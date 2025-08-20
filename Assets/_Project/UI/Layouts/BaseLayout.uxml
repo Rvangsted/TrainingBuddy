@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="Overlay" class="background-overlay">
+        <ui:VisualElement name="FemaleChar" class="female-char-left" />
+        <ui:VisualElement name="MaleChar" class="male-char-right" />
+    </ui:VisualElement>
+</ui:UXML>

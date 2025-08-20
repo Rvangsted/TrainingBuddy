@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "41464725559",
+    "project_id": "trainingbuddy-81bca",
+    "storage_bucket": "trainingbuddy-81bca.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41464725559:android:544dd7298946b02d47bfb2",
+        "android_client_info": {
+          "package_name": "com.TrainingBuddyInc.TrainingBuddy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "41464725559-7f52phdukhjr72a13j2qirfsu8qn7hjn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPAaQHyXBWb7AWfJ-yxKXy0RtucHBoWzE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "41464725559-7f52phdukhjr72a13j2qirfsu8qn7hjn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

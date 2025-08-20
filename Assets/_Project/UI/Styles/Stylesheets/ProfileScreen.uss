@@ -1,0 +1,128 @@
+.profile-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+.container {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 100px;
+}
+
+.username {
+    -unity-text-align: middle-center;
+    white-space: normal;
+    margin-top: 50px;
+}
+
+.profile-picture {
+    width: 200px;
+    height: 200px;
+    background-image: url("project://database/Assets/_Project/Art/TestUser.jpg");
+    border-radius: 100px;
+}
+
+.skill-points {
+    margin-top: 50px;
+}
+
+.skill-points-container {
+    width: 400px;
+    flex-direction: row;
+}
+
+.skill-points-left {
+    flex-direction: row;
+    width: 200px;
+}
+
+.skill-points-right {
+    flex-direction: row;
+    width: 200px;
+}
+
+.skill-points-labels {
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+}
+
+.skill-points-labels .skill-points-number {
+    font-size: 40px;
+}
+
+.skill-points-labels .skill-points-description {
+    font-size: 16px;
+}
+
+.skill-points-buttons {
+    
+}
+
+.skill-points-right .skill-points-buttons {
+    align-items: flex-end;
+}
+
+.skill-points-buttons .unity-button {
+    width: 50px;
+    height: 50px;
+}
+
+.skill-points-buttons .skill-points-plus {
+    margin-bottom: 30px;
+}
+
+.skill-points-left .skill-points-labels {
+    margin-left: 10px;
+}
+
+.training-button {
+    margin-top: 50px;
+}
+
+.level {
+    margin-top: 30px;
+}
+
+.experience-bar {
+    height: 50px;
+    width: 300px;
+    border-radius: 30;
+    border-width: 0;
+    background-color: var(--font-color-black);
+    color: var(--font-color-white);
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.80);
+    font-size: 14px;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/SundayFunday/SundayFunday SDF.asset");
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.experience-bar .unity-progress-bar__container {
+    height: 100%;
+    max-height: 100%;
+}
+
+.experience-bar .unity-progress-bar__background {
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+.experience-bar .unity-progress-bar__progress {
+    height: 100%;
+    background-color: var(--font-color-exp);
+    border-radius: 0;
+    border-width: 0;
+    margin: 0;
+}
+
+.logout-button {
+    margin-top: 50px;
+}

@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/RaceScreen.uss?fileID=7433441132597879392&amp;guid=162e64af8350c4941acc5432a924576e&amp;type=3#RaceScreen" />
+    <ui:VisualElement name="RaceMenuScreen" class="race-menu-screen" style="flex-grow: 1;">
+        <ui:Label text="Race" display-tooltip-when-elided="true" name="Title" class="font-title title" />
+        <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
+            <TrainingBuddy.UI.Controls.LocalizedButton key="interface_button_hostrace" name="HostButton" class="button-large" />
+            <TrainingBuddy.UI.Controls.LocalizedButton key="interface_button_findrace" name="FindRace" class="button-large" />
+            <TrainingBuddy.UI.Controls.LocalizedButton key="interface_button_watchrace" name="WatchRace" class="button-large" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

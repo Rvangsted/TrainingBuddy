@@ -1,0 +1,63 @@
+.login-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+.container {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 280px;
+}
+
+.field-username,
+.field-email,
+.field-password {
+    height: 50px;
+    width: 300px;
+}
+
+.field-username .unity-text-field__input,
+.field-email .unity-text-field__input,
+.field-password .unity-text-field__input {
+    border-radius: 30;
+    border-width: 2px;
+    border-color: var(--font-color-darkgray);
+}
+
+.field-username .unity-text-element,
+.field-email .unity-text-element,
+.field-password .unity-text-element {
+    flex-shrink: 0;
+    font-size: 20px;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/SundayFunday/SundayFunday SDF.asset");
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+    color: var(--font-color-lightgray);
+}
+
+.field-username>.unity-text-field__input.has-value .unity-text-element,
+.field-email>.unity-text-field__input.has-value .unity-text-element,
+.field-password>.unity-text-field__input.has-value .unity-text-element {
+    color: var(--font-color-gray);
+}
+
+.button-container {
+    margin-top: 10px;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    width: 300px;
+}
+
+.button-large {
+    margin-top: 40px;
+    width: 300px;
+}
+
+.button-small {
+    margin-top: 0;
+    width: 140px;
+}

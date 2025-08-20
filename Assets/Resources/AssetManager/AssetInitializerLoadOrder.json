@@ -1,0 +1,12 @@
+{
+    "initializers": [
+        {
+            "enabled": true,
+            "assemblyQualifiedTypeName": "BedtimeCore.Managers.ManagerInitializer, BedtimeCore, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
+        },
+        {
+            "enabled": true,
+            "assemblyQualifiedTypeName": "BedtimeCore.Assets.StreamingAssetsHandlerSupplier, com.bedtime.asset-system.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
+        }
+    ]
+}

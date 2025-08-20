@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/LoginScreen.uss?fileID=7433441132597879392&amp;guid=33f193674af8bdc43a1cd060c856b505&amp;type=3#LoginScreen" />
+    <ui:VisualElement name="LoginScreen" class="login-screen" style="flex-grow: 1;">
+        <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
+            <TrainingBuddy.UI.Controls.LocalizedTextInput name="Email" key="interface_text_email" hide-placeholder-on-focus="true" class="field-email" />
+            <TrainingBuddy.UI.Controls.LocalizedTextInput name="Password" key="interface_text_password" hide-placeholder-on-focus="true" password="true" class="field-password" />
+            <TrainingBuddy.UI.Controls.LocalizedButton key="interface_button_login" name="LoginButton" class="button-large" />
+            <ui:VisualElement name="ButtonContainer" class="button-container" style="flex-grow: 1;">
+                <TrainingBuddy.UI.Controls.LocalizedButton name="RegisterButton" key="interface_button_register" class="button-small" />
+                <TrainingBuddy.UI.Controls.LocalizedButton name="TestButton" text="Test" class="button-small" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

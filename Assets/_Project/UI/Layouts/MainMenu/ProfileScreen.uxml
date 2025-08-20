@@ -1,0 +1,36 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/ProfileScreen.uss?fileID=7433441132597879392&amp;guid=5c04b6199a67f3949832abb5fc6147fd&amp;type=3#ProfileScreen" />
+    <ui:VisualElement name="ProfileScreen" class="profile-screen" style="flex-grow: 1; height: 961px; width: 503px;">
+        <ui:VisualElement name="Container" class="container">
+            <ui:Label text="Username" name="Username" class="username font-regular" />
+            <ui:VisualElement name="ProfilePicture" class="profile-picture" style="flex-grow: 1;" />
+            <ui:Label text="Skill Points: 0" name="SkillPoints" class="skill-points font-regular" />
+            <ui:VisualElement name="SkillpointsContainer" class="skill-points-container" style="flex-grow: 1;">
+                <ui:VisualElement name="Left" class="skill-points-left" style="flex-grow: 1;">
+                    <ui:VisualElement name="Buttons" class="skill-points-buttons" style="flex-grow: 1;">
+                        <ui:Button name="AccPlus" text="+" class="skill-points-plus" />
+                        <ui:Button name="AccMinus" text="-" class="skill-points-minus" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Labels" class="skill-points-labels" style="flex-grow: 1;">
+                        <ui:Label text="18" name="AccNumber" class="skill-points-number font-regular" />
+                        <ui:Label text="Acceleration" name="AccDescription" class="skill-points-description font-regular" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="Right" class="skill-points-right" style="flex-grow: 1;">
+                    <ui:VisualElement name="Labels" class="skill-points-labels" style="flex-grow: 1;">
+                        <ui:Label text="20" name="SpdNumber" class="skill-points-number font-regular" />
+                        <ui:Label text="Speed" name="SpdDescription" class="skill-points-description font-regular" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="Buttons" class="skill-points-buttons" style="flex-grow: 1;">
+                        <ui:Button name="SpdPlus" text="+" class="skill-points-plus" />
+                        <ui:Button name="SpdMinus" text="-" class="skill-points-minus" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <TrainingBuddy.UI.Controls.LocalizedButton name="TrainingButton" key="interface_button_training" class="button-large training-button" />
+            <ui:Label text="Level: 8" name="Level" class="level font-regular" />
+            <ui:ProgressBar value="50" title="400/800 xp" name="ExperienceBar" class="experience-bar" />
+            <TrainingBuddy.UI.Controls.LocalizedButton key="interface_button_logout" name="LogoutButton" class="button-large logout-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

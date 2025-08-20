@@ -1,0 +1,17 @@
+.font-title {
+    flex-shrink: 0;
+    font-size: 80px;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/SundayFunday/SundayFunday SDF.asset");
+    -unity-font-style: normal;
+    -unity-text-outline-width: 3px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.80);
+    color: var(--font-color-white);
+}
+
+.font-regular {
+    flex-shrink: 0;
+    font-size: 24px;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/SundayFunday/SundayFunday SDF.asset");
+    -unity-font-style: normal;
+    color: var(--font-color-black);
+}

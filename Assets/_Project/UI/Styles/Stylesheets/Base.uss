@@ -1,0 +1,113 @@
+@import url('project://database/Assets/_Project/UI/Styles/Stylesheets/Fonts.uss');
+
+:root {
+    --color-white: rgba(255, 255, 255, 1);
+    --color-off-white: rgba(247, 247, 247, .65);
+    
+    --font-color-white: rgba(245, 245, 245, 1);
+    --font-color-black: rgb(0, 0, 0);
+    --font-color-darkgray: rgb(38, 38, 38);
+    --font-color-gray: rgba(60, 60, 60, 1);
+    --font-color-lightgray: rgb(150, 150, 150);
+    --font-color-exp: rgba(98, 229, 89, 1);
+}
+
+.unity-ui-document__root {
+    background-color: var(--color-white);
+}
+
+.unity-ui-document__root.show-splash-background {
+    background-image: url('project://database/Assets/_Project/Art/TrainingBuddyBG.png');
+}
+
+.show-splash-background .background-overlay {
+    position: absolute;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: flex-start;
+    height: 100%;
+    width: 100%;
+}
+
+.show-splash-background .female-char-left {
+    background-image: url('project://database/Assets/_Project/Art/Frontpage/female.png');
+    height: 80%;
+    width: 50%;
+}
+
+.show-splash-background .male-char-right {
+    background-image: url('project://database/Assets/_Project/Art/Frontpage/male.png');
+    height: 80%;
+    width: 50%;
+}
+
+.button-large {
+    height: 70px;
+    width: 259px;
+    border-radius: 40;
+    border-width: 0;
+    background-color: var(--color-off-white);
+    color: var(--font-color-darkgray);
+    font-size: 25px;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+}
+
+.unity-ui-document__root .button-large:hover {
+    background-color: var(--color-off-white);
+}
+
+.unity-ui-document__root .button-large:active {
+    background-color: var(--color-off-white);
+}
+
+.text-button {
+    height: 70px;
+    width: 259px;
+    border-width: 0;
+    background-color: transparent;
+    color: var(--color-off-white);
+    font-size: 14px;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+}
+
+.unity-ui-document__root .text-button:hover {
+    background-color: transparent;
+}
+
+.unity-ui-document__root .text-button:active {
+    background-color: transparent;
+}
+
+.button-large {
+    width: 300px;
+}
+
+.button-small {
+    width: 140px;
+}
+
+.button-back {
+    width: 50px;
+}
+
+.hide-back-button .button-back {
+    display: none;
+}
+
+.layout-header {
+    height: 50px;
+}
+
+.layout-content {
+    justify-content: flex-end;
+    align-items: center;
+    height: 100%;
+}
+
+.layout-footer {
+    height: 50px;
+}

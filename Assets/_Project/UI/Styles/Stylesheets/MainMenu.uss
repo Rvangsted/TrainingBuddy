@@ -1,0 +1,36 @@
+.main-menu {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.drop-shadow {
+    width: 100%;
+    align-self: center;
+    flex-grow: 1;
+    flex-shrink: 0;
+}
+
+.gradient-container {
+    position: relative;
+    align-items: center;
+    flex-shrink: 0;
+    border-radius: 54px;
+    background-color: white;
+    --gradient-from: rgba(255, 255, 255, 1);
+    --gradient-to: rgba(96, 85, 255, .1);
+    --gradient-direction: vertical;
+}
+
+.shadow-button {
+    margin-top: 20px;
+}
+
+.gradient-container .content {
+    align-items: center;
+}
+
+.button-large {
+    position: relative;
+}

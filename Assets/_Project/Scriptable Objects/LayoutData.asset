@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 720932b009e149759d4185868efaf4b6, type: 3}
+  m_Name: LayoutData
+  m_EditorClassIdentifier: 
+  <LoginScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: dfe909e47b3fa464380c1eee7c2cc92b,
+    type: 3}
+  <RegisterScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 609276061f4f8f14087862a6a2e69a9c,
+    type: 3}
+  <MainMenuVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 025d6e30183f27343a03bedb15c11a51,
+    type: 3}
+  <ProfileScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: e490b62ec2ea377478845022985557e1,
+    type: 3}
+  <HighScoreVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 34c8b585f662d1740b8f5247fb88f277,
+    type: 3}
+  <RaceScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 20b18b6401f30a142a82758619d9221f,
+    type: 3}
+  <RaceMenuScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 258b27d75b5ba624285b453d626eb356,
+    type: 3}
+  <LobbyScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 396af9188d3f6f6478d1fd70da3652bf,
+    type: 3}
+  <HostScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 283fdbdbfaca05a43b32bbad725485e9,
+    type: 3}
+  <FindLobbyScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 5710735217e9a2e41a7c7323372a96f5,
+    type: 3}
