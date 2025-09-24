@@ -1,155 +1,405 @@
 .profile-screen {
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    height: 100%;
+    flex-grow: 1;
+    background-color: #f4f6fb;
 }
 
 .profile-screen .unity-scroll-view__content-container {
     align-items: center;
-    padding: 50px 0;
+    padding-top: 36px;
+    padding-bottom: 96px;
 }
 
-.box-header {
-    width: 400px;
-    height: 125px;
-    margin-top: 30px;
-    background-image: url("project://database/Assets/_Project/Art/Boxes/HeaderBox.png");
-}
-
-.box-size-large {
-    width: 500px;
-    height: 898px;
-    margin-top: 30px;
-    background-image: url("project://database/Assets/_Project/Art/Boxes/Box.png");
-    align-items: center;
-    padding: 50px;
-}
-
-.circular-progress {
-    height: 200px;
-    width: 200px;
-    
-}
-
-.container {
+.profile-content {
+    width: 520px;
+    display: flex;
     flex-direction: column;
+    gap: 32px;
+    align-items: stretch;
+}
+
+.card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 32px;
+    border-radius: 48px;
+    background-color: #ffffff;
+    box-shadow: 0 24px 60px rgba(143, 160, 211, 0.25);
+}
+
+.hero-card {
+    flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
-    margin-top: 100px;
+    gap: 24px;
+    background-image: linear-gradient(140deg, #ffe3f2 0%, #ffffff 60%);
+    box-shadow: 0 35px 65px rgba(255, 163, 212, 0.25);
 }
 
-.username {
-    -unity-text-align: middle-center;
-    white-space: normal;
-    margin-top: 50px;
-}
-
-.profile-picture {
-    width: 200px;
-    height: 200px;
+.hero-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 40px;
     background-image: url("project://database/Assets/_Project/Art/TestUser.jpg");
-    border-radius: 100px;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 12px 30px rgba(195, 117, 171, 0.35);
 }
 
-.skill-points {
-    margin-top: 50px;
+.hero-details {
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
 }
 
-.skill-points-container {
-    width: 400px;
-    flex-direction: row;
+.hero-title {
+    font-size: 18px;
+    color: #6d6f8b;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
 }
 
-.skill-points-left {
-    flex-direction: row;
-    width: 200px;
+.hero-name {
+    font-size: 36px;
+    color: #2a1b4e;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
 }
 
-.skill-points-right {
-    flex-direction: row;
-    width: 200px;
+.hero-subtitle {
+    font-size: 16px;
+    color: #8b8faa;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
 }
 
-.skill-points-labels {
+.skill-chip {
+    margin-left: auto;
+    padding: 20px 26px;
+    border-radius: 28px;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 14px 24px rgba(156, 102, 255, 0.18);
     align-items: center;
     justify-content: center;
-    width: 150px;
+    gap: 4px;
 }
 
-.skill-points-labels .skill-points-number {
-    font-size: 40px;
+.chip-label {
+    font-size: 12px;
+    color: #7a74a3;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
 }
 
-.skill-points-labels .skill-points-description {
-    font-size: 16px;
+.chip-value {
+    font-size: 30px;
+    color: #473b7b;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
 }
 
-.skill-points-buttons {
-    
+.summary-card {
+    align-items: center;
 }
 
-.skill-points-right .skill-points-buttons {
-    align-items: flex-end;
-}
-
-.skill-points-buttons .unity-button {
-    width: 50px;
-    height: 50px;
-}
-
-.skill-points-buttons .skill-points-plus {
-    margin-bottom: 30px;
-}
-
-.skill-points-left .skill-points-labels {
-    margin-left: 10px;
-}
-
-.training-button {
-    margin-top: 50px;
-}
-
-.level {
-    margin-top: 30px;
-}
-
-.experience-bar {
-    height: 50px;
-    width: 300px;
-    border-radius: 30;
-    border-width: 0;
-    background-color: var(--font-color-black);
-    color: var(--font-color-white);
-    -unity-text-outline-width: 1px;
-    -unity-text-outline-color: rgba(0, 0, 0, 0.80);
-    font-size: 14px;
-    -unity-font-definition: url("project://database/Assets/_Project/Fonts/SundayFunday/SundayFunday SDF.asset");
-    -unity-font-style: normal;
-    -unity-text-align: middle-center;
+.summary-progress {
+    align-items: center;
     justify-content: center;
-    overflow: hidden;
 }
 
-.experience-bar .unity-progress-bar__container {
-    height: 100%;
-    max-height: 100%;
+.progress-wrapper {
+    width: 240px;
+    height: 240px;
+    position: relative;
+    align-items: center;
+    justify-content: center;
 }
 
-.experience-bar .unity-progress-bar__background {
+.weekly-progress {
+    width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0);
+}
+
+.progress-center {
+    position: absolute;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.progress-value {
+    font-size: 48px;
+    color: #2a1b4e;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
+}
+
+.progress-caption {
+    font-size: 16px;
+    color: #74779a;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+}
+
+.progress-goal {
+    font-size: 13px;
+    color: #abaed0;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+}
+
+.summary-stats {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.stat-chip {
+    flex: 1 1 0;
+    padding: 18px;
+    border-radius: 28px;
+    background-color: #f3f5ff;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    box-shadow: inset 0 0 0 2px rgba(216, 220, 255, 0.55);
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #7e82a9;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+}
+
+.stat-value {
+    font-size: 28px;
+    color: #2a1b4e;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
+}
+
+.section-heading {
+    font-size: 20px;
+    color: #2a1b4e;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.skills-card {
+    gap: 28px;
+}
+
+.skills-section {
+    padding: 20px 24px;
+    border-radius: 32px;
+    background-color: rgba(238, 242, 255, 0.8);
+    gap: 12px;
+}
+
+.skills-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-title {
+    font-size: 20px;
+    color: #32345d;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
+}
+
+.section-subtitle {
+    font-size: 15px;
+    color: #777aa0;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+}
+
+.slider-value {
+    font-size: 18px;
+    color: #4b4d7e;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+}
+
+.stat-slider {
+    margin-top: 4px;
+    height: 36px;
+}
+
+.stat-slider .unity-base-slider__tracker {
+    height: 12px;
+    border-radius: 8px;
+    background-color: rgba(198, 205, 255, 0.6);
+}
+
+.stat-slider .unity-base-slider__dragger {
+    width: 34px;
+    height: 34px;
+    border-radius: 17px;
+    background-color: #9cff4d;
     border-width: 0;
+    box-shadow: 0 8px 18px rgba(156, 255, 77, 0.35);
 }
 
-.experience-bar .unity-progress-bar__progress {
-    height: 100%;
-    background-color: var(--font-color-exp);
-    border-radius: 0;
+.activity-card {
+    gap: 20px;
+}
+
+.activity-row {
+    gap: 12px;
+}
+
+.activity-info {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activity-label {
+    font-size: 16px;
+    color: #5c5f89;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
+}
+
+.activity-value {
+    font-size: 14px;
+    color: #8f92b5;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+}
+
+.activity-progress {
+    height: 20px;
+    border-radius: 14px;
     border-width: 0;
-    margin: 0;
+    background-color: transparent;
 }
 
-.logout-button {
-    margin-top: 50px;
+.activity-progress .unity-progress-bar__container {
+    padding: 0;
+}
+
+.activity-progress .unity-progress-bar__background {
+    border-radius: 14px;
+    border-width: 0;
+    background-color: rgba(215, 219, 255, 0.6);
+}
+
+.activity-progress .unity-progress-bar__progress {
+    border-radius: 14px;
+    border-width: 0;
+    background-image: linear-gradient(90deg, #9cff4d 0%, #68d100 100%);
+}
+
+.button-wide {
+    width: 100%;
+}
+
+.primary-action {
+    margin-top: 8px;
+    background-image: linear-gradient(90deg, #9cff4d 0%, #68d100 100%);
+    color: #1f2b32;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
+}
+
+.secondary-action {
+    margin-top: 8px;
+    background-color: #ffffff;
+    color: #2a1b4e;
+    box-shadow: inset 0 0 0 2px rgba(196, 201, 255, 0.8);
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
+}
+
+.friends-card {
+    gap: 20px;
+}
+
+.friends-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.friend-card {
+    width: 150px;
+    padding: 16px 12px;
+    border-radius: 32px;
+    background-color: rgba(241, 244, 255, 0.9);
+    align-items: center;
+    gap: 12px;
+    box-shadow: inset 0 0 0 2px rgba(208, 217, 255, 0.55);
+}
+
+.friend-card.highlight {
+    background-color: rgba(255, 247, 208, 0.95);
+    box-shadow: inset 0 0 0 2px rgba(255, 214, 94, 0.75);
+}
+
+.friend-avatar {
+    width: 86px;
+    height: 86px;
+    border-radius: 28px;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 10px 18px rgba(154, 165, 255, 0.35);
+}
+
+.friend-avatar--primary {
+    background-image: linear-gradient(180deg, #ff9fd9 0%, #ffc1e6 100%);
+}
+
+.friend-avatar--secondary {
+    background-image: linear-gradient(180deg, #9fd6ff 0%, #bce8ff 100%);
+}
+
+.friend-avatar--tertiary {
+    background-image: linear-gradient(180deg, #ffd29f 0%, #ffe4bd 100%);
+}
+
+.friend-avatar--quaternary {
+    background-image: linear-gradient(180deg, #9fffe4 0%, #bcfff0 100%);
+}
+
+.friend-name {
+    font-size: 16px;
+    color: #484a7e;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+}
+
+.options-card {
+    gap: 16px;
+}
+
+.option-row {
+    padding: 12px 18px;
+    border-radius: 28px;
+    background-color: rgba(238, 242, 255, 0.75);
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+}
+
+.option-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 20px;
+    box-shadow: inset 0 0 0 2px rgba(206, 212, 255, 0.7);
+}
+
+.option-icon--about {
+    background-image: linear-gradient(180deg, #ffe3f2 0%, #ffd5ec 100%);
+}
+
+.option-icon--settings {
+    background-image: linear-gradient(180deg, #d9ecff 0%, #cce4ff 100%);
+}
+
+.option-icon--screen {
+    background-image: linear-gradient(180deg, #fff3d6 0%, #ffe9bc 100%);
+}
+
+.option-label {
+    font-size: 18px;
+    color: #3a3c66;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
 }

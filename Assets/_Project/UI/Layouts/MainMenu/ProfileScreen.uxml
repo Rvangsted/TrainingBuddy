@@ -1,37 +1,127 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/ProfileScreen.uss?fileID=7433441132597879392&amp;guid=5c04b6199a67f3949832abb5fc6147fd&amp;type=3#ProfileScreen" />
-    <ui:VisualElement name="ProfileScreenOld" class="profile-screen" style="flex-grow: 1; height: 961px; width: 503px; display: none;">
-        <ui:VisualElement name="PreviousContainer" class="container" style="display: none;">
-            <ui:Label text="Username" name="Username" class="username font-regular" />
-            <ui:VisualElement name="ProfilePicture" class="profile-picture" style="flex-grow: 1;" />
-            <ui:Label text="Skill Points: 0" name="SkillPoints" class="skill-points font-regular" />
-            <ui:VisualElement name="SkillpointsContainer" class="skill-points-container" style="flex-grow: 1;">
-                <ui:VisualElement name="Left" class="skill-points-left" style="flex-grow: 1;">
-                    <ui:VisualElement name="Buttons" class="skill-points-buttons" style="flex-grow: 1;">
-                        <ui:Button name="AccPlus" text="+" class="skill-points-plus" />
-                        <ui:Button name="AccMinus" text="-" class="skill-points-minus" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="Labels" class="skill-points-labels" style="flex-grow: 1;">
-                        <ui:Label text="18" name="AccNumber" class="skill-points-number font-regular" />
-                        <ui:Label text="Acceleration" name="AccDescription" class="skill-points-description font-regular" />
+    <ui:ScrollView name="ProfileScreen" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="profile-screen" style="flex-grow: 1; height: auto;">
+        <ui:VisualElement class="profile-content">
+            <ui:VisualElement class="hero-card card">
+                <ui:VisualElement class="hero-avatar" name="ProfileAvatar" />
+                <ui:VisualElement class="hero-details">
+                    <ui:Label class="hero-title" text="Min profil" />
+                    <ui:Label name="ProfileName" class="hero-name" text="Bruger" />
+                    <ui:Label name="ProfileEmail" class="hero-subtitle" text="Din e-mail" />
+                </ui:VisualElement>
+                <ui:VisualElement class="skill-chip">
+                    <ui:Label class="chip-label" text="Point" />
+                    <ui:Label name="SkillPointsValue" class="chip-value" text="0" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="summary-card card">
+                <ui:VisualElement class="summary-progress">
+                    <ui:VisualElement class="progress-wrapper">
+                        <TrainingBuddy.UI.Controls.CircularProgressBar name="WeeklyDistanceProgress" class="weekly-progress" value="0" TrackColor="#EEF2FF" ProgressColor="#8CF200" KnobColor="#C8FF5F" InnerKnobColor="#FFFFFF" ArrowColor="#4C4C4C" LineThickness="22" KnobSize="20" InnerKnobSize="7" />
+                        <ui:VisualElement class="progress-center">
+                            <ui:Label name="WeeklyDistanceValue" class="progress-value" text="0 KM" />
+                            <ui:Label class="progress-caption" text="Træning denne uge" />
+                            <ui:Label name="WeeklyGoalLabel" class="progress-goal" text="Mål: 80 KM" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="Right" class="skill-points-right" style="flex-grow: 1;">
-                    <ui:VisualElement name="Labels" class="skill-points-labels" style="flex-grow: 1;">
-                        <ui:Label text="20" name="SpdNumber" class="skill-points-number font-regular" />
-                        <ui:Label text="Speed" name="SpdDescription" class="skill-points-description font-regular" />
+                <ui:VisualElement class="summary-stats">
+                    <ui:VisualElement class="stat-chip">
+                        <ui:Label class="stat-label" text="Level" />
+                        <ui:Label name="LevelValue" class="stat-value" text="1" />
                     </ui:VisualElement>
-                    <ui:VisualElement name="Buttons" class="skill-points-buttons" style="flex-grow: 1;">
-                        <ui:Button name="SpdPlus" text="+" class="skill-points-plus" />
-                        <ui:Button name="SpdMinus" text="-" class="skill-points-minus" />
+                    <ui:VisualElement class="stat-chip">
+                        <ui:Label class="stat-label" text="XP" />
+                        <ui:Label name="ExperienceValue" class="stat-value" text="0" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="stat-chip">
+                        <ui:Label class="stat-label" text="Skridt" />
+                        <ui:Label name="StepsValue" class="stat-value" text="0" />
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-            <TrainingBuddy.UI.Controls.LocalizedButton name="TrainingButton" key="interface_button_training" class="button-large training-button" />
-            <ui:Label text="Level: 8" name="Level" class="level font-regular" />
-            <ui:ProgressBar value="50" title="400/800 xp" name="ExperienceBar" class="experience-bar" />
-            <TrainingBuddy.UI.Controls.LocalizedButton key="interface_button_logout" name="LogoutButton" class="button-large logout-button" />
+            <ui:VisualElement class="skills-card card">
+                <ui:Label text="Færdigheder" class="section-heading" />
+                <ui:VisualElement class="skills-section">
+                    <ui:VisualElement class="skills-header">
+                        <ui:Label text="Hastighed" class="section-title" />
+                        <ui:Label name="SpeedPointsLabel" class="slider-value" text="0 pt" />
+                    </ui:VisualElement>
+                    <ui:Label text="Du løber længere og hurtigere" class="section-subtitle" />
+                    <ui:SliderInt name="SpeedSlider" class="stat-slider" low-value="0" high-value="20" value="0" />
+                </ui:VisualElement>
+                <ui:VisualElement class="skills-section">
+                    <ui:VisualElement class="skills-header">
+                        <ui:Label text="Acceleration" class="section-title" />
+                        <ui:Label name="AccelerationPointsLabel" class="slider-value" text="0 pt" />
+                    </ui:VisualElement>
+                    <ui:Label text="Du starter hurtigere" class="section-subtitle" />
+                    <ui:SliderInt name="AccelerationSlider" class="stat-slider" low-value="0" high-value="20" value="0" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="activity-card card">
+                <ui:Label text="Min aktivitet" class="section-heading" />
+                <ui:VisualElement class="activity-row">
+                    <ui:VisualElement class="activity-info">
+                        <ui:Label class="activity-label" text="Erfaring" />
+                        <ui:Label name="ExperienceProgressLabel" class="activity-value" text="0 / 0 XP" />
+                    </ui:VisualElement>
+                    <ui:ProgressBar name="ExperienceBar" class="activity-progress" value="0" />
+                </ui:VisualElement>
+                <ui:VisualElement class="activity-row">
+                    <ui:VisualElement class="activity-info">
+                        <ui:Label class="activity-label" text="Skridtmål" />
+                        <ui:Label name="StepsProgressLabel" class="activity-value" text="0 / 10.000" />
+                    </ui:VisualElement>
+                    <ui:ProgressBar name="StepsBar" class="activity-progress" value="0" />
+                </ui:VisualElement>
+                <TrainingBuddy.UI.Controls.LocalizedButton name="TrainingButton" key="interface_button_training" class="button-large button-wide primary-action" />
+            </ui:VisualElement>
+            <ui:VisualElement class="friends-card card">
+                <ui:Label text="Mine venner" class="section-heading" />
+                <ui:VisualElement class="friends-grid">
+                    <ui:VisualElement class="friend-card highlight">
+                        <ui:VisualElement class="friend-avatar friend-avatar--primary" />
+                        <ui:Label class="friend-name" text="Mia" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="friend-card">
+                        <ui:VisualElement class="friend-avatar friend-avatar--secondary" />
+                        <ui:Label class="friend-name" text="Ali" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="friend-card">
+                        <ui:VisualElement class="friend-avatar friend-avatar--tertiary" />
+                        <ui:Label class="friend-name" text="Sofie" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="friend-card">
+                        <ui:VisualElement class="friend-avatar friend-avatar--quaternary" />
+                        <ui:Label class="friend-name" text="Lars" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="friend-card">
+                        <ui:VisualElement class="friend-avatar friend-avatar--primary" />
+                        <ui:Label class="friend-name" text="Nora" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="friend-card">
+                        <ui:VisualElement class="friend-avatar friend-avatar--secondary" />
+                        <ui:Label class="friend-name" text="Emma" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="options-card card">
+                <ui:Label text="Menu" class="section-heading" />
+                <ui:VisualElement class="option-row">
+                    <ui:VisualElement class="option-icon option-icon--about" />
+                    <ui:Label class="option-label" text="Om Training Buddy" />
+                </ui:VisualElement>
+                <ui:VisualElement class="option-row">
+                    <ui:VisualElement class="option-icon option-icon--settings" />
+                    <ui:Label class="option-label" text="Indstillinger" />
+                </ui:VisualElement>
+                <ui:VisualElement class="option-row">
+                    <ui:VisualElement class="option-icon option-icon--screen" />
+                    <ui:Label class="option-label" text="Skærm" />
+                </ui:VisualElement>
+                <TrainingBuddy.UI.Controls.LocalizedButton key="interface_button_logout" name="LogoutButton" class="button-large button-wide secondary-action" />
+            </ui:VisualElement>
         </ui:VisualElement>
-    </ui:VisualElement>
-    <ui:ScrollView name="ProfileScreen" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="profile-screen" style="flex-grow: 1; height: auto;" />
+    </ui:ScrollView>
 </ui:UXML>
