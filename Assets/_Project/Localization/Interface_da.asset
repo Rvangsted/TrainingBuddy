@@ -43,15 +43,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 762710412222464
-    m_Localized: Race
+    m_Localized: "Start L\xF8b"
     m_Metadata:
       m_Items: []
   - m_Id: 762746575511552
-    m_Localized: Profil
+    m_Localized: Min Profil
     m_Metadata:
       m_Items: []
   - m_Id: 762771472900096
-    m_Localized: Highscore
+    m_Localized: "Deltag i L\xF8b"
     m_Metadata:
       m_Items: []
   - m_Id: 1089054102773760

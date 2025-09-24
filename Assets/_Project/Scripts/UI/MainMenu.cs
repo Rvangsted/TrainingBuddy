@@ -7,9 +7,9 @@ namespace TrainingBuddy.UI
 {
 	public class MainMenu : UILayout
 	{
-		private Button _raceButton;
+		private Button _startRaceButton;
+		private Button _participateRaceButton;
 		private Button _profileButton;
-		private Button _highScoreButton;
 		
 		private readonly DatabaseManager _databaseManager;
 		
@@ -22,32 +22,6 @@ namespace TrainingBuddy.UI
 		
 		public override void Initialize()
 		{
-			// var containerWithShadow = new Shadow
-			// {
-			// 	name = "ContainerWithShadow",
-			// 	shadowCornerRadius = 54,
-			// 	shadowScale = 1,
-			// 	shadowOffsetX = 0,
-			// 	shadowOffsetY = 0,
-			// };
-			// containerWithShadow.AddToClassList("drop-shadow");
-			//
-			// var gradientContainer = new GradientElement
-			// {
-			// 	name = "GradientContainer",
-			// };
-			// gradientContainer.AddToClassList("gradient-container");
-			
-			// var button = new LocalizedButton
-			// {
-			// 	name = "RaceButton",
-			// 	key = "interface_button_race",
-			// };
-			// var glow = new Glow();
-			// glow.AddToClassList("button-glow");
-			// button.AddToClassList("button-large");
-			// button.Add(glow);
-			
 			var shadowSettings = new ShadowSettings
 			{
 				CornerRadius = 54,
@@ -56,19 +30,14 @@ namespace TrainingBuddy.UI
 				ShadowOffsetY = 10,
 			};
 
-			var raceButton = ShadowButton("RaceButton", "interface_button_race", shadowSettings);
+			var startRaceButton = ShadowButton("StartRaceButton", "interface_button_start_race", shadowSettings);
+			var participateRaceButton = ShadowButton("ParticipateRaceButton", "interface_button_participate_race", shadowSettings);
 			var profileButton = ShadowButton("ProfileButton", "interface_button_profile", shadowSettings);
-			var highScoreButton = ShadowButton("HighScoreButton", "interface_button_highscore", shadowSettings);
 			var privacyButton = TextButton("PrivacyButton", "interface_button_privacy", "<u>", "</u>");
 			
-			// gradientContainer.Content.Add(raceButton);
-			// gradientContainer.Content.Add(profileButton);
-			// gradientContainer.Content.Add(highScoreButton);
-			//
-			// containerWithShadow.Add(gradientContainer);
-			Layout.Q<VisualElement>("MainMenu").Add(raceButton);
+			Layout.Q<VisualElement>("MainMenu").Add(startRaceButton);
+			Layout.Q<VisualElement>("MainMenu").Add(participateRaceButton);
 			Layout.Q<VisualElement>("MainMenu").Add(profileButton);
-			Layout.Q<VisualElement>("MainMenu").Add(highScoreButton);
 			Layout.Q<VisualElement>("MainMenu").Add(privacyButton);
 		}
 
@@ -80,23 +49,23 @@ namespace TrainingBuddy.UI
 				_databaseManager.StartStepCounter();
 			}
 			
-			_raceButton = Layout.Q<Button>("RaceButton");
+			_startRaceButton = Layout.Q<Button>("StartRaceButton");
+			_participateRaceButton = Layout.Q<Button>("ParticipateRaceButton");
 			_profileButton = Layout.Q<Button>("ProfileButton");
-			_highScoreButton = Layout.Q<Button>("HighScoreButton");
 			
-			_raceButton.RegisterCallback<ClickEvent>(_ =>
+			_startRaceButton.RegisterCallback<ClickEvent>(_ =>
 			{
 				_uiManager.ChangePage(_layoutData.RaceMenuScreen);
+			});
+			
+			_participateRaceButton.RegisterCallback<ClickEvent>(_ =>
+			{
+				// _uiManager.ChangePage(_layoutData.ProfileScreen);
 			});
 			
 			_profileButton.RegisterCallback<ClickEvent>(_ =>
 			{
 				_uiManager.ChangePage(_layoutData.ProfileScreen);
-			});
-			
-			_highScoreButton.RegisterCallback<ClickEvent>(_ =>
-			{
-				_uiManager.ChangePage(_layoutData.HighScoreScreen);
 			});
 		}
 	}

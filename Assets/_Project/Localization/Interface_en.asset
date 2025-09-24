@@ -43,15 +43,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 762710412222464
-    m_Localized: Race
+    m_Localized: Start Race
     m_Metadata:
       m_Items: []
   - m_Id: 762746575511552
-    m_Localized: Profile
+    m_Localized: My Profile
     m_Metadata:
       m_Items: []
   - m_Id: 762771472900096
-    m_Localized: Highscore
+    m_Localized: Participate in Race
     m_Metadata:
       m_Items: []
   - m_Id: 1089077116919808

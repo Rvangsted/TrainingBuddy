@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/ProfileScreen.uss?fileID=7433441132597879392&amp;guid=5c04b6199a67f3949832abb5fc6147fd&amp;type=3#ProfileScreen" />
-    <ui:VisualElement name="ProfileScreen" class="profile-screen" style="flex-grow: 1; height: 961px; width: 503px;">
-        <ui:VisualElement name="Container" class="container">
+    <ui:VisualElement name="ProfileScreenOld" class="profile-screen" style="flex-grow: 1; height: 961px; width: 503px; display: none;">
+        <ui:VisualElement name="PreviousContainer" class="container" style="display: none;">
             <ui:Label text="Username" name="Username" class="username font-regular" />
             <ui:VisualElement name="ProfilePicture" class="profile-picture" style="flex-grow: 1;" />
             <ui:Label text="Skill Points: 0" name="SkillPoints" class="skill-points font-regular" />
@@ -33,4 +33,5 @@
             <TrainingBuddy.UI.Controls.LocalizedButton key="interface_button_logout" name="LogoutButton" class="button-large logout-button" />
         </ui:VisualElement>
     </ui:VisualElement>
+    <ui:ScrollView name="ProfileScreen" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="profile-screen" style="flex-grow: 1; height: auto;" />
 </ui:UXML>

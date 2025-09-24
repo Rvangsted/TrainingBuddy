@@ -43,9 +43,9 @@ namespace TrainingBuddy.UI
 			Footer.AddToClassList("layout-footer");
 			
 			// Assemble UI
-			_uiDocument.rootVisualElement.Add(Header);
+			// _uiDocument.rootVisualElement.Add(Header);
 			_uiDocument.rootVisualElement.Add(Content);
-			_uiDocument.rootVisualElement.Add(Footer);
+			// _uiDocument.rootVisualElement.Add(Footer);
 
 			ChangePage(_layoutData.ProfileScreen);
 		}

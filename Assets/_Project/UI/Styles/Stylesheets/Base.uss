@@ -2,7 +2,7 @@
 
 :root {
     --color-white: rgba(255, 255, 255, 1);
-    --color-off-white: rgba(247, 247, 247, .65);
+    --color-off-white: rgba(237, 237, 237, 1);
     
     --font-color-white: rgba(245, 245, 245, 1);
     --font-color-black: rgb(0, 0, 0);

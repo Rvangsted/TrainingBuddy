@@ -36,6 +36,30 @@ namespace TrainingBuddy.UI
 			_layoutDrawn = true;
 		}
 		
+		protected Shadow ShadowBox(string name, ShadowSettings settings, BoxSize size = BoxSize.small)
+		{
+			var boxShadow = new Shadow()
+			{
+				name = $"{name}ShadowBox",
+				shadowCornerRadius = settings.CornerRadius,
+				shadowScale = settings.ShadowScale,
+				shadowOffsetX = settings.ShadowOffsetX,
+				shadowOffsetY = settings.ShadowOffsetY,
+			};
+			boxShadow.AddToClassList("shadow-box");
+			
+			var box = new VisualElement()
+			{
+				name = $"{name}Content",
+			};
+			box.AddToClassList("box-content");
+			box.AddToClassList($"box-size-{size}");
+			
+			boxShadow.Add(box);
+
+			return boxShadow;
+		}
+		
 		protected Shadow ShadowButton(string buttonName, string key, ShadowSettings settings)
 		{
 			var buttonShadow = new Shadow()
@@ -82,4 +106,11 @@ namespace TrainingBuddy.UI
 		public int ShadowOffsetX { get; set; }
 		public int ShadowOffsetY { get; set; }
 	}
+}
+
+public enum BoxSize
+{
+	small,
+	medium,
+	large
 }

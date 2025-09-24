@@ -5,6 +5,33 @@
     height: 100%;
 }
 
+.profile-screen .unity-scroll-view__content-container {
+    align-items: center;
+    padding: 50px 0;
+}
+
+.box-header {
+    width: 400px;
+    height: 125px;
+    margin-top: 30px;
+    background-image: url("project://database/Assets/_Project/Art/Boxes/HeaderBox.png");
+}
+
+.box-size-large {
+    width: 500px;
+    height: 898px;
+    margin-top: 30px;
+    background-image: url("project://database/Assets/_Project/Art/Boxes/Box.png");
+    align-items: center;
+    padding: 50px;
+}
+
+.circular-progress {
+    height: 200px;
+    width: 200px;
+    
+}
+
 .container {
     flex-direction: column;
     align-items: center;
