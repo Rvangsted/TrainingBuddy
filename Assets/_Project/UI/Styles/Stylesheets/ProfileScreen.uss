@@ -1,10 +1,12 @@
 /*General*/
 .profile-screen {
-    
+    background-color: red;
+    height: 100%;
+    width: 100%;
 }
 
 .profile-screen .unity-scroll-view__content_container {
-
+    background-color: aqua;
 }
 
 /*Top Container*/

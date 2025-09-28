@@ -84,7 +84,7 @@ namespace TrainingBuddy.UI
 			
 
 			// var titleBox = ShadowBox("Title", smallBoxshadowSettings);
-			// var titleBox = new VisualElement() { name = "UserName" };
+			var titleBox = new VisualElement() { name = "UserName" };
 			// titleBox.AddToClassList("box-header");
 			//
 			// var box = new VisualElement() { name = $"StatsContent" };
@@ -107,7 +107,7 @@ namespace TrainingBuddy.UI
 			//
 			// containerWithShadow.Add(gradientContainer);
 			
-			// Layout.Q<VisualElement>("ProfileScreen").Add(titleBox);
+			Layout.Q<VisualElement>("ProfileScreen").Add(titleBox); 
 			// Layout.Q<VisualElement>("ProfileScreen").Add(box);
 			// Layout.Q<VisualElement>("ProfileScreen").Add(test);
 			// Layout.Q<VisualElement>("ProfileScreen").Add(contentBox2);
