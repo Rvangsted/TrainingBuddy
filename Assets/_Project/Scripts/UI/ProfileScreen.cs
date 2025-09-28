@@ -84,16 +84,16 @@ namespace TrainingBuddy.UI
 			
 
 			// var titleBox = ShadowBox("Title", smallBoxshadowSettings);
-			var titleBox = new VisualElement() { name = "UserName" };
-			titleBox.AddToClassList("box-header");
+			// var titleBox = new VisualElement() { name = "UserName" };
+			// titleBox.AddToClassList("box-header");
+			//
+			// var box = new VisualElement() { name = $"StatsContent" };
+			// box.AddToClassList($"box-size-large");
+			//
+			// var test = new CircularProgressBar { name = "ProgressBar", Value = 0.7f };
+			// test.AddToClassList($"circular-progress");
 			
-			var box = new VisualElement() { name = $"StatsContent" };
-			box.AddToClassList($"box-size-large");
-
-			var test = new CircularProgressBar { name = "ProgressBar", Value = 0.7f };
-			test.AddToClassList($"circular-progress");
-			
-			box.Add(test);
+			// box.Add(test);
 
 			// var contentBox = ShadowBox("Stats", largeBoxshadowSettings, BoxSize.large);
 			// var contentBox2 = ShadowBox("Stats2", largeBoxshadowSettings, BoxSize.large);
@@ -107,8 +107,8 @@ namespace TrainingBuddy.UI
 			//
 			// containerWithShadow.Add(gradientContainer);
 			
-			Layout.Q<VisualElement>("ProfileScreen").Add(titleBox);
-			Layout.Q<VisualElement>("ProfileScreen").Add(box);
+			// Layout.Q<VisualElement>("ProfileScreen").Add(titleBox);
+			// Layout.Q<VisualElement>("ProfileScreen").Add(box);
 			// Layout.Q<VisualElement>("ProfileScreen").Add(test);
 			// Layout.Q<VisualElement>("ProfileScreen").Add(contentBox2);
 			// Layout.Q<VisualElement>("MainMenu").Add(participateRaceButton);
