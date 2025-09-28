@@ -7,6 +7,7 @@ namespace TrainingBuddy.UI
 		protected RaceScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager)
 		{
 			Layout = _layoutData.RaceScreenVisualTree.Instantiate();
+			Layout.AddToClassList("race-wrapper");
 			_layoutData.RaceScreen = this;
 		}
 		

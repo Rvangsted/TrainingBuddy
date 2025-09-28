@@ -28,6 +28,7 @@ namespace TrainingBuddy.UI
 		protected ProfileScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager)
 		{
 			Layout = _layoutData.ProfileScreenVisualTree.Instantiate();
+			Layout.AddToClassList("profile-wrapper");
 			_layoutData.ProfileScreen = this;
 			_firebaseController = firebaseController;
 			_databaseManager = databaseManager;

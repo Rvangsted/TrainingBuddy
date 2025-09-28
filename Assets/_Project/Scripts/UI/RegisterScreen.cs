@@ -18,6 +18,7 @@ namespace TrainingBuddy.UI
 		public RegisterScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController) : base(layoutData, uiManager)
 		{
 			Layout = _layoutData.RegisterScreenVisualTree.Instantiate();
+			Layout.AddToClassList("register-wrapper");
 			_layoutData.RegisterScreen = this;
 			_firebaseController = firebaseController;
 		}

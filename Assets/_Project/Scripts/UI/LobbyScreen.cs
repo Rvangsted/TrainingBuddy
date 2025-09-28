@@ -7,6 +7,7 @@ namespace TrainingBuddy.UI
 		protected LobbyScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager)
 		{
 			Layout = _layoutData.LobbyScreenVisualTree.Instantiate();
+			Layout.AddToClassList("lobby-wrapper");
 			_layoutData.LobbyScreen = this;
 		}
 		

@@ -98,9 +98,24 @@
     display: none;
 }
 
+/*Header*/
 .layout-header {
     height: 50px;
+    width: 100%;
 }
+
+.layout-header .button-back {
+    width: 50px;
+    height: 50px;
+    background-color: aquamarine;
+}
+
+
+
+/*<ui:Button text="&lt;" name="BackButton" class="button-back" />*/
+/*<ui:Label text="SiteTitle" name="SiteTitle" class="site-title" />*/
+/*<ui:VisualElement name="HeaderLevelContainer" class="header-level-container">*/
+/*<ui:Label name="HeaderLevelLabel" class="header-level-label" />*/
 
 .safe-area-container {
     flex-grow: 1;
@@ -110,7 +125,6 @@
     display: flex;
     flex-direction: column;
 }
-
 
 .layout-content {
     justify-content: flex-end;

@@ -21,6 +21,7 @@ namespace TrainingBuddy.UI
 		public LoginScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController) : base(layoutData, uiManager)
 		{
 			Layout = _layoutData.LoginScreenVisualTree.Instantiate();
+			Layout.AddToClassList("login-wrapper");
 			_layoutData.LoginScreen = this;
 			_firebaseController = firebaseController;
 		}
