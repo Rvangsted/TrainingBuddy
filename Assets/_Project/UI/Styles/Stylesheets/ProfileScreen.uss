@@ -1,6 +1,5 @@
 /*General*/
 .profile-screen {
-    background-color: red;
     height: 100%;
     width: 100%;
 }
@@ -10,128 +9,237 @@
     height: 100%;
 }
 
-.profile-screen .unity-scroll-view__content_container {
-    background-color: aqua;
-}
-
-/*Top Container*/
-.top-container {
-    
-}
-
-.top-container .back-button {
-    
-}
-
-.top-container .page-label {
-
-}
-
-.top-container .level-element {
-
-}
-
-.top-container .level-element .level-label {
-
+.profile-screen .profile-picture-big {
+    position: absolute;
+    background-image: url('project://database/Assets/_Project/Art/Characters/emma_figur_1.png');
+    background-position-x: right;
+    background-position-y: top;
+    background-size: 430px;
+    width: 328px;
+    height: 645px;
+    left: -125px;
+    top: -10px;
 }
 
 /*Info Container*/
+.info-wrapper {
+    padding: 30px 50px;
+}
+
 .info-container {
-    
+    position: relative;
+    flex-direction: row;
+    align-items: center;
+    background-color: var(--color-white);
+    height: 120px;
+    border-radius: 60px;
+}
+
+.info-container .profile-picture {
+    display: none;
+    position: absolute;
+    background-image: url('project://database/Assets/_Project/Art/Characters/emma_figur_1.png');
+    background-position-x: right;
+    background-position-y: top;
+    background-size: 430px;
+    width: 328px;
+    height: 645px;
+    left: -175px;
+    top: -30px;
 }
 
 .info-container .middle-labels {
-    
+    justify-content: center;
+    flex-grow: 1;
+    height: 100%;
+    margin-left: 105px;
 }
 
 .info-container .middle-labels .name-label {
-
+    font-size: 24px;
 }
 
 .info-container .middle-labels .date-of-birth-label {
-
+    padding: 10px 0 3px 7px;
+    font-size: 18px;
 }
 
 .info-container .middle-labels .user-id-label {
-
+    padding-left: 10px;
+    font-size: 12px;
 }
 
-.info-container .edt-button {
-
+.info-container .edit-button {
+    width: 80px;
+    height: 80px;
+    background-color: var(--color-buttons);
+    border-width: 0;
+    border-radius: 50%;
+    background-image: url('project://database/Assets/_Project/Art/Icons/edit.png');
+    background-size: 40px;
+    -unity-background-image-tint-color: var(--color-dark);
+    margin-right: -25px;
 }
 
 /*Stats Container*/
 .stats-container {
-    
+    position: relative;
+    flex-direction: row;
+    align-items: flex-start;
+    background-color: var(--color-white);
+    border-radius: 60px;
+    margin-top: 20px;
 }
 
+/* Leveling */
 .stats-container .leveling-container {
-
+    flex-grow: 1;
 }
 
 .stats-container .leveling-container .leveling-top-container {
-
+    /*display: none;*/
+    width: 100%;
+    flex-direction: row;
 }
 
 .stats-container .leveling-container .leveling-top-container .leveling-top-left-container {
+    flex-grow: 1;
+}
 
+/* Unused */
+.stats-container .leveling-container .leveling-top-container .leveling-top-left-container .leveling-top-left-element {
+    display: none;
+    margin: 30px 0 0 30px;
+    width: 80px;
+    height: 80px;
+    background-color: var(--color-buttons);
+    border-width: 0;
+    border-radius: 50%;
 }
 
 .stats-container .leveling-container .leveling-top-container .leveling-top-right-container {
-
+    flex-grow: 1;
+    align-items: flex-end;
 }
 
-.stats-container .leveling-container .leveling-top-container .leveling-top-right-container .leveling-points-label {
+.stats-container .leveling-container .leveling-top-container .leveling-top-right-container .leveling-points-container {
+    margin: 30px 30px 0 0;
+    width: 80px;
+    height: 80px;
+    background-color: var(--color-buttons);
+    border-width: 0;
+    border-radius: 50%;
+}
 
+.stats-container .leveling-container .leveling-top-container .leveling-top-right-container .leveling-points-container .leveling-points-label {
+    display: none;
 }
 
 .stats-container .leveling-container .leveling-middle-container {
-
+    min-height: 100px;
+    width: 100%;
+    flex-direction: row;
 }
 
 .stats-container .leveling-container .leveling-bottom-container {
-
+    min-height: 100px;
+    width: 100%;
+    flex-direction: row;
 }
 
 .stats-container .leveling-container .leveling-bottom-container .leveling-bottom-left-container {
-
+    flex-grow: 1;
 }
 
-.stats-container .leveling-container .leveling-bottom-container .leveling-bottom-left-container .leveling-bottom-left-icon {
+/* Unused */
+.stats-container .leveling-container .leveling-bottom-container .leveling-bottom-left-container .leveling-bottom-left-element {
+    display: none;
+    margin: 0 0 30px 30px;
+    width: 80px;
+    height: 80px;
+    background-color: var(--color-buttons);
+    border-width: 0;
+    border-radius: 50%;
+}
 
+.stats-container .leveling-container .leveling-bottom-container .leveling-bottom-left-container .leveling-bottom-left-element .leveling-bottom-right-element-label {
+    display: none;
 }
 
 .stats-container .leveling-container .leveling-bottom-container .leveling-bottom-right-container {
-
+    flex-grow: 1;
+    align-items: flex-end;
 }
 
-.stats-container .leveling-container .leveling-bottom-container .leveling-bottom-left-container .leveling-bottom-right-icon {
+.stats-container .leveling-container .leveling-bottom-container .leveling-bottom-right-container .leveling-bottom-right-element {
+    margin: 0 30px 30px 0;
+    width: 80px;
+    height: 80px;
+    background-color: var(--color-buttons);
+    border-width: 0;
+    border-radius: 50%;
+}
 
+.stats-container .leveling-container .leveling-bottom-container .leveling-bottom-right-container .leveling-bottom-right-element .leveling-bottom-right-element-label {
+    display: none;
+}
+
+/* Stats */
+.stats-container .speed-stat-container {
+    display: none;
+}
+
+.stats-container .speed-stat-container .speed-stat-left {
+    display: none;
+}
+
+.stats-container .speed-stat-container .speed-stat-middle {
+    display: none;
+}
+
+.stats-container .speed-stat-container .speed-stat-right {
+    display: none;
+}
+
+.stats-container .acceleration-stat-container {
+    display: none;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-left {
+    display: none;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-middle {
+    display: none;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-right {
+    display: none;
 }
 
 /*Activity Container*/
-.stats-container .activity-container {
-
+.activity-container {
+    display: none;
 }
 
 /*Friends Container*/
-.stats-container .friends-container {
-
+.friends-container {
+    display: none;
 }
 
 /*Menu Container*/
-.stats-container .menu-container {
-
+.menu-container {
+    display: none;
 }
 
-.stats-container .menu-container .about-button {
-
+.menu-container .about-button {
+    display: none;
 }
 
-.stats-container .menu-container .settings-button {
-
+.menu-container .settings-button {
+    display: none;
 }
 
-.stats-container .menu-container .logout-button {
-
+.menu-container .logout-button {
+    display: none;
 }

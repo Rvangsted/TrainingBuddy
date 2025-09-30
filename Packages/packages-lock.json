@@ -187,6 +187,15 @@
       },
       "url": "https://packages.bedtime.io"
     },
+    "com.convalise.unity-material-symbols": {
+      "version": "https://github.com/convalise/unity-material-symbols.git?path=/src/UnityMaterialSymbols/Assets/MaterialSymbols",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0"
+      },
+      "hash": "e6854ee174e92166260d270ab8846cd3943f64cb"
+    },
     "com.cysharp.unitask": {
       "version": "2.5.10",
       "depth": 0,

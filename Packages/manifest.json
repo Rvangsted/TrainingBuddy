@@ -10,6 +10,7 @@
     "com.bedtime.metadata": "1.1.0",
     "com.bedtime.nest-builder": "2.0.3",
     "com.bedtime.safe-action": "1.2.4",
+    "com.convalise.unity-material-symbols": "https://github.com/convalise/unity-material-symbols.git?path=/src/UnityMaterialSymbols/Assets/MaterialSymbols",
     "com.cysharp.unitask": "2.5.10",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.adaptiveperformance": "5.1.4",

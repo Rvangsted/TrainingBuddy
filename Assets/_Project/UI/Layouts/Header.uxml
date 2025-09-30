@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:Button text="&lt;" name="BackButton" class="button-back" />
-    <ui:Label text="SiteTitle" name="SiteTitle" class="site-title" />
+    <ui:Button name="BackButton" class="button-back" />
+    <ui:Label text="Min profil" name="SiteTitle" class="site-title font-title" />
     <ui:VisualElement name="HeaderLevelContainer" class="header-level-container">
-        <ui:Label name="HeaderLevelLabel" class="header-level-label" />
+        <ui:Label text="13" name="HeaderLevelLabel" class="header-level-label font-title" />
     </ui:VisualElement>
 </ui:UXML>

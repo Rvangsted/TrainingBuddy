@@ -1,36 +1,56 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/ProfileScreen.uss?fileID=7433441132597879392&amp;guid=5c04b6199a67f3949832abb5fc6147fd&amp;type=3#ProfileScreen" />
     <ui:ScrollView name="ProfileScreen" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="profile-screen" style="flex-grow: 1; height: auto;">
-        <ui:VisualElement name="TopContainer" class="top-container">
-            <ui:Button name="BackButton" class="back-button" />
-            <ui:Label name="PageLabel" class="page-label" />
-            <ui:VisualElement name="LevelElement" class="level-element">
-                <ui:Label name="LevelLabel" class="level-label" />
-            </ui:VisualElement>
-        </ui:VisualElement>
-        <ui:VisualElement name="InfoContainer" class="info-container">
-            <ui:VisualElement name="MiddleLabels" class="middle-labels">
-                <ui:Label name="Name" class="name-label" />
-                <ui:Label name="DateOfBirth" class="date-of-birth-label" />
-                <ui:Label name="UserID" class="user-id-label" />
-            </ui:VisualElement>
-            <ui:VisualElement name="EditButton" class="edit-button" />
+        <ui:VisualElement name="InfoWrapper" class="info-wrapper">
+          <ui:VisualElement name="InfoContainer" class="info-container">
+              <ui:VisualElement name="ProfilePicture" class="profile-picture" />
+              <ui:VisualElement name="MiddleLabels" class="middle-labels">
+                  <ui:Label text="Jeanette Olsen" name="Name" class="name-label font-title" />
+                  <ui:Label text="14 JUN 1985" name="DateOfBirth" class="date-of-birth-label font-regular" />
+                  <ui:Label text="ID #CA45680F" name="UserID" class="user-id-label font-regular" />
+              </ui:VisualElement>
+              <ui:Button name="EditButton" class="edit-button" />
+          </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="StatsContainer" class="stats-container">
             <ui:VisualElement name="LevelingContainer" class="leveling-container">
                 <ui:VisualElement name="LevelingTopContainer" class="leveling-top-container">
-                    <ui:VisualElement name="LevelingTopLeftContainer" class="leveling-top-left-container" />
+                    <ui:VisualElement name="LevelingTopLeftContainer" class="leveling-top-left-container">
+                        <ui:VisualElement name="LevelingTopLeftElement" class="leveling-top-left-element" />
+                    </ui:VisualElement>
                     <ui:VisualElement name="LevelingTopRightContainer" class="leveling-top-right-container">
-                        <ui:Label name="LevelingPointsLabel" class="leveling-points-label" />
+                        <ui:VisualElement name="LevelingPointsContainer" class="leveling-points-container">
+                            <ui:Label name="LevelingPointsLabel" class="leveling-points-label" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="LevelingMiddleContainer" class="leveling-middle-container" />
+                    <ui:VisualElement name="LevelingMiddleContainer" class="leveling-middle-container" />
                 <ui:VisualElement name="LevelingBottomContainer" class="leveling-bottom-container">
                     <ui:VisualElement name="LevelingBottomLeftContainer" class="leveling-bottom-left-container">
-                        <ui:VisualElement name="LevelingBottomLeftIcon" class="leveling-bottom-left-label" />
+                        <ui:VisualElement name="LevelingBottomLeftElement" class="leveling-bottom-left-element">
+                            <ui:Label name="LevelingBottomLeftElementLabel" class="leveling-bottom-left-element-label" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="LevelingBottomRightContainer" class="leveling-bottom-right-container">
-                        <ui:VisualElement name="LevelingBottomRightIcon" class="leveling-bottom-right-label" />
+                        <ui:VisualElement name="LevelingBottomRightElement" class="leveling-bottom-right-element">
+                            <ui:Label name="LevelingBottomRightElementLabel" class="leveling-bottom-right-element-label" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="SpeedStatContainer" class="speed-stat-container">
+                    <ui:VisualElement name="SpeedStatLeft" class="speed-stat-left">
+                    </ui:VisualElement>
+                    <ui:VisualElement name="SpeedStatMiddle" class="speed-stat-middle">
+                    </ui:VisualElement>
+                    <ui:VisualElement name="SpeedStatRight" class="speed-stat-right">
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="AccelerationStatContainer" class="acceleration-stat-container">
+                    <ui:VisualElement name="AccelerationStatLeft" class="acceleration-stat-left">
+                    </ui:VisualElement>
+                    <ui:VisualElement name="AccelerationStatMiddle" class="acceleration-stat-middle">
+                    </ui:VisualElement>
+                    <ui:VisualElement name="AccelerationStatRight" class="acceleration-stat-right">
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -42,5 +62,6 @@
             <TrainingBuddy.UI.Controls.LocalizedButton name="SettingsButton" class="settings-button" />
             <TrainingBuddy.UI.Controls.LocalizedButton name="LogoutButton" class="logout-button" />
         </ui:VisualElement>
+        <ui:VisualElement name="ProfilePicture" class="profile-picture-big" />
     </ui:ScrollView>
 </ui:UXML>
