@@ -6,7 +6,8 @@ namespace TrainingBuddy.UI.Controls
 	[UxmlElement]
     public partial class CircularProgressBar : VisualElement
     {
-        public static BindingId valueProperty = nameof(Value);
+	    public static readonly BindingId valueProperty = nameof(Value);
+
         float m_Value;
 
         [UxmlAttribute]
@@ -20,29 +21,21 @@ namespace TrainingBuddy.UI.Controls
             }
         }
 
-        [UxmlAttribute]
-        public Color TrackColor { get; set; } = new Color(0.9f, 0.9f, 0.9f, 1f);
+        [UxmlAttribute] public Color TrackColor { get; set; } = new Color(0.88f, 0.88f, 0.88f, 1f);
+        [UxmlAttribute] public Color ProgressColor { get; set; } = new Color(0.76f, 1f, 0f, 1f);
+        [UxmlAttribute] public Color KnobColor { get; set; } = new Color(0.68f, 0.94f, 0f, 1f);
+        [UxmlAttribute] public Color InnerKnobColor { get; set; } = Color.clear;
+        [UxmlAttribute] public Color ArrowColor { get; set; } = Color.black;
 
-        [UxmlAttribute]
-        public Color ProgressColor { get; set; } = new Color(0.82f, 1f, 0f, 1f);
-
-        [UxmlAttribute]
-        public Color KnobColor { get; set; } = new Color(0.78f, 0.98f, 0f, 1f);
-
-        [UxmlAttribute]
-        public Color InnerKnobColor { get; set; } = Color.white;
-
-        [UxmlAttribute]
-        public Color ArrowColor { get; set; } = Color.black;
-
-        [UxmlAttribute]
-        public float LineThickness { get; set; } = 20f;
-
-        [UxmlAttribute]
-        public float KnobSize { get; set; } = 15f;
-
-        [UxmlAttribute]
-        public float InnerKnobSize { get; set; } = 5f;
+        [UxmlAttribute] public float LineThickness { get; set; } = 22f;
+        [UxmlAttribute] public float StartAngle { get; set; } = 270f;
+        [UxmlAttribute] public float KnobSize { get; set; } = 18f;
+        [UxmlAttribute] public float InnerKnobSize { get; set; } = 6f;
+        [UxmlAttribute] public bool ShowKnob { get; set; } = true;
+        [UxmlAttribute] public bool ShowArrow { get; set; } = true;
+        [UxmlAttribute] public float ArrowLength { get; set; } = 18f;
+        [UxmlAttribute] public float ArrowWidth { get; set; } = 12f;
+        [UxmlAttribute] public float ArrowOffset { get; set; } = 6f;
 
         public CircularProgressBar()
         {
@@ -52,59 +45,91 @@ namespace TrainingBuddy.UI.Controls
         void OnGenerateVisualContent(MeshGenerationContext context)
         {
             var rect = contentRect;
-            float r = Mathf.Min(rect.width, rect.height) * 0.5f;
-            Vector2 center = rect.center;
+            if (rect.width <= 0f || rect.height <= 0f)
+            {
+	            return;
+            }
 
             var painter = context.painter2D;
-            float thickness = resolvedStyle.borderTopWidth > 0 ? resolvedStyle.borderTopWidth : LineThickness;
+            
+            float thickness = resolvedStyle.borderTopWidth > 0f ? resolvedStyle.borderTopWidth : Mathf.Max(0f, LineThickness);
+            float radius = Mathf.Max(0f, Mathf.Min(rect.width, rect.height) * 0.5f - thickness * 0.5f);
+
+            if (radius <= 0f)
+            {
+	            return;
+            }
+
+            Vector2 center = rect.center;
+
             painter.lineWidth = thickness;
             painter.lineCap = LineCap.Round;
 
-            // background circle
-            painter.strokeColor = TrackColor;
-            painter.BeginPath();
-            painter.Arc(center, r, 270, 630);
-            painter.Stroke();
-
-            // progress arc
-            float startAngle = 270f;
+            float startAngle = StartAngle;
             float endAngle = startAngle + 360f * m_Value;
-            painter.strokeColor = ProgressColor;
-            painter.BeginPath();
-            painter.Arc(center, r, startAngle, endAngle);
-            painter.Stroke();
+            // Draw background track
+            if (TrackColor.a > 0f)
+            {
+                painter.strokeColor = TrackColor;
+                painter.BeginPath();
+                painter.Arc(center, radius, startAngle, startAngle + 360f);
+                painter.Stroke();
+            }
 
-            // knob at end of progress
-            Vector2 end = center + new Vector2(Mathf.Cos(endAngle * Mathf.Deg2Rad), Mathf.Sin(endAngle * Mathf.Deg2Rad)) * r;
-            painter.fillColor = KnobColor;
-            painter.BeginPath();
-            float knobRadius = KnobSize > 0 ? KnobSize : thickness * 0.6f;
-            painter.Arc(end, knobRadius, 0, 360);
-            painter.Fill();
+            // Draw progress arc
+            if (m_Value > 0f && ProgressColor.a > 0f)
+            {
+                painter.strokeColor = ProgressColor;
+                painter.BeginPath();
+                painter.Arc(center, radius, startAngle, endAngle);
+                painter.Stroke();
+            }
 
-            // inner knob inside the main knob
-            painter.fillColor = InnerKnobColor;
-            painter.BeginPath();
-            float innerRadius = InnerKnobSize > 0 ? InnerKnobSize : knobRadius * 0.5f;
-            painter.Arc(end, innerRadius, 0, 360);
-            painter.Fill();
+            if (!ShowKnob && !ShowArrow)
+            {
+                return;
+            }
 
-            // arrow inside the circle pointing to the knob
-            painter.fillColor = ArrowColor;
-            painter.BeginPath();
-            Vector2 dir = (end - center).normalized;
-            float arrowLength = knobRadius;
-            float arrowWidth = arrowLength * 0.8f;
-            Vector2 tip = end - dir * (knobRadius + 5f);
-            Vector2 baseCenter = tip - dir * arrowLength;
-            Vector2 perp = new Vector2(-dir.y, dir.x) * (arrowWidth * 0.6f);
-            Vector2 b = baseCenter - perp;
-            Vector2 c = baseCenter + perp;
-            painter.MoveTo(tip);
-            painter.LineTo(b);
-            painter.LineTo(c);
-            painter.ClosePath();
-            painter.Fill();
+            Vector2 direction = new Vector2(Mathf.Cos(endAngle * Mathf.Deg2Rad), Mathf.Sin(endAngle * Mathf.Deg2Rad));
+            Vector2 knobCenter = center + direction * radius;
+
+            // Draw knob at the end of the progress arc
+            if (ShowKnob && ProgressColor.a > 0f)
+            {
+                float knobRadius = KnobSize > 0f ? KnobSize : thickness * 0.6f;
+                painter.fillColor = KnobColor;
+                painter.BeginPath();
+                painter.Arc(knobCenter, knobRadius, 0f, 360f);
+                painter.Fill();
+
+                if (InnerKnobColor.a > 0f)
+                {
+                    float innerRadius = InnerKnobSize > 0f ? InnerKnobSize : knobRadius * 0.5f;
+                    painter.fillColor = InnerKnobColor;
+                    painter.BeginPath();
+                    painter.Arc(knobCenter, innerRadius, 0f, 360f);
+                    painter.Fill();
+                }
+            }
+
+            // Draw arrow pointing towards the knob from the inside of the circle
+            if (ShowArrow && ArrowColor.a > 0f)
+            {
+                float knobRadius = KnobSize > 0f ? KnobSize : thickness * 0.6f;
+                float arrowLength = ArrowLength > 0f ? ArrowLength : knobRadius;
+                float arrowHalfWidth = Mathf.Max(0f, ArrowWidth > 0f ? ArrowWidth * 0.5f : knobRadius * 0.4f);
+                Vector2 tip = knobCenter - direction * (knobRadius + Mathf.Max(0f, ArrowOffset));
+                Vector2 baseCenter = tip - direction * arrowLength;
+                Vector2 perpendicular = new Vector2(-direction.y, direction.x) * arrowHalfWidth;
+
+                painter.fillColor = ArrowColor;
+                painter.BeginPath();
+                painter.MoveTo(tip);
+                painter.LineTo(baseCenter - perpendicular);
+                painter.LineTo(baseCenter + perpendicular);
+                painter.ClosePath();
+                painter.Fill();
+            }
         }
     }
 }

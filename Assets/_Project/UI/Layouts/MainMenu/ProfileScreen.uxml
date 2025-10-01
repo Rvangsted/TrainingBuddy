@@ -24,7 +24,7 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                    <ui:VisualElement name="LevelingMiddleContainer" class="leveling-middle-container" />
+                <ui:VisualElement name="LevelingMiddleContainer" class="leveling-middle-container" />
                 <ui:VisualElement name="LevelingBottomContainer" class="leveling-bottom-container">
                     <ui:VisualElement name="LevelingBottomLeftContainer" class="leveling-bottom-left-container">
                         <ui:VisualElement name="LevelingBottomLeftElement" class="leveling-bottom-left-element">
