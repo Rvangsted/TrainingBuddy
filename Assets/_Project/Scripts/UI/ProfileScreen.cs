@@ -1,6 +1,5 @@
-
-
 using System;
+using System.Collections.Generic;
 using BedtimeCore;
 using Firebase.Database;
 using TrainingBuddy.FireBase;
@@ -20,6 +19,8 @@ namespace TrainingBuddy.UI
 		private Button _spdMinusButton;
 		private Button _trainingButton;
 		private Button _logoutButton;
+
+		private ActivityGraph _activityGraph;
 		
 		private readonly FirebaseController _firebaseController;
 		private readonly DatabaseManager _databaseManager;
@@ -87,13 +88,106 @@ namespace TrainingBuddy.UI
 			levelingProgressWrapper.Add(circularProgressBar);
 			levelingProgressWrapper.Add(levelingProgressContent);
 			Layout.Q<VisualElement>("LevelingMiddleContainer").Add(levelingProgressWrapper);
+			
+			// SpeedStatUpperMiddle
+			var speedProgressBar = new LinearProgressBar
+			{
+				name = "SpeedProgressBar", 
+				Value = 0.7f,
+				TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
+				ProgressColor = new Color(0.76f, 1f, 0f, 1f),
+				KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
+				InnerKnobColor = new Color(0.88f, 0.88f, 0.88f, 1f),
+				
+				LineThickness = 35f,
+				KnobSize = 25f,
+				InnerKnobSize = 6f,
+			};
+			speedProgressBar.AddToClassList($"linear-progress-bar");
+			Layout.Q<VisualElement>("SpeedStatUpperMiddle").Add(speedProgressBar);
+			
+			var accelerationProgressBar = new LinearProgressBar
+			{
+				name = "AccelerationProgressBar", 
+				Value = 0.7f,
+				TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
+				ProgressColor = new Color(0.76f, 1f, 0f, 1f),
+				KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
+				InnerKnobColor = new Color(0.88f, 0.88f, 0.88f, 1f),
+				
+				LineThickness = 35f,
+				KnobSize = 25f,
+				InnerKnobSize = 6f,
+			};
+			accelerationProgressBar.AddToClassList($"linear-progress-bar");
+			Layout.Q<VisualElement>("AccelerationStatUpperMiddle").Add(accelerationProgressBar);
+			
+			Layout.Q<VisualElement>("LevelingMiddleContainer").Add(levelingProgressWrapper);
+
+			InitializeActivitySection();
 		}
 
 		public override async void DrawLayout()
 		{
 			base.DrawLayout();
 			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.MainMenu));
-		}
+        }
+
+        private void InitializeActivitySection()
+        {
+            var activityContainer = Layout.Q<VisualElement>("ActivityContainer");
+            if (activityContainer == null)
+            {
+				return;
+            }
+
+            activityContainer.style.display = DisplayStyle.Flex;
+
+            var header = new VisualElement { name = "ActivityHeader" };
+            header.AddToClassList("activity-header");
+
+            var titleLabel = new Label("Træningsdistance")
+            {
+				name = "ActivityTitle",
+            };
+            titleLabel.AddToClassList("activity-title");
+            titleLabel.AddToClassList("font-title");
+
+            var subtitleLabel = new Label("Sidste 5 dage")
+            {
+				name = "ActivitySubtitle",
+            };
+            subtitleLabel.AddToClassList("activity-subtitle");
+            subtitleLabel.AddToClassList("font-regular");
+
+            header.Add(titleLabel);
+            header.Add(subtitleLabel);
+
+            _activityGraph = new ActivityGraph
+            {
+				name = "WeeklyDistanceGraph",
+            };
+            _activityGraph.ValueFormatter = value => $"{value:0.#} KM";
+
+            activityContainer.Add(header);
+            activityContainer.Add(_activityGraph);
+
+            var sampleData = new List<ActivityGraph.DataPoint>
+            {
+                new("28. april", 2.8f),
+                new("29. april", 3.6f),
+                new("30. april", 2.9f),
+                new("I dag", 5.0f),
+                new("1. maj", 2.4f),
+            };
+
+            _activityGraph.SetData(sampleData, 3);
+        }
+
+        public void UpdateActivityData(IEnumerable<ActivityGraph.DataPoint> dataPoints, int highlightIndex)
+        {
+            _activityGraph?.SetData(dataPoints, highlightIndex);
+        }
 
 		private void OnLogout(ClickEvent evt)
 		{

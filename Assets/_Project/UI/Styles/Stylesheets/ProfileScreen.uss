@@ -89,6 +89,7 @@
     background-color: var(--color-white);
     border-radius: 60px;
     margin-top: 20px;
+    padding-bottom: 30px;
 }
 
 /* Leveling */
@@ -97,7 +98,6 @@
 }
 
 .stats-container .leveling-container .leveling-top-container {
-    /*display: none;*/
     width: 100%;
     flex-direction: row;
 }
@@ -165,21 +165,17 @@
     width: 70%;
     height: 70%;
     border-radius: 50%;
-    gap: 8px;
-    pointer-events: none;
 }
 
 .stats-container .leveling-container .leveling-middle-container .leveling-progress-wrapper .leveling-progress-content .leveling-progress-value-label {
     font-size: 40px;
     color: var(--color-dark);
-    text-align: center;
 }
 
 .stats-container .leveling-container .leveling-middle-container .leveling-progress-wrapper .leveling-progress-content .leveling-progress-subtitle-label {
     font-size: 18px;
     color: var(--color-dark);
     opacity: 0.7;
-    text-align: center;
 }
 
 .stats-container .leveling-container .leveling-bottom-container {
@@ -230,40 +226,232 @@
 
 /* Stats */
 .stats-container .speed-stat-container {
-    display: none;
+    flex-grow: 1;
 }
 
-.stats-container .speed-stat-container .speed-stat-left {
-    display: none;
+.stats-container .speed-stat-container .speed-stat-title {
+    flex-grow: 1;
+    font-size: 22px;
+    padding: 5px 35px;
 }
 
-.stats-container .speed-stat-container .speed-stat-middle {
-    display: none;
+.stats-container .speed-stat-container .speed-stat-subtitle {
+    flex-grow: 1;
+    font-size: 16px;
+    padding: 5px 35px 15px 35px;
 }
 
-.stats-container .speed-stat-container .speed-stat-right {
-    display: none;
+.stats-container .speed-stat-container .speed-stat-upper {
+    flex-grow: 1;
+    flex-direction: row;
+}
+
+.stats-container .speed-stat-container .speed-stat-upper .speed-stat-left {
+    flex-grow: 1;
+    background-image: url('project://database/Assets/_Project/Art/Icons/turtle.png');
+    background-size: 60px auto;
+    background-position-x: right 10px;
+    background-position-y: top 5px;
+}
+
+.stats-container .speed-stat-container .speed-stat-upper .speed-stat-middle {
+    width: 290px;
+    min-height: 20px;
+}
+
+.stats-container .speed-stat-container .speed-stat-upper .speed-stat-middle .linear-progress-bar {
+    width: 100%;
+    height: 50px;
+    margin: 10px 0;
+}
+
+.stats-container .speed-stat-container .speed-stat-upper .speed-stat-right {
+    flex-grow: 1;
+    background-image: url('project://database/Assets/_Project/Art/Icons/hare.png');
+    background-size: auto 50px;
+    background-position-x: left 10px;
+    background-position-y: top 5px;
+}
+
+.stats-container .speed-stat-container .speed-stat-lower {
+    flex-grow: 1;
+    flex-direction: row;
+}
+
+.stats-container .speed-stat-container .speed-stat-lower .speed-stat-left {
+    flex-grow: 1;
+    height: 40px;
+    background-image: url('project://database/Assets/_Project/Art/Icons/minus.png');
+    background-size: 40px 10px;
+    background-position-y: top 14px;
+    background-position-x: right 24px;
+}
+
+.stats-container .speed-stat-container .speed-stat-lower .speed-stat-middle {
+    width: 290px;
+    justify-content: center;
+}
+
+.stats-container .speed-stat-container .speed-stat-lower .speed-stat-middle .speed-stat-value {
+    font-size: 16px;
+    align-self: center;
+}
+
+.stats-container .speed-stat-container .speed-stat-lower .speed-stat-right {
+    flex-grow: 1;
+    height: 40px;
+    background-image: url('project://database/Assets/_Project/Art/Icons/plus.png');
+    background-size: 40px 40px;
+    background-position-y: top 0;
+    background-position-x: left 13px;
 }
 
 .stats-container .acceleration-stat-container {
-    display: none;
+    flex-grow: 1;
 }
 
-.stats-container .acceleration-stat-container .acceleration-stat-left {
-    display: none;
+.stats-container .acceleration-stat-container .acceleration-stat-title {
+    flex-grow: 1;
+    font-size: 22px;
+    padding: 5px 35px;
 }
 
-.stats-container .acceleration-stat-container .acceleration-stat-middle {
-    display: none;
+.stats-container .acceleration-stat-container .acceleration-stat-subtitle {
+    flex-grow: 1;
+    font-size: 16px;
+    padding: 5px 35px 15px 35px;
 }
 
-.stats-container .acceleration-stat-container .acceleration-stat-right {
-    display: none;
+.stats-container .acceleration-stat-container .acceleration-stat-upper {
+    flex-grow: 1;
+    flex-direction: row;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-upper .acceleration-stat-left {
+    flex-grow: 1;
+    background-image: url('project://database/Assets/_Project/Art/Icons/turtle.png');
+    background-size: 60px auto;
+    background-position-x: right 10px;
+    background-position-y: top 5px;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-upper .acceleration-stat-middle {
+    width: 290px;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-upper .acceleration-stat-middle .linear-progress-bar {
+    width: 100%;
+    height: 50px;
+    margin: 10px 0;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-upper .acceleration-stat-right {
+    flex-grow: 1;
+    background-image: url('project://database/Assets/_Project/Art/Icons/hare.png');
+    background-size: auto 50px;
+    background-position-x: left 10px;
+    background-position-y: top 5px;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-lower {
+    flex-grow: 1;
+    flex-direction: row;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-lower .acceleration-stat-left {
+    flex-grow: 1;
+    height: 40px;
+    background-image: url('project://database/Assets/_Project/Art/Icons/minus.png');
+    background-size: 40px 10px;
+    background-position-y: top 14px;
+    background-position-x: right 24px;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-lower .acceleration-stat-middle {
+    width: 290px;
+    justify-content: center;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-lower .acceleration-stat-middle .acceleration-stat-value {
+    font-size: 16px;
+    align-self: center;
+}
+
+.stats-container .acceleration-stat-container .acceleration-stat-lower .acceleration-stat-right {
+    flex-grow: 1;
+    height: 40px;
+    background-image: url('project://database/Assets/_Project/Art/Icons/plus.png');
+    background-size: 40px 40px;
+    background-position-y: top 0;
+    background-position-x: left 13px;
 }
 
 /*Activity Container*/
 .activity-container {
-    display: none;
+    margin-top: 20px;
+    padding: 40px 50px;
+    background-color: var(--color-white);
+    border-radius: 60px;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.activity-container .activity-header {
+    flex-direction: column;
+    gap: 6px;
+}
+
+.activity-container .activity-title {
+    font-size: 24px;
+    color: var(--color-dark);
+}
+
+.activity-container .activity-subtitle {
+    font-size: 16px;
+    color: rgba(0, 0, 0, 0.55);
+}
+
+.activity-container .activity-graph {
+    width: 100%;
+}
+
+.activity-graph {
+    height: 220px;
+    position: relative;
+    flex-direction: column;
+}
+
+.activity-graph__canvas {
+    position: relative;
+    flex-grow: 1;
+    height: 180px;
+}
+
+.activity-graph__highlight-dot {
+    width: 12px;
+    height: 12px;
+    background-color: var(--color-dark);
+    border-radius: 50%;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+}
+
+.activity-graph__value-label {
+    color: var(--color-dark);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 14px;
+}
+
+.activity-graph__labels {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 16px;
+}
+
+.activity-graph__labels .activity-graph__label {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.5);
+    text-transform: uppercase;
 }
 
 /*Friends Container*/

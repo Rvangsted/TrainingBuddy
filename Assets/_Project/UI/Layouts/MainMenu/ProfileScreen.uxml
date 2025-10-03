@@ -6,8 +6,8 @@
               <ui:VisualElement name="ProfilePicture" class="profile-picture" />
               <ui:VisualElement name="MiddleLabels" class="middle-labels">
                   <ui:Label text="Jeanette Olsen" name="Name" class="name-label font-title" />
-                  <ui:Label text="14 JUN 1985" name="DateOfBirth" class="date-of-birth-label font-regular" />
-                  <ui:Label text="ID #CA45680F" name="UserID" class="user-id-label font-regular" />
+                  <ui:Label text="14 JUN 1985" name="DateOfBirth" class="date-of-birth-label" />
+                  <ui:Label text="ID #CA45680F" name="UserID" class="user-id-label" />
               </ui:VisualElement>
               <ui:Button name="EditButton" class="edit-button" />
           </ui:VisualElement>
@@ -38,19 +38,35 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="SpeedStatContainer" class="speed-stat-container">
-                    <ui:VisualElement name="SpeedStatLeft" class="speed-stat-left">
+                    <ui:Label text="Hastighed" name="SpeedStatTitle" class="speed-stat-title font-title" />
+                    <ui:Label text="Hvor hurtigt din karakter bevæger sig" name="SpeedStatSubtitle" class="speed-stat-subtitle" />
+                    <ui:VisualElement name="SpeedStatUpper" class="speed-stat-upper">
+                        <ui:VisualElement name="SpeedStatUpperLeft" class="speed-stat-left" />
+                        <ui:VisualElement name="SpeedStatUpperMiddle" class="speed-stat-middle"/>
+                        <ui:VisualElement name="SpeedStatUpperRight" class="speed-stat-right" />
                     </ui:VisualElement>
-                    <ui:VisualElement name="SpeedStatMiddle" class="speed-stat-middle">
-                    </ui:VisualElement>
-                    <ui:VisualElement name="SpeedStatRight" class="speed-stat-right">
+                    <ui:VisualElement name="SpeedStatLower" class="speed-stat-lower">
+                        <ui:VisualElement name="SpeedStatLowerLeft" class="speed-stat-left" />
+                        <ui:VisualElement name="SpeedStatLowerMiddle" class="speed-stat-middle">
+                            <ui:Label text="10 point" name="SpeedStatValue" class="speed-stat-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="SpeedStatLowerRight" class="speed-stat-right" />
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="AccelerationStatContainer" class="acceleration-stat-container">
-                    <ui:VisualElement name="AccelerationStatLeft" class="acceleration-stat-left">
+                    <ui:Label text="Acceleration" name="AccelerationStatTitle" class="acceleration-stat-title font-title" />
+                    <ui:Label text="Hvor hurtigt din karakter når sin topfart" name="AccelerationStatSubtitle" class="acceleration-stat-subtitle" />
+                    <ui:VisualElement name="AccelerationStatUpper" class="acceleration-stat-upper">
+                        <ui:VisualElement name="AccelerationStatUpperLeft" class="acceleration-stat-left" />
+                        <ui:VisualElement name="AccelerationStatUpperMiddle" class="acceleration-stat-middle"/>
+                        <ui:VisualElement name="AccelerationStatUpperRight" class="acceleration-stat-right" />
                     </ui:VisualElement>
-                    <ui:VisualElement name="AccelerationStatMiddle" class="acceleration-stat-middle">
-                    </ui:VisualElement>
-                    <ui:VisualElement name="AccelerationStatRight" class="acceleration-stat-right">
+                    <ui:VisualElement name="AccelerationStatLower" class="acceleration-stat-lower">
+                        <ui:VisualElement name="AccelerationStatLowerLeft" class="acceleration-stat-left" />
+                        <ui:VisualElement name="AccelerationStatLowerMiddle" class="acceleration-stat-middle">
+                            <ui:Label text="10 point" name="AccelerationStatValue" class="acceleration-stat-value" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="AccelerationStatLowerRight" class="acceleration-stat-right" />
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

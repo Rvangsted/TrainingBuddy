@@ -1,3 +1,13 @@
+.unity-text-element, .font-regular {
+    flex-shrink: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 24px;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+    -unity-font-style: normal;
+    color: var(--color-font);
+}
+
 .font-title {
     flex-shrink: 0;
     padding: 0;
@@ -8,14 +18,4 @@
     /*-unity-text-outline-width: 3px;*/
     /*-unity-text-outline-color: rgba(0, 0, 0, 0.80);*/
     color: var(--color-dark);
-}
-
-.font-regular {
-    flex-shrink: 0;
-    padding: 0;
-    margin: 0;
-    font-size: 24px;
-    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
-    -unity-font-style: normal;
-    color: var(--color-font);
 }
