@@ -56,17 +56,17 @@
 }
 
 .info-container .middle-labels .name-label {
-    font-size: 24px;
+    font-size: var(--font-size-xl);
 }
 
 .info-container .middle-labels .date-of-birth-label {
     padding: 10px 0 3px 7px;
-    font-size: 18px;
+    font-size: var(--font-size-l);
 }
 
 .info-container .middle-labels .user-id-label {
     padding-left: 10px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
 }
 
 .info-container .edit-button {
@@ -173,7 +173,7 @@
 }
 
 .stats-container .leveling-container .leveling-middle-container .leveling-progress-wrapper .leveling-progress-content .leveling-progress-subtitle-label {
-    font-size: 18px;
+    font-size: var(--font-size-l);
     color: var(--color-dark);
     opacity: 0.7;
 }
@@ -231,13 +231,13 @@
 
 .stats-container .speed-stat-container .speed-stat-title {
     flex-grow: 1;
-    font-size: 22px;
+    font-size: var(--font-size-xl);
     padding: 5px 35px;
 }
 
 .stats-container .speed-stat-container .speed-stat-subtitle {
     flex-grow: 1;
-    font-size: 16px;
+    font-size: var(--font-size-m);
     padding: 5px 35px 15px 35px;
 }
 
@@ -293,7 +293,7 @@
 }
 
 .stats-container .speed-stat-container .speed-stat-lower .speed-stat-middle .speed-stat-value {
-    font-size: 16px;
+    font-size: var(--font-size-m);
     align-self: center;
 }
 
@@ -312,13 +312,13 @@
 
 .stats-container .acceleration-stat-container .acceleration-stat-title {
     flex-grow: 1;
-    font-size: 22px;
+    font-size: var(--font-size-xl);
     padding: 5px 35px;
 }
 
 .stats-container .acceleration-stat-container .acceleration-stat-subtitle {
     flex-grow: 1;
-    font-size: 16px;
+    font-size: var(--font-size-m);
     padding: 5px 35px 15px 35px;
 }
 
@@ -373,7 +373,7 @@
 }
 
 .stats-container .acceleration-stat-container .acceleration-stat-lower .acceleration-stat-middle .acceleration-stat-value {
-    font-size: 16px;
+    font-size: var(--font-size-m);
     align-self: center;
 }
 
@@ -389,25 +389,23 @@
 /*Activity Container*/
 .activity-container {
     margin-top: 20px;
-    padding: 40px 50px;
-    background-color: var(--color-white);
+    padding: 40px 35px;
     border-radius: 60px;
+    display: flex;
     flex-direction: column;
-    gap: 30px;
 }
 
 .activity-container .activity-header {
     flex-direction: column;
-    gap: 6px;
 }
 
 .activity-container .activity-title {
-    font-size: 24px;
+    font-size: var(--font-size-xl);
     color: var(--color-dark);
 }
 
 .activity-container .activity-subtitle {
-    font-size: 16px;
+    font-size: var(--font-size-m);
     color: rgba(0, 0, 0, 0.55);
 }
 
@@ -432,13 +430,11 @@
     height: 12px;
     background-color: var(--color-dark);
     border-radius: 50%;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
 }
 
 .activity-graph__value-label {
     color: var(--color-dark);
-    font-size: 26px;
-    font-weight: 700;
+    font-size: var(--font-size-xl);
     letter-spacing: 14px;
 }
 
@@ -449,29 +445,99 @@
 }
 
 .activity-graph__labels .activity-graph__label {
-    font-size: 14px;
+    font-size: var(--font-size-m);
     color: rgba(0, 0, 0, 0.5);
-    text-transform: uppercase;
 }
 
 /*Friends Container*/
 .friends-container {
-    display: none;
+    align-self: center;
+}
+
+.friends-container .friend-title {
+    width: 430px;
+    border-width: 1px;
+    align-self: center;
+    font-size: var(--font-size-xl);
+}
+
+.friends-container .friend-subtitle {
+    width: 430px;
+    border-width: 1px;
+    align-self: center;
+    font-size: var(--font-size-l);
+}
+
+.friends-container .friends-content {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.friends-container .friend-element {
+    position: relative;
+    background-color: white;
+    align-items: center;
+    justify-content: flex-end;
+    width: 104px;
+    height: 135px;
+    border-radius: 30px;
+    margin: 20px 59px 20px 0;
+}
+
+.friends-container .friend-element.no-margin {
+    margin-right: 0;
+}
+
+.friends-container .friends-content .friend-element .friend-image {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    top: -40px;
+    background-image: url('project://database/Assets/_Project/Art/Characters/emma_friend.png');
+    background-size: 140px;
+}
+
+.friends-container .friends-content .friend-element .friend-favorite-icon {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    top: -50px;
+    right: -30px;
+    background-image: url('project://database/Assets/_Project/Art/icons/favorite_star.png');
+    background-size: 60px;
+}
+
+.friends-container .friends-content .friend-element .friend-name-label {
+    font-size: var(--font-size-l);
+    margin-bottom: 5px;
+}
+
+.friends-container .friends-content .friend-element .friend-distance-label {
+    font-size: var(--font-size-s);
+    margin-bottom: 5px;
 }
 
 /*Menu Container*/
 .menu-container {
-    display: none;
+    margin: 0 30px;
+    align-items: center;
+    /*display: none;*/
+}
+
+.menu-container .unity-button {
+    margin-bottom: 10px;
 }
 
 .menu-container .about-button {
-    display: none;
+    /*display: none;*/
 }
 
 .menu-container .settings-button {
-    display: none;
+    /*display: none;*/
 }
 
 .menu-container .logout-button {
-    display: none;
+    /*display: none;*/
 }

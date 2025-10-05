@@ -18,10 +18,17 @@
     --color-white: rgba(255, 255, 255, 1);
     --color-buttons: rgba(237, 237, 237, 1);
     --color-font: rgba(38, 38, 38, 1);
+    
+    /* Font Sizes */
+    --font-size-xl: 24px;
+    --font-size-l: 18px;
+    --font-size-m: 16px;
+    --font-size-s: 14px;
+    --font-size-xs: 12px;
 }
 
 .unity-ui-document__root {
-    background-color: rgb(145, 145, 145);
+    background-color: var(--color-light);
 }
 
 .unity-ui-document__root.show-splash-background {
@@ -49,25 +56,23 @@
     width: 50%;
 }
 
-.button-large {
+.unity-button {
     height: 70px;
-    width: 259px;
-    border-radius: 40;
+    width: 100%;
+    border-radius: 10;
     border-width: 0;
-    background-color: var(--color-light);
+    background-color: var(--color-buttons);
+    flex-shrink: 0;
+    padding: 0;
+    margin: 0;
+    font-size: 20px;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+    -unity-font-style: bold;
     color: var(--color-dark);
-    font-size: 25px;
-    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
-    -unity-font-style: normal;
-    -unity-text-align: middle-center;
 }
 
-.unity-ui-document__root .button-large:hover {
-    background-color: var(--color-light);
-}
-
-.unity-ui-document__root .button-large:active {
-    background-color: var(--color-light);
+.unity-ui-document__root .unity-button:hover {
+    background-color: var(--color-magenta);
 }
 
 .text-button {

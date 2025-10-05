@@ -2,15 +2,15 @@
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/ProfileScreen.uss?fileID=7433441132597879392&amp;guid=5c04b6199a67f3949832abb5fc6147fd&amp;type=3#ProfileScreen" />
     <ui:ScrollView name="ProfileScreen" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="profile-screen" style="flex-grow: 1; height: auto;">
         <ui:VisualElement name="InfoWrapper" class="info-wrapper">
-          <ui:VisualElement name="InfoContainer" class="info-container">
-              <ui:VisualElement name="ProfilePicture" class="profile-picture" />
-              <ui:VisualElement name="MiddleLabels" class="middle-labels">
-                  <ui:Label text="Jeanette Olsen" name="Name" class="name-label font-title" />
-                  <ui:Label text="14 JUN 1985" name="DateOfBirth" class="date-of-birth-label" />
-                  <ui:Label text="ID #CA45680F" name="UserID" class="user-id-label" />
-              </ui:VisualElement>
-              <ui:Button name="EditButton" class="edit-button" />
-          </ui:VisualElement>
+            <ui:VisualElement name="InfoContainer" class="info-container">
+                <ui:VisualElement name="ProfilePicture" class="profile-picture" />
+                <ui:VisualElement name="MiddleLabels" class="middle-labels">
+                    <ui:Label text="Jeanette Olsen" name="Name" class="name-label font-title" />
+                    <ui:Label text="14 JUN 1985" name="DateOfBirth" class="date-of-birth-label" />
+                    <ui:Label text="ID #CA45680F" name="UserID" class="user-id-label" />
+                </ui:VisualElement>
+                <ui:Button name="EditButton" class="edit-button" />
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="StatsContainer" class="stats-container">
             <ui:VisualElement name="LevelingContainer" class="leveling-container">
@@ -42,7 +42,7 @@
                     <ui:Label text="Hvor hurtigt din karakter bevæger sig" name="SpeedStatSubtitle" class="speed-stat-subtitle" />
                     <ui:VisualElement name="SpeedStatUpper" class="speed-stat-upper">
                         <ui:VisualElement name="SpeedStatUpperLeft" class="speed-stat-left" />
-                        <ui:VisualElement name="SpeedStatUpperMiddle" class="speed-stat-middle"/>
+                        <ui:VisualElement name="SpeedStatUpperMiddle" class="speed-stat-middle" />
                         <ui:VisualElement name="SpeedStatUpperRight" class="speed-stat-right" />
                     </ui:VisualElement>
                     <ui:VisualElement name="SpeedStatLower" class="speed-stat-lower">
@@ -58,7 +58,7 @@
                     <ui:Label text="Hvor hurtigt din karakter når sin topfart" name="AccelerationStatSubtitle" class="acceleration-stat-subtitle" />
                     <ui:VisualElement name="AccelerationStatUpper" class="acceleration-stat-upper">
                         <ui:VisualElement name="AccelerationStatUpperLeft" class="acceleration-stat-left" />
-                        <ui:VisualElement name="AccelerationStatUpperMiddle" class="acceleration-stat-middle"/>
+                        <ui:VisualElement name="AccelerationStatUpperMiddle" class="acceleration-stat-middle" />
                         <ui:VisualElement name="AccelerationStatUpperRight" class="acceleration-stat-right" />
                     </ui:VisualElement>
                     <ui:VisualElement name="AccelerationStatLower" class="acceleration-stat-lower">
@@ -71,12 +71,21 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="ActivityContainer" class="activity-container" />
-        <ui:VisualElement name="FriendsContainer" class="friends-container" />
+        <ui:VisualElement name="ActivityContainer" class="activity-container">
+            <ui:VisualElement name="ActivityHeader" class="activity-header">
+                <ui:Label text="Træningsdistance" name="ActivityTitle" class="activity-title font-title" />
+                <ui:Label text="Sidste 5 dage" name="ActivitySubtitle" class="activity-subtitle font-regular" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="FriendsContainer" class="friends-container">
+            <ui:Label text="Mine venner" name="FriendTitle" class="friend-title font-title" />
+            <ui:Label text="Se din aktivitet fra den sidste måned" name="FriendSubtitle" class="friend-subtitle font-regular" />
+            <ui:VisualElement name="FriendsContent" class="friends-content" />
+        </ui:VisualElement>
         <ui:VisualElement name="MenuContainer" class="menu-container">
-            <TrainingBuddy.UI.Controls.LocalizedButton name="AboutButton" class="about-button" />
-            <TrainingBuddy.UI.Controls.LocalizedButton name="SettingsButton" class="settings-button" />
-            <TrainingBuddy.UI.Controls.LocalizedButton name="LogoutButton" class="logout-button" />
+            <TrainingBuddy.UI.Controls.LocalizedButton name="AboutButton" key="interface_button_about" class="about-button" />
+            <TrainingBuddy.UI.Controls.LocalizedButton name="SettingsButton" key="interface_button_settings" class="settings-button" />
+            <TrainingBuddy.UI.Controls.LocalizedButton name="LogoutButton" key="interface_button_logout" class="logout-button" />
         </ui:VisualElement>
         <ui:VisualElement name="ProfilePicture" class="profile-picture-big" />
     </ui:ScrollView>

@@ -38,6 +38,19 @@ namespace TrainingBuddy.UI
 		
 		public override void Initialize()
 		{
+			InitializeStatsSection();
+			InitializeActivitySection();
+			InitializeFriendsSection();
+		}
+
+		public override async void DrawLayout()
+		{
+			base.DrawLayout();
+			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.MainMenu));
+        }
+		
+		private void InitializeStatsSection()
+		{
 			var levelingProgressWrapper = new VisualElement();
 			levelingProgressWrapper.AddToClassList("leveling-progress-wrapper");
 			
@@ -121,19 +134,52 @@ namespace TrainingBuddy.UI
 			};
 			accelerationProgressBar.AddToClassList($"linear-progress-bar");
 			Layout.Q<VisualElement>("AccelerationStatUpperMiddle").Add(accelerationProgressBar);
-			
 			Layout.Q<VisualElement>("LevelingMiddleContainer").Add(levelingProgressWrapper);
-
-			InitializeActivitySection();
 		}
 
-		public override async void DrawLayout()
+		private void InitializeFriendsSection()
 		{
-			base.DrawLayout();
-			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.MainMenu));
-        }
+			for (var i = 1; i <= 6; i++)
+			{
+				var friendElement = new VisualElement();
+				friendElement.AddToClassList("friend-element");
+				if (i % 3 == 0)
+				{
+					friendElement.AddToClassList("no-margin");
+				}
+			
+				var friendImage = new VisualElement();
+				friendImage.AddToClassList("friend-image");
+			
+				var friendFavoriteIcon = new VisualElement();
+				friendFavoriteIcon.AddToClassList("friend-favorite-icon");
+			
+				var friendNameLabel = new Label
+				{
+					name = "FriendName",
+					text = "Name",
+				};
+				friendNameLabel.AddToClassList("friend-name-label");
+				friendNameLabel.AddToClassList("font-title");
+			
+				var friendDistanceLabel = new Label
+				{
+					name = "FriendDistance",
+					text = "50 km",
+				};
+				friendDistanceLabel.AddToClassList("friend-distance-label");
+				friendDistanceLabel.AddToClassList("font-regular");
+			
+				friendElement.Add(friendImage);
+				friendElement.Add(friendFavoriteIcon);
+				friendElement.Add(friendNameLabel);
+				friendElement.Add(friendDistanceLabel);
+			
+				Layout.Q<VisualElement>("FriendsContent").Add(friendElement);
+			}
+		}
 
-        private void InitializeActivitySection()
+		private void InitializeActivitySection()
         {
             var activityContainer = Layout.Q<VisualElement>("ActivityContainer");
             if (activityContainer == null)
@@ -141,35 +187,12 @@ namespace TrainingBuddy.UI
 				return;
             }
 
-            activityContainer.style.display = DisplayStyle.Flex;
-
-            var header = new VisualElement { name = "ActivityHeader" };
-            header.AddToClassList("activity-header");
-
-            var titleLabel = new Label("Træningsdistance")
-            {
-				name = "ActivityTitle",
-            };
-            titleLabel.AddToClassList("activity-title");
-            titleLabel.AddToClassList("font-title");
-
-            var subtitleLabel = new Label("Sidste 5 dage")
-            {
-				name = "ActivitySubtitle",
-            };
-            subtitleLabel.AddToClassList("activity-subtitle");
-            subtitleLabel.AddToClassList("font-regular");
-
-            header.Add(titleLabel);
-            header.Add(subtitleLabel);
-
             _activityGraph = new ActivityGraph
             {
-				name = "WeeklyDistanceGraph",
+				name = "WeeklyDistanceGraph", 
+				ValueFormatter = value => $"{value:0.#} KM",
             };
-            _activityGraph.ValueFormatter = value => $"{value:0.#} KM";
 
-            activityContainer.Add(header);
             activityContainer.Add(_activityGraph);
 
             var sampleData = new List<ActivityGraph.DataPoint>
@@ -186,7 +209,7 @@ namespace TrainingBuddy.UI
 
         public void UpdateActivityData(IEnumerable<ActivityGraph.DataPoint> dataPoints, int highlightIndex)
         {
-            _activityGraph?.SetData(dataPoints, highlightIndex);
+            _activityGraph?.SetData(dataPoints);
         }
 
 		private void OnLogout(ClickEvent evt)

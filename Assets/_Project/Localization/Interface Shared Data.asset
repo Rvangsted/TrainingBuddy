@@ -83,6 +83,14 @@ MonoBehaviour:
     m_Key: interface_button_privacy
     m_Metadata:
       m_Items: []
+  - m_Id: 149671989717491712
+    m_Key: interface_button_settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 149672116762959872
+    m_Key: interface_button_about
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
