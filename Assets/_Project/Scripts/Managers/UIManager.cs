@@ -1,4 +1,5 @@
 using TrainingBuddy.Managers;
+using TrainingBuddy.UI.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 using VContainer;
@@ -12,12 +13,14 @@ namespace TrainingBuddy.UI
 		[SerializeField] private VisualTreeAsset _header;
 		[SerializeField] private VisualTreeAsset _content;
 		[SerializeField] private VisualTreeAsset _footer;
+		[SerializeField] private UniversalOverlay _universalOverlay;
 
 		public VisualElement Header { get; private set; }
 		public VisualElement Content { get; private set; }
 		public VisualElement Footer { get; private set; }
 
 		public UILayout CurrentLayout { get; private set; }
+		public UniversalOverlay Overlay => _universalOverlay;
 
 		private LayoutData _layoutData;
 		private DatabaseManager _databaseManager;
@@ -50,6 +53,16 @@ namespace TrainingBuddy.UI
 			SetupSafeAreaContainer();
 
 			ChangePage(_layoutData.ProfileScreen);
+		}
+
+		public void ShowOverlay(string title, string message, string primaryButtonText = "OK", System.Action primaryAction = null, string secondaryButtonText = null, System.Action secondaryAction = null, bool allowBackgroundDismiss = false)
+		{
+			_universalOverlay?.Show(title, message, primaryButtonText, primaryAction, secondaryButtonText, secondaryAction, allowBackgroundDismiss);
+		}
+
+		public void HideOverlay()
+		{
+			_universalOverlay?.Hide();
 		}
 
 		public void ChangePage(UILayout layout)

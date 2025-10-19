@@ -1,0 +1,76 @@
+﻿.overlay-root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    padding: 24px;
+}
+
+.overlay-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.65);
+}
+
+.overlay-card {
+    min-width: 280px;
+    max-width: 420px;
+    width: 100%;
+    gap: 16px;
+    padding: 24px;
+    background-color: var(--color-light);
+    border-radius: 18px;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.overlay-title {
+    font-size: var(--font-size-l);
+    color: var(--color-dark);
+}
+
+.overlay-message {
+    color: var(--color-font);
+    white-space: normal;
+    -unity-text-align: upper-left;
+}
+
+.overlay-button-row {
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.overlay-button {
+    min-width: 100px;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 12px;
+    border-width: 0;
+    font-size: var(--font-size-m);
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+}
+
+.overlay-primary {
+    background-color: var(--color-magenta);
+    color: var(--color-light);
+}
+
+.overlay-secondary {
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--color-dark);
+    border-width: 1px;
+    border-color: var(--color-dark);
+}
+
+.overlay-secondary:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}

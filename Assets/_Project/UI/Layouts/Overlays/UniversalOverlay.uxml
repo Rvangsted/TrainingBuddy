@@ -1,0 +1,14 @@
+﻿<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/UniversalOverlay.uss" />
+    <ui:VisualElement name="UniversalOverlay" class="overlay-root">
+        <ui:VisualElement name="OverlayBackground" class="overlay-background" />
+        <ui:VisualElement name="OverlayCard" class="overlay-card">
+            <ui:Label name="OverlayTitle" class="overlay-title font-title" text="Overlay Title" />
+            <ui:Label name="OverlayMessage" class="overlay-message" text="Overlay message content goes here." />
+            <ui:VisualElement name="OverlayButtonRow" class="overlay-button-row">
+                <ui:Button name="OverlaySecondaryButton" class="overlay-button overlay-secondary" text="Cancel" />
+                <ui:Button name="OverlayPrimaryButton" class="overlay-button overlay-primary" text="OK" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
