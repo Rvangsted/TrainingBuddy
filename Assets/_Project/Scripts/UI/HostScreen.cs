@@ -11,20 +11,17 @@ namespace TrainingBuddy.UI
 		
 		private readonly DatabaseManager _databaseManager;
 		
-		protected HostScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, layoutData.HostScreenVisualTree)
+		protected HostScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager)
 		{
+			Layout = _layoutData.HostScreenVisualTree.Instantiate();
+			Layout.AddToClassList("host-wrapper");
 			_layoutData.HostScreen = this;
 			_databaseManager = databaseManager;
 		}
-
-		protected override void OnLayoutBuilt(VisualElement root)
-		{
-			root.AddToClassList("host-wrapper");
-		}
-
+		
 		public override void Initialize()
 		{
-			base.Initialize();
+			// throw new System.NotImplementedException();
 		}
 
 		public override void DrawLayout()

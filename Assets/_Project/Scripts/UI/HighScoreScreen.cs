@@ -6,19 +6,17 @@ namespace TrainingBuddy.UI
 {
 	public class HighScoreScreen : UILayout
 	{
-		protected HighScoreScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager, layoutData.HighScoreVisualTree)
+		protected HighScoreScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager)
 		{
+			Layout = _layoutData.HighScoreVisualTree.Instantiate();
+			Layout.AddToClassList("highscore-wrapper");
 			_layoutData.HighScoreScreen = this;
 		}
-
-		protected override void OnLayoutBuilt(VisualElement root)
-		{
-			root.AddToClassList("highscore-wrapper");
-		}
-
+		
 		public override void Initialize()
 		{
-			base.Initialize();
+			
+			// throw new System.NotImplementedException();
 		}
 
 		public override void DrawLayout()

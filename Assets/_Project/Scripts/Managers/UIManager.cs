@@ -87,7 +87,6 @@ namespace TrainingBuddy.UI
 
 			if (_databaseManager.Auth == null)
 			{
-				_layoutData.LoginScreen.EnsureLayoutBuilt();
 				Content.Add(_layoutData.LoginScreen.Layout);
 				CurrentLayout = _layoutData.LoginScreen;
 				AddConditionalClasses(CurrentLayout);
@@ -97,7 +96,6 @@ namespace TrainingBuddy.UI
 
 			AddConditionalClasses(layout);
 			Content.Add(Header);
-			layout.EnsureLayoutBuilt();
 			Content.Add(layout.Layout);
 			CurrentLayout = layout;
 			CurrentLayout.DrawLayout();

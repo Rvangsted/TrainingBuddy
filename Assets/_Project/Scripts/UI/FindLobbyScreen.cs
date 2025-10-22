@@ -14,20 +14,17 @@ namespace TrainingBuddy.UI
 		private readonly DatabaseManager _databaseManager;
 		private List<Button> _lobbyButtons = new ();
 		
-		protected FindLobbyScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, layoutData.FindLobbyScreenVisualTree)
+		protected FindLobbyScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager)
 		{
+			Layout = _layoutData.FindLobbyScreenVisualTree.Instantiate();
+			Layout.AddToClassList("find-lobby-wrapper");
 			_layoutData.FindLobbyScreen = this;
 			_databaseManager = databaseManager;
 		}
-
-		protected override void OnLayoutBuilt(VisualElement root)
-		{
-			root.AddToClassList("find-lobby-wrapper");
-		}
-
+		
 		public override void Initialize()
 		{
-			base.Initialize();
+			// throw new System.NotImplementedException();
 		}
 
 		public override void DrawLayout()

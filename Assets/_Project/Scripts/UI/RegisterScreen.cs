@@ -15,20 +15,16 @@ namespace TrainingBuddy.UI
 		
 		private readonly FirebaseController _firebaseController;
 		
-		public RegisterScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController) : base(layoutData, uiManager, layoutData.RegisterScreenVisualTree)
+		public RegisterScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController) : base(layoutData, uiManager)
 		{
+			Layout = _layoutData.RegisterScreenVisualTree.Instantiate();
+			Layout.AddToClassList("register-wrapper");
 			_layoutData.RegisterScreen = this;
 			_firebaseController = firebaseController;
 		}
-
-		protected override void OnLayoutBuilt(VisualElement root)
-		{
-			root.AddToClassList("register-wrapper");
-		}
-
+		
 		public override void Initialize()
 		{
-			base.Initialize();
 			_registerUsernameField = Layout.Q<TextField>("Username");
 			_registerEmailField = Layout.Q<TextField>("Email");
 			_registerPasswordField = Layout.Q<TextField>("Password");

@@ -4,19 +4,16 @@ namespace TrainingBuddy.UI
 {
 	public class LobbyScreen : UILayout
 	{
-		protected LobbyScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager, layoutData.LobbyScreenVisualTree)
+		protected LobbyScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager)
 		{
+			Layout = _layoutData.LobbyScreenVisualTree.Instantiate();
+			Layout.AddToClassList("lobby-wrapper");
 			_layoutData.LobbyScreen = this;
 		}
-
-		protected override void OnLayoutBuilt(VisualElement root)
-		{
-			root.AddToClassList("lobby-wrapper");
-		}
-
+		
 		public override void Initialize()
 		{
-			base.Initialize();
+			// throw new System.NotImplementedException();
 		}
 
 		public override void DrawLayout()
