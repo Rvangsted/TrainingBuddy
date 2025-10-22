@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Android;
 using UnityEngine.UIElements;
 using Button = UnityEngine.UIElements.Button;
+using UnityEngine.InputSystem;
 
 namespace TrainingBuddy.UI
 {
@@ -69,8 +70,34 @@ namespace TrainingBuddy.UI
 		
 		void Update()
 		{
-			if( Input.GetMouseButtonDown( 0 ) && Input.mousePosition.x > Screen.width * 0.8f && Input.mousePosition.y < Screen.height * 0.2f )
-				RequestPermission();
+			Vector2? pointerPosition = null;
+			bool pressed = false;
+
+			var mouse = Mouse.current;
+			if (mouse != null)
+			{
+				pointerPosition = mouse.position.ReadValue();
+				pressed = mouse.leftButton.wasPressedThisFrame;
+			}
+
+			if (!pressed)
+			{
+				var touch = Touchscreen.current?.primaryTouch;
+				if (touch != null)
+				{
+					pointerPosition = touch.position.ReadValue();
+					pressed = touch.press.wasPressedThisFrame;
+				}
+			}
+
+			if (pressed && pointerPosition.HasValue)
+			{
+				var position = pointerPosition.Value;
+				if (position.x > Screen.width * 0.8f && position.y < Screen.height * 0.2f)
+				{
+					RequestPermission();
+				}
+			}
 		}
 
 		async void RequestPermission()

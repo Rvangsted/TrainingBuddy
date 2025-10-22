@@ -196,7 +196,7 @@ namespace TrainingBuddy.Managers
 			var nearbyLobbies = new List<string>();
 			var userList = await NearbyUsers(10);
 			var raceList = await GetAllRaces();
-
+		
 			foreach (DataSnapshot raceListChild in raceList.Children)
 			{
 				foreach (string user in userList)
@@ -207,7 +207,7 @@ namespace TrainingBuddy.Managers
 					}
 				}
 			}
-
+		
 			return nearbyLobbies;
 		}
 
@@ -217,14 +217,14 @@ namespace TrainingBuddy.Managers
 			{
 				return null;
 			}
-
+		
 			if (Input.location.status != LocationServiceStatus.Running)
 			{
 				Input.location.Start();
 			}
-
+		
 			var userData = await GetAllUsers();
-
+		
 			return UtilityMethods.FindUsersInRange(userData, Input.location.lastData.latitude, Input.location.lastData.longitude, range);
 		}
 
@@ -250,22 +250,22 @@ namespace TrainingBuddy.Managers
 			{
 				return;
 			}
-
+		
 			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION"))
 			{
 				return;
 			}
-
+		
 			if (StepCounter.current == null)
 			{
 				InputSystem.AddDevice<StepCounter>();
 			}
-
+		
 			if (StepCounter.current == null)
 			{
 				return;
 			}
-
+		
 			if (!StepCounter.current.enabled)
 			{
 				InputSystem.EnableDevice(StepCounter.current);
@@ -274,12 +274,12 @@ namespace TrainingBuddy.Managers
 					Debug.Log("StepCounter is enabled");
 				}
 			}
-
+		
 			if (!StepCounter.current.enabled)
 			{
 				return;
 			}
-
+		
 			StepCounterRunning = true;
 			_ = StepCounterHandler();
 		}
