@@ -1,5 +1,6 @@
 using TrainingBuddy.UI.Controls;
 using TrainingBuddy.UI.Effects;
+using UnityEngine;
 using UnityEngine.UIElements;
 using VContainer.Unity;
 
@@ -7,20 +8,25 @@ namespace TrainingBuddy.UI
 {
 	public class UILayout : IInitializable
 	{
-		public VisualElement Layout { get; set; }
-		
+		public VisualElement Layout { get; private set; }
 		protected UIManager _uiManager;
 		protected LayoutData _layoutData;
+		private readonly VisualTreeAsset _visualTreeAsset;
+		private bool _layoutBuilt;
 		private bool _layoutDrawn;
 
-		protected UILayout(LayoutData layoutData, UIManager uiManager)
+		protected UILayout(LayoutData layoutData, UIManager uiManager, VisualTreeAsset visualTreeAsset)
 		{
 			_layoutData = layoutData;
 			_uiManager = uiManager;
+			_visualTreeAsset = visualTreeAsset;
 		}
 
-		public virtual void Initialize() {}
-		
+		public virtual void Initialize()
+		{
+			EnsureLayoutBuilt();
+		}
+
 		protected virtual void ReDrawLayout()
 		{
 			_layoutDrawn = false;
@@ -29,11 +35,35 @@ namespace TrainingBuddy.UI
 
 		public virtual void DrawLayout()
 		{
+			EnsureLayoutBuilt();
 			if (_layoutDrawn)
 			{
 				return;
 			}
 			_layoutDrawn = true;
+		}
+
+		protected virtual void OnLayoutBuilt(VisualElement root) {}
+
+		protected internal void EnsureLayoutBuilt()
+		{
+			if (_layoutBuilt)
+			{
+				return;
+			}
+
+			if (_visualTreeAsset == null)
+			{
+				Debug.LogWarning($"{GetType().Name} is missing a VisualTreeAsset reference.");
+				Layout = new VisualElement();
+			}
+			else
+			{
+				Layout = _visualTreeAsset.Instantiate();
+			}
+
+			OnLayoutBuilt(Layout);
+			_layoutBuilt = true;
 		}
 		
 		protected Shadow ShadowBox(string name, ShadowSettings settings, BoxSize size = BoxSize.small)

@@ -13,16 +13,20 @@ namespace TrainingBuddy.UI
 		
 		private readonly DatabaseManager _databaseManager;
 		
-		protected MainMenu(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager)
+		protected MainMenu(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, layoutData.MainMenuVisualTree)
 		{
-			Layout = _layoutData.MainMenuVisualTree.Instantiate();
-			Layout.AddToClassList("main-menu-wrapper");
 			_layoutData.MainMenu = this;
 			_databaseManager = databaseManager;
 		}
-		
+
+		protected override void OnLayoutBuilt(VisualElement root)
+		{
+			root.AddToClassList("main-menu-wrapper");
+		}
+
 		public override void Initialize()
 		{
+			base.Initialize();
 			var shadowSettings = new ShadowSettings
 			{
 				CornerRadius = 54,

@@ -4,16 +4,19 @@ namespace TrainingBuddy.UI
 {
 	public class RaceScreen : UILayout
 	{
-		protected RaceScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager)
+		protected RaceScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager, layoutData.RaceScreenVisualTree)
 		{
-			Layout = _layoutData.RaceScreenVisualTree.Instantiate();
-			Layout.AddToClassList("race-wrapper");
 			_layoutData.RaceScreen = this;
 		}
-		
+
+		protected override void OnLayoutBuilt(VisualElement root)
+		{
+			root.AddToClassList("race-wrapper");
+		}
+
 		public override void Initialize()
 		{
-			// throw new System.NotImplementedException();
+			base.Initialize();
 		}
 
 		public override void DrawLayout()
