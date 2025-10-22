@@ -13,7 +13,8 @@ namespace TrainingBuddy.UI
 		[SerializeField] private VisualTreeAsset _header;
 		[SerializeField] private VisualTreeAsset _content;
 		[SerializeField] private VisualTreeAsset _footer;
-		[SerializeField] private UniversalOverlay _universalOverlay;
+		[SerializeField] private VisualTreeAsset _overlayAsset;
+		private UniversalOverlay _universalOverlay;
 
 		public VisualElement Header { get; private set; }
 		public VisualElement Content { get; private set; }
@@ -37,6 +38,21 @@ namespace TrainingBuddy.UI
 			_databaseManager = databaseManager;
 		}
 		
+		private void Awake()
+		{
+			if (_uiDocument == null)
+			{
+				_uiDocument = GetComponent<UIDocument>();
+			}
+
+			if (_universalOverlay == null && !TryGetComponent(out _universalOverlay))
+			{
+				_universalOverlay = gameObject.AddComponent<UniversalOverlay>();
+			}
+
+			_universalOverlay?.Configure(_uiDocument, _overlayAsset);
+		}
+
 		public void Initialize()
 		{
 			_databaseManager.UIManager = this;

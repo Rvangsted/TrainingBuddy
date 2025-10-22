@@ -132,7 +132,7 @@
 }
 
 .stats-container .leveling-container .leveling-top-container .leveling-top-right-container .leveling-points-container .leveling-points-label {
-    display: none;
+    /*display: none;*/
 }
 
 .stats-container .leveling-container .leveling-middle-container {

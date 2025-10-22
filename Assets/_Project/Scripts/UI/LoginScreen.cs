@@ -112,18 +112,18 @@ namespace TrainingBuddy.UI
 		
 		private async void OnTest(ClickEvent evt)
 		{
-			$"show overlay".Log();
-			_uiManager.ShowOverlay("string title", "string message");
-// #if !UNITY_EDITOR
-// 			if (!CheckPermission())
-// 			{
-// 				return;
-// 			}
-// #endif
-// 			if (await _firebaseController.FirebaseLogin("admin@trainingbuddy.dk", "smjo3y2kZRfk7jN^@wGN4z8K^"))
-// 			{
-// 				_uiManager.ChangePage(_layoutData.MainMenu);
-// 			}
+			// $"show overlay".Log();
+			// _uiManager.ShowOverlay("string title", "string message");
+#if !UNITY_EDITOR
+			if (!CheckPermission())
+			{
+				return;
+			}
+#endif
+			if (await _firebaseController.FirebaseLogin("admin@trainingbuddy.dk", "smjo3y2kZRfk7jN^@wGN4z8K^"))
+			{
+				_uiManager.ChangePage(_layoutData.MainMenu);
+			}
 		}
 
 		private bool CheckPermission()

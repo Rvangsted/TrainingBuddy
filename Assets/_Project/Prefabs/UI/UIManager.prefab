@@ -74,4 +74,5 @@ MonoBehaviour:
   _content: {fileID: 9197481963319205126, guid: 652907255766ce64baa3c4193c702f97,
     type: 3}
   _footer: {fileID: 9197481963319205126, guid: 1a0b55688565fbd4c8ccbe3624f6b81a, type: 3}
-  _universalOverlay: {fileID: 0}
+  _overlayAsset: {fileID: 9197481963319205126, guid: 039eb7934b25451ea13bb293907400a5,
+    type: 3}
