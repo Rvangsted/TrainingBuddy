@@ -90,7 +90,6 @@ namespace TrainingBuddy.UI
 				Content.Add(_layoutData.LoginScreen.Layout);
 				CurrentLayout = _layoutData.LoginScreen;
 				AddConditionalClasses(CurrentLayout);
-				ApplySafeArea(true);
 				return;
 			}
 
@@ -99,7 +98,6 @@ namespace TrainingBuddy.UI
 			Content.Add(layout.Layout);
 			CurrentLayout = layout;
 			CurrentLayout.DrawLayout();
-			ApplySafeArea(true);
 		}
 
 		private void AddConditionalClasses(UILayout layout)
@@ -157,185 +155,11 @@ namespace TrainingBuddy.UI
             // _safeAreaContainer.Add(Header);
             _safeAreaContainer.Add(Content);
             // _safeAreaContainer.Add(Footer);
-
-            if (!_safeAreaRegistered)
-            {
-                root.RegisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
-                _safeAreaRegistered = true;
-            }
-
-            ApplySafeArea(true);
-        }
-
-        private void OnRootGeometryChanged(GeometryChangedEvent evt)
-        {
-            ApplySafeArea(true);
-        }
-
-        private void Update()
-        {
-            if (_safeAreaContainer == null)
-            {
-                return;
-            }
-
-            if (HasScreenChanged())
-            {
-                ApplySafeArea();
-            }
-        }
-
-        private bool HasScreenChanged()
-        {
-            var currentSafeArea = CalculateEffectiveSafeArea();
-            var currentResolution = new Vector2Int(Screen.width, Screen.height);
-            var currentOrientation = Screen.orientation;
-
-            return currentSafeArea != _lastSafeArea ||
-                   currentResolution != _lastScreenSize ||
-                   currentOrientation != _lastOrientation;
-        }
-
-        private void ApplySafeArea(bool force = false)
-        {
-            if (_safeAreaContainer == null)
-            {
-                return;
-            }
-
-            var safeArea = CalculateEffectiveSafeArea();
-            var currentResolution = new Vector2Int(Screen.width, Screen.height);
-            var currentOrientation = Screen.orientation;
-
-            if (!force && safeArea == _lastSafeArea && currentResolution == _lastScreenSize && currentOrientation == _lastOrientation)
-            {
-                return;
-            }
-
-            _lastSafeArea = safeArea;
-            _lastScreenSize = currentResolution;
-            _lastOrientation = currentOrientation;
-
-            var rootSize = GetRootDimensions();
-            var scaleX = rootSize.x <= 0f ? 1f : rootSize.x / Screen.width;
-            var scaleY = rootSize.y <= 0f ? 1f : rootSize.y / Screen.height;
-
-            _safeAreaContainer.style.paddingLeft = Mathf.Max(0f, safeArea.xMin * scaleX);
-            _safeAreaContainer.style.paddingRight = Mathf.Max(0f, (Screen.width - safeArea.xMax) * scaleX);
-            _safeAreaContainer.style.paddingBottom = Mathf.Max(0f, safeArea.yMin * scaleY);
-            _safeAreaContainer.style.paddingTop = Mathf.Max(0f, (Screen.height - safeArea.yMax) * scaleY);
-        }
-
-        private Vector2 GetRootDimensions()
-        {
-            if (_uiDocument == null)
-            {
-                return new Vector2(Screen.width, Screen.height);
-            }
-
-            var root = _uiDocument.rootVisualElement;
-            var width = root.resolvedStyle.width;
-            var height = root.resolvedStyle.height;
-
-            if (float.IsNaN(width) || Mathf.Approximately(width, 0f))
-            {
-                width = root.worldBound.width;
-            }
-
-            if (float.IsNaN(height) || Mathf.Approximately(height, 0f))
-            {
-                height = root.worldBound.height;
-            }
-
-            if (Mathf.Approximately(width, 0f))
-            {
-                width = Screen.width;
-            }
-
-            if (Mathf.Approximately(height, 0f))
-            {
-                height = Screen.height;
-            }
-
-            return new Vector2(width, height);
-        }
-
-        private void OnDestroy()
-        {
-            if (_uiDocument != null && _safeAreaRegistered)
-            {
-	            if (_uiDocument.rootVisualElement != null)
-	            {
-					_uiDocument.rootVisualElement.UnregisterCallback<GeometryChangedEvent>(OnRootGeometryChanged);
-	            }
-                _safeAreaRegistered = false;
-            }
         }
 
         public void UpdateStepCounter(long steps)
         {
             Header.Q<Label>("StepCounter").text = "Steps: " + steps;
-        }
-
-        private Rect CalculateEffectiveSafeArea()
-        {
-            var safeArea = Screen.safeArea;
-
-            if (safeArea.width <= 0f || safeArea.height <= 0f)
-            {
-                return new Rect(0f, 0f, Screen.width, Screen.height);
-            }
-
-            var cutouts = Screen.cutouts;
-            if (cutouts != null && cutouts.Length > 0)
-            {
-                const float edgeTolerance = 1f;
-
-                for (var i = 0; i < cutouts.Length; i++)
-                {
-                    var cutout = cutouts[i];
-
-                    if (cutout.width <= 0f || cutout.height <= 0f)
-                    {
-                        continue;
-                    }
-
-                    // Android devices can expose multiple notches/punch holes via Screen.cutouts.
-                    // Shrink the safe area further when a cutout touches a screen edge so that
-                    // content never overlaps device specific hardware features.
-                    if (cutout.x <= edgeTolerance)
-                    {
-                        safeArea.xMin = Mathf.Max(safeArea.xMin, cutout.xMax);
-                    }
-
-                    if (cutout.y <= edgeTolerance)
-                    {
-                        safeArea.yMin = Mathf.Max(safeArea.yMin, cutout.yMax);
-                    }
-
-                    if (cutout.xMax >= Screen.width - edgeTolerance)
-                    {
-                        safeArea.xMax = Mathf.Min(safeArea.xMax, cutout.xMin);
-                    }
-
-                    if (cutout.yMax >= Screen.height - edgeTolerance)
-                    {
-                        safeArea.yMax = Mathf.Min(safeArea.yMax, cutout.yMin);
-                    }
-                }
-            }
-
-            safeArea.xMin = Mathf.Clamp(safeArea.xMin, 0f, Screen.width);
-            safeArea.yMin = Mathf.Clamp(safeArea.yMin, 0f, Screen.height);
-            safeArea.xMax = Mathf.Clamp(safeArea.xMax, 0f, Screen.width);
-            safeArea.yMax = Mathf.Clamp(safeArea.yMax, 0f, Screen.height);
-
-            if (safeArea.xMax < safeArea.xMin || safeArea.yMax < safeArea.yMin)
-            {
-                return new Rect(0f, 0f, Screen.width, Screen.height);
-            }
-
-            return safeArea;
         }
     }
 }
