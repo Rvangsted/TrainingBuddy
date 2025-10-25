@@ -15,8 +15,7 @@ namespace TrainingBuddy.UI
 		
 		protected MainMenu(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager)
 		{
-			Layout = _layoutData.MainMenuVisualTree.Instantiate();
-			Layout.AddToClassList("main-menu-wrapper");
+			ConfigureLayoutAsset(_layoutData.MainMenuVisualTree, "main-menu-wrapper");
 			_layoutData.MainMenu = this;
 			_databaseManager = databaseManager;
 		}

@@ -29,8 +29,7 @@ namespace TrainingBuddy.UI
 		
 		protected ProfileScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager)
 		{
-			Layout = _layoutData.ProfileScreenVisualTree.Instantiate();
-			Layout.AddToClassList("profile-wrapper");
+			ConfigureLayoutAsset(_layoutData.ProfileScreenVisualTree, "profile-wrapper");
 			_layoutData.ProfileScreen = this;
 			_firebaseController = firebaseController;
 			_databaseManager = databaseManager;
@@ -51,7 +50,7 @@ namespace TrainingBuddy.UI
 			Layout.Q<Label>("Name").text = _dataSnapshot.Child("UserName").Value.ToString();
 			Layout.Q<Label>("DateOfBirth").text = _dataSnapshot.Child("Email").Value.ToString();
 			Layout.Q<Label>("UserID").text = _dataSnapshot.Child("UserID").Value.ToString();
-			Layout.Q<VisualElement>("ProfilePicture").AddToClassList(_dataSnapshot.Child("Sex").Value.ToString());
+			Layout.Q<VisualElement>("ProfilePicture").AddToClassList(_dataSnapshot.Child("Sex").Value.ToString()); 
 			
 			DrawStatsSection();
 			DrawActivitySection();
@@ -94,7 +93,7 @@ namespace TrainingBuddy.UI
 			var levelingProgressValueLabel = new Label
 			{
 				name = "LevelingProgressValueLabel",
-				text = $"{(10000 - Convert.ToInt32(_dataSnapshot.Child("StepCount").Value)).ToString()} skridt",
+				text = $"{(10000 - Convert.ToInt32(_dataSnapshot.Child("StepCount").Value)).ToString()}\n skridt",
 			};
 			levelingProgressValueLabel.AddToClassList("leveling-progress-value-label");
 			levelingProgressValueLabel.AddToClassList("font-title");

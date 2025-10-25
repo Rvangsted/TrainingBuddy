@@ -8,8 +8,20 @@ namespace TrainingBuddy.UI
 {
 	public class UILayout : IInitializable
 	{
-		public VisualElement Layout { get; set; }
-		
+		private VisualElement _layout;
+		private VisualTreeAsset _layoutAsset;
+		private string[] _layoutClassNames;
+
+		public VisualElement Layout
+		{
+			get
+			{
+				EnsureLayout();
+				return _layout;
+			}
+			protected set => _layout = value;
+		}
+
 		protected UIManager _uiManager;
 		protected LayoutData _layoutData;
 		private bool _layoutDrawn;
@@ -21,6 +33,37 @@ namespace TrainingBuddy.UI
 		}
 
 		public virtual void Initialize() {}
+
+		protected void ConfigureLayoutAsset(VisualTreeAsset asset, params string[] classNames)
+		{
+			_layoutAsset = asset;
+			_layoutClassNames = classNames;
+		}
+
+		protected void EnsureLayout()
+		{
+			if (_layout != null || _layoutAsset == null)
+			{
+				return;
+			}
+
+			_layout = _layoutAsset.Instantiate();
+
+			if (_layoutClassNames == null)
+			{
+				return;
+			}
+
+			foreach (var className in _layoutClassNames)
+			{
+				if (string.IsNullOrEmpty(className))
+				{
+					continue;
+				}
+
+				_layout.AddToClassList(className);
+			}
+		}
 		
 		protected virtual void ReDrawLayout()
 		{

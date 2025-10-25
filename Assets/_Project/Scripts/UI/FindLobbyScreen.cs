@@ -16,8 +16,7 @@ namespace TrainingBuddy.UI
 		
 		protected FindLobbyScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager)
 		{
-			Layout = _layoutData.FindLobbyScreenVisualTree.Instantiate();
-			Layout.AddToClassList("find-lobby-wrapper");
+			ConfigureLayoutAsset(_layoutData.FindLobbyScreenVisualTree, "find-lobby-wrapper");
 			_layoutData.FindLobbyScreen = this;
 			_databaseManager = databaseManager;
 		}

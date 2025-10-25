@@ -8,8 +8,7 @@ namespace TrainingBuddy.UI
 	{
 		protected HighScoreScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager)
 		{
-			Layout = _layoutData.HighScoreVisualTree.Instantiate();
-			Layout.AddToClassList("highscore-wrapper");
+			ConfigureLayoutAsset(_layoutData.HighScoreVisualTree, "highscore-wrapper");
 			_layoutData.HighScoreScreen = this;
 		}
 		

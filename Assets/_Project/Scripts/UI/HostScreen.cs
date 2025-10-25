@@ -13,8 +13,7 @@ namespace TrainingBuddy.UI
 		
 		protected HostScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager)
 		{
-			Layout = _layoutData.HostScreenVisualTree.Instantiate();
-			Layout.AddToClassList("host-wrapper");
+			ConfigureLayoutAsset(_layoutData.HostScreenVisualTree, "host-wrapper");
 			_layoutData.HostScreen = this;
 			_databaseManager = databaseManager;
 		}

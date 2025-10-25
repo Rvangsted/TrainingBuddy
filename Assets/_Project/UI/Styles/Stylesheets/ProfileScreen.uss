@@ -178,6 +178,7 @@
 .stats-container .leveling-container .leveling-middle-container .leveling-progress-wrapper .leveling-progress-content .leveling-progress-value-label {
     font-size: 40px;
     color: var(--color-dark);
+    -unity-text-align: middle-center;
 }
 
 .stats-container .leveling-container .leveling-middle-container .leveling-progress-wrapper .leveling-progress-content .leveling-progress-subtitle-label {
