@@ -285,6 +285,7 @@ namespace TrainingBuddy.Managers
 			}
 
 			StepCounterRunning = true;
+			Debug.Log("StepCounter Handler Call");
 			_ = StepCounterHandler();
 		}
 
@@ -292,13 +293,22 @@ namespace TrainingBuddy.Managers
 		{
 			while (StepCounterRunning)
 			{
+				if (StepCounter.current == null)
+				{
+					Debug.Log("StepCounter is stopping");
+					StepCounterRunning = false;
+					break;
+				}
+
+				Debug.Log("StepCounter is reading");
+				localStepCount = StepCounter.current.stepCounter.ReadValue();
+
 				if (localStepCount <= 0)
 				{
+					Debug.Log("StepCounter is something");
 					await Task.Delay(1000);
 					continue;
 				}
-
-				localStepCount = StepCounter.current.stepCounter.ReadValue();
 
 				await UpdateStepCount();
 
@@ -323,6 +333,7 @@ namespace TrainingBuddy.Managers
 				await UniTask.SwitchToMainThread();
 				UIManager.UpdateStepCounter(newStepCount);
 				StepCountChanged?.Invoke(newStepCount);
+				Debug.Log(newStepCount);
 			}
 
 			await UpdateUser(Auth.CurrentUser, new UserData { StepCountSnapshot = localStepCount });
