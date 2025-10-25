@@ -24,6 +24,11 @@ namespace TrainingBuddy.UI
 		private readonly FirebaseController _firebaseController;
 
 		private DataSnapshot _dataSnapshot;
+
+		private CircularProgressBar _levelingProgressBar;
+		private Label _levelingProgressValueLabel;
+		private float _stepsRequiredForNextLevel;
+		private long _currentStepCount;
 		
 		protected ProfileScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
@@ -34,9 +39,9 @@ namespace TrainingBuddy.UI
 		
 		public override void Initialize()
 		{
-			//InitializeStatsSection();
-			//InitializeActivitySection();
-			//InitializeFriendsSection();
+			base.Initialize();
+			_databaseManager.StepCountChanged -= OnStepCountChanged;
+			_databaseManager.StepCountChanged += OnStepCountChanged;
 		}
 
 		public override async void DrawLayout()
@@ -73,11 +78,15 @@ namespace TrainingBuddy.UI
 			var levelingProgressWrapper = new VisualElement();
 			levelingProgressWrapper.AddToClassList("leveling-progress-wrapper");
 
-			float expToNextLevel = Convert.ToInt32(_dataSnapshot.Child("Level").Value) * 10000;
+			_stepsRequiredForNextLevel = Convert.ToInt32(_dataSnapshot.Child("Level").Value) * 10000f;
+			_currentStepCount = Convert.ToInt64(_dataSnapshot.Child("StepCount").Value);
+
 			var circularProgressBar = new CircularProgressBar
 			{
-				name = "LevelingProgressBar", 
-				Value = Convert.ToInt32(_dataSnapshot.Child("StepCount").Value) / expToNextLevel,
+				name = "LevelingProgressBar",
+				Value = _stepsRequiredForNextLevel <= 0f
+					? 1f
+					: Mathf.Clamp01((float)_currentStepCount / _stepsRequiredForNextLevel),
 				TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
 				ProgressColor = new Color(0.76f, 1f, 0f, 1f),
 				KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
@@ -95,15 +104,12 @@ namespace TrainingBuddy.UI
 				ArrowOffset = 6f,
 			};
 			circularProgressBar.AddToClassList($"leveling-progress-bar");
+			_levelingProgressBar = circularProgressBar;
 
 			var levelingProgressContent = new VisualElement();
 			levelingProgressContent.AddToClassList("leveling-progress-content");
 
-			var stepsToGo = expToNextLevel - Convert.ToInt32(_dataSnapshot.Child("StepCount").Value);
-			if (stepsToGo <= 0)
-			{
-				stepsToGo = 0;
-			}
+			var stepsToGo = Mathf.Max(0, Mathf.CeilToInt(_stepsRequiredForNextLevel - _currentStepCount));
 			var levelingProgressValueLabel = new Label
 			{
 				name = "LevelingProgressValueLabel",
@@ -111,6 +117,7 @@ namespace TrainingBuddy.UI
 			};
 			levelingProgressValueLabel.AddToClassList("leveling-progress-value-label");
 			levelingProgressValueLabel.AddToClassList("font-title");
+			_levelingProgressValueLabel = levelingProgressValueLabel;
 			
 			var levelingProgressSubtitleLabel = new Label
 			{
@@ -126,6 +133,8 @@ namespace TrainingBuddy.UI
 			levelingProgressWrapper.Add(circularProgressBar);
 			levelingProgressWrapper.Add(levelingProgressContent);
 			levelingProgressContainer?.Add(levelingProgressWrapper);
+
+			UpdateLevelingProgress();
 			
 			// SpeedStatUpperMiddle
 			var speedProgressWrapper = Layout.Q<VisualElement>("SpeedStatUpperMiddle");
@@ -171,6 +180,35 @@ namespace TrainingBuddy.UI
 			Layout.Q<Label>("AccelerationStatValue").text = $"{_dataSnapshot.Child("AccelerationPoints").Value} point";
 			Layout.Q<Button>("AccelerationStatLowerLeft").RegisterCallback<ClickEvent>(AccelerationMinus);
 			Layout.Q<Button>("AccelerationStatLowerRight").RegisterCallback<ClickEvent>(AccelerationPlus);
+		}
+
+		private void OnStepCountChanged(long stepCount)
+		{
+			_currentStepCount = stepCount;
+			UpdateLevelingProgress();
+		}
+
+		private void UpdateLevelingProgress()
+		{
+			if (_levelingProgressBar == null || _levelingProgressValueLabel == null)
+			{
+				return;
+			}
+
+			float progress = 1f;
+			if (_stepsRequiredForNextLevel > 0f)
+			{
+				progress = Mathf.Clamp01((float)_currentStepCount / _stepsRequiredForNextLevel);
+			}
+			_levelingProgressBar.Value = progress;
+
+			var stepsToGo = 0;
+			if (_stepsRequiredForNextLevel > 0f)
+			{
+				stepsToGo = Mathf.Max(0, Mathf.CeilToInt(_stepsRequiredForNextLevel - _currentStepCount));
+			}
+
+			_levelingProgressValueLabel.text = $"{stepsToGo}\n skridt";
 		}
 
 		private void DrawFriendsSection()

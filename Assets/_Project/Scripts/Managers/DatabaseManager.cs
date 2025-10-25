@@ -31,6 +31,8 @@ namespace TrainingBuddy.Managers
 	{
 		private int localStepCount;
 
+		public event Action<long> StepCountChanged;
+
 		public bool StepCounterRunning { get; private set; }
 		public bool isLocationUpdaterRunning { get; private set; }
 
@@ -163,7 +165,13 @@ namespace TrainingBuddy.Managers
 			totalPoints -= (int)spdPoints;
 			totalPoints -= (int)accPoints;
 
-			await UpdateUser(Auth.CurrentUser, new UserData { Level = userLevel, StepCount = (int)steps - (int)investCap, ExperiencePoints = experience + (int)investCap, SkillPoints = (int)totalPoints });
+			var updatedStepCount = (int)steps - (int)investCap;
+
+			await UpdateUser(Auth.CurrentUser, new UserData { Level = userLevel, StepCount = updatedStepCount, ExperiencePoints = experience + (int)investCap, SkillPoints = (int)totalPoints });
+
+			await UniTask.SwitchToMainThread();
+			UIManager.UpdateStepCounter(updatedStepCount);
+			StepCountChanged?.Invoke(updatedStepCount);
 		}
 
 		public async Task CreateLobby(RaceData race)
@@ -290,6 +298,8 @@ namespace TrainingBuddy.Managers
 					continue;
 				}
 
+				localStepCount = StepCounter.current.stepCounter.ReadValue();
+
 				await UpdateStepCount();
 
 				await Task.Delay((int)delay * 1000);
@@ -312,6 +322,7 @@ namespace TrainingBuddy.Managers
 
 				await UniTask.SwitchToMainThread();
 				UIManager.UpdateStepCounter(newStepCount);
+				StepCountChanged?.Invoke(newStepCount);
 			}
 
 			await UpdateUser(Auth.CurrentUser, new UserData { StepCountSnapshot = localStepCount });
