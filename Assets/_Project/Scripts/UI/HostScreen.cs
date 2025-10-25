@@ -9,13 +9,10 @@ namespace TrainingBuddy.UI
 	{
 		private Button _createButton;
 		
-		private readonly DatabaseManager _databaseManager;
-		
-		protected HostScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager)
+		protected HostScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.HostScreenVisualTree, "host-wrapper");
 			_layoutData.HostScreen = this;
-			_databaseManager = databaseManager;
 		}
 		
 		public override void Initialize()

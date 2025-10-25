@@ -1,10 +1,11 @@
+using TrainingBuddy.Managers;
 using UnityEngine.UIElements;
 
 namespace TrainingBuddy.UI
 {
 	public class LobbyScreen : UILayout
 	{
-		protected LobbyScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager)
+		protected LobbyScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.LobbyScreenVisualTree, "lobby-wrapper");
 			_layoutData.LobbyScreen = this;

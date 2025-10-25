@@ -11,13 +11,10 @@ namespace TrainingBuddy.UI
 		private Button _participateRaceButton;
 		private Button _profileButton;
 		
-		private readonly DatabaseManager _databaseManager;
-		
-		protected MainMenu(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager)
+		protected MainMenu(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.MainMenuVisualTree, "main-menu-wrapper");
 			_layoutData.MainMenu = this;
-			_databaseManager = databaseManager;
 		}
 		
 		public override void Initialize()

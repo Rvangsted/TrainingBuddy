@@ -149,6 +149,10 @@
     -unity-text-align: middle-center;
 }
 
+.layout-header .header-level-label.hidden {
+    display: none;
+}
+
 .safe-area-container {
     flex-grow: 1;
     width: 100%;

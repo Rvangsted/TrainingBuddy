@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using BedtimeCore;
 using Firebase.Database;
 using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
 using TrainingBuddy.UI.Controls;
-using TrainingBuddy.UI.Effects;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -23,16 +21,14 @@ namespace TrainingBuddy.UI
 		private ActivityGraph _activityGraph;
 		
 		private readonly FirebaseController _firebaseController;
-		private readonly DatabaseManager _databaseManager;
 
 		private DataSnapshot _dataSnapshot;
 		
-		protected ProfileScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager)
+		protected ProfileScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.ProfileScreenVisualTree, "profile-wrapper");
 			_layoutData.ProfileScreen = this;
 			_firebaseController = firebaseController;
-			_databaseManager = databaseManager;
 		}
 		
 		public override void Initialize()
@@ -45,7 +41,11 @@ namespace TrainingBuddy.UI
 		public override async void DrawLayout()
 		{
 			_dataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
-			base.DrawLayout();
+			
+			if (_layoutDrawn)
+			{
+				return;
+			}
 				
 			Layout.Q<Label>("Name").text = _dataSnapshot.Child("UserName").Value.ToString();
 			Layout.Q<Label>("DateOfBirth").text = _dataSnapshot.Child("Email").Value.ToString();
@@ -57,6 +57,8 @@ namespace TrainingBuddy.UI
 			DrawFriendsSection();
 			
 			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.MainMenu));
+			
+			base.DrawLayout();
         }
 		
 		private void DrawStatsSection()
@@ -117,7 +119,7 @@ namespace TrainingBuddy.UI
 			var speedProgressBar = new LinearProgressBar
 			{
 				name = "SpeedProgressBar", 
-				Value = 0.7f,
+				Value = (float)Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) / ((Convert.ToInt32(_dataSnapshot.Child("Level").Value) - 1) * 10),
 				TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
 				ProgressColor = new Color(0.76f, 1f, 0f, 1f),
 				KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
@@ -129,11 +131,14 @@ namespace TrainingBuddy.UI
 			};
 			speedProgressBar.AddToClassList($"linear-progress-bar");
 			Layout.Q<VisualElement>("SpeedStatUpperMiddle").Add(speedProgressBar);
+			Layout.Q<Label>("SpeedStatValue").text = $"{_dataSnapshot.Child("SpeedPoints").Value} point";
+			Layout.Q<Button>("SpeedStatLowerLeft").RegisterCallback<ClickEvent>(SpeedMinus);
+			Layout.Q<Button>("SpeedStatLowerRight").RegisterCallback<ClickEvent>(SpeedPlus);
 			
 			var accelerationProgressBar = new LinearProgressBar
 			{
 				name = "AccelerationProgressBar", 
-				Value = 0.7f,
+				Value = (float)Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) / ((Convert.ToInt32(_dataSnapshot.Child("Level").Value) - 1) * 10),
 				TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
 				ProgressColor = new Color(0.76f, 1f, 0f, 1f),
 				KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
@@ -145,6 +150,10 @@ namespace TrainingBuddy.UI
 			};
 			accelerationProgressBar.AddToClassList($"linear-progress-bar");
 			Layout.Q<VisualElement>("AccelerationStatUpperMiddle").Add(accelerationProgressBar);
+			Layout.Q<Label>("AccelerationStatValue").text = $"{_dataSnapshot.Child("AccelerationPoints").Value} point";
+			Layout.Q<Button>("AccelerationStatLowerLeft").RegisterCallback<ClickEvent>(AccelerationMinus);
+			Layout.Q<Button>("AccelerationStatLowerRight").RegisterCallback<ClickEvent>(AccelerationPlus);
+			
 			Layout.Q<VisualElement>("LevelingMiddleContainer").Add(levelingProgressWrapper);
 		}
 
@@ -273,65 +282,65 @@ namespace TrainingBuddy.UI
 		// 	Layout.Q<ProgressBar>("ExperienceBar").value = (expInt - expNeededToCurrentLevel) / (float) maxExp * 100;
 		// }
 		//
-		// private async void AccelerationPlus(ClickEvent evt)
-		// {
-		// 	if (Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) <= 0)
-		// 	{
-		// 		return;
-		// 	}
-		// 	
-		// 	await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
-		// 	{
-		// 		SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) - 1,
-		// 		AccelerationPoints = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) + 1
-		// 	});
-		// 	ReDrawLayout();
-		// }
-		//
-		// private async void AccelerationMinus(ClickEvent evt)
-		// {
-		// 	if (Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) <= 0)
-		// 	{
-		// 		return;
-		// 	}
-		// 	
-		// 	await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
-		// 	{
-		// 		SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) + 1,
-		// 		AccelerationPoints = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) - 1
-		// 	});
-		// 	ReDrawLayout();
-		// }
-		//
-		// private async void SpeedPlus(ClickEvent evt)
-		// {
-		// 	if (Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) <= 0)
-		// 	{
-		// 		return;
-		// 	}
-		// 	
-		// 	await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
-		// 	{
-		// 		SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) - 1,
-		// 		SpeedPoints = Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) + 1
-		// 	});
-		// 	ReDrawLayout();
-		// }
-		//
-		// private async void SpeedMinus(ClickEvent evt)
-		// {
-		// 	if (Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) <= 0)
-		// 	{
-		// 		return;
-		// 	}
-		// 	
-		// 	await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
-		// 	{
-		// 		SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) + 1,
-		// 		SpeedPoints = Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) - 1
-		// 	});
-		// 	ReDrawLayout();
-		// }
+		private async void AccelerationPlus(ClickEvent evt)
+		{
+			if (Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) <= 0)
+			{
+				return;
+			}
+			
+			await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
+			{
+				SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) - 1,
+				AccelerationPoints = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) + 1
+			});
+			ReDrawLayout();
+		}
+		
+		private async void AccelerationMinus(ClickEvent evt)
+		{
+			if (Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) <= 0)
+			{
+				return; 
+			}
+			
+			await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
+			{
+				SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) + 1,
+				AccelerationPoints = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) - 1
+			});
+			ReDrawLayout();
+		}
+		
+		private async void SpeedPlus(ClickEvent evt)
+		{
+			if (Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) <= 0)
+			{
+				return;
+			}
+			
+			await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
+			{
+				SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) - 1,
+				SpeedPoints = Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) + 1,
+			});
+			ReDrawLayout();
+		}
+		
+		private async void SpeedMinus(ClickEvent evt)
+		{
+			if (Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) <= 0)
+			{
+				return;
+			}
+			
+			await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
+			{
+				SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) + 1,
+				SpeedPoints = Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) - 1,
+			});
+			ReDrawLayout();
+		}
 		//
 		// private async void OnTraining(ClickEvent evt)
 		// {

@@ -46,11 +46,11 @@
                         <ui:VisualElement name="SpeedStatUpperRight" class="speed-stat-right" />
                     </ui:VisualElement>
                     <ui:VisualElement name="SpeedStatLower" class="speed-stat-lower">
-                        <ui:VisualElement name="SpeedStatLowerLeft" class="speed-stat-left" />
+                        <ui:Button name="SpeedStatLowerLeft" class="speed-stat-left" />
                         <ui:VisualElement name="SpeedStatLowerMiddle" class="speed-stat-middle">
                             <ui:Label text="10 point" name="SpeedStatValue" class="speed-stat-value" />
                         </ui:VisualElement>
-                        <ui:VisualElement name="SpeedStatLowerRight" class="speed-stat-right" />
+                        <ui:Button name="SpeedStatLowerRight" class="speed-stat-right" />
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="AccelerationStatContainer" class="acceleration-stat-container">
@@ -62,11 +62,11 @@
                         <ui:VisualElement name="AccelerationStatUpperRight" class="acceleration-stat-right" />
                     </ui:VisualElement>
                     <ui:VisualElement name="AccelerationStatLower" class="acceleration-stat-lower">
-                        <ui:VisualElement name="AccelerationStatLowerLeft" class="acceleration-stat-left" />
+                        <ui:Button name="AccelerationStatLowerLeft" class="acceleration-stat-left" />
                         <ui:VisualElement name="AccelerationStatLowerMiddle" class="acceleration-stat-middle">
                             <ui:Label text="10 point" name="AccelerationStatValue" class="acceleration-stat-value" />
                         </ui:VisualElement>
-                        <ui:VisualElement name="AccelerationStatLowerRight" class="acceleration-stat-right" />
+                        <ui:Button name="AccelerationStatLowerRight" class="acceleration-stat-right" />
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

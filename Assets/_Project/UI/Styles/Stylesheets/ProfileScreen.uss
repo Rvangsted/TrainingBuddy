@@ -296,6 +296,9 @@
     background-size: 40px 10px;
     background-position-y: top 14px;
     background-position-x: right 24px;
+    width: auto;
+    border-radius: 0;
+    background-color: rgba(0,0,0,0);
 }
 
 .stats-container .speed-stat-container .speed-stat-lower .speed-stat-middle {
@@ -315,6 +318,9 @@
     background-size: 40px 40px;
     background-position-y: top 0;
     background-position-x: left 13px;
+    width: auto;
+    border-radius: 0;
+    background-color: rgba(0,0,0,0);
 }
 
 .stats-container .acceleration-stat-container {
@@ -376,6 +382,9 @@
     background-size: 40px 10px;
     background-position-y: top 14px;
     background-position-x: right 24px;
+    width: auto;
+    border-radius: 0;
+    background-color: rgba(0,0,0,0);
 }
 
 .stats-container .acceleration-stat-container .acceleration-stat-lower .acceleration-stat-middle {
@@ -395,6 +404,9 @@
     background-size: 40px 40px;
     background-position-y: top 0;
     background-position-x: left 13px;
+    width: auto;
+    border-radius: 0;
+    background-color: rgba(0,0,0,0);
 }
 
 /*Activity Container*/

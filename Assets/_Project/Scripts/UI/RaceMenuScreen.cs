@@ -1,10 +1,11 @@
+using TrainingBuddy.Managers;
 using UnityEngine.UIElements;
 
 namespace TrainingBuddy.UI
 {
 	public class RaceMenuScreen : UILayout
 	{
-		protected RaceMenuScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager)
+		protected RaceMenuScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.RaceMenuScreenVisualTree, "race-menu-wrapper");
 			_layoutData.RaceMenuScreen = this;

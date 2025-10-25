@@ -1,6 +1,8 @@
+using BedtimeCore;
+using Firebase.Database;
+using TrainingBuddy.Managers;
 using TrainingBuddy.UI.Controls;
 using TrainingBuddy.UI.Effects;
-using UnityEngine;
 using UnityEngine.UIElements;
 using VContainer.Unity;
 
@@ -22,14 +24,17 @@ namespace TrainingBuddy.UI
 			protected set => _layout = value;
 		}
 
-		protected UIManager _uiManager;
-		protected LayoutData _layoutData;
-		private bool _layoutDrawn;
+		protected readonly UIManager _uiManager;
+		protected readonly LayoutData _layoutData;
+		protected readonly DatabaseManager _databaseManager;
+		private DataSnapshot _dataSnapshot;
+		protected bool _layoutDrawn;
 
-		protected UILayout(LayoutData layoutData, UIManager uiManager)
+		protected UILayout(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager)
 		{
 			_layoutData = layoutData;
 			_uiManager = uiManager;
+			_databaseManager = databaseManager;
 		}
 
 		public virtual void Initialize() {}
@@ -40,7 +45,7 @@ namespace TrainingBuddy.UI
 			_layoutClassNames = classNames;
 		}
 
-		protected void EnsureLayout()
+		private void EnsureLayout()
 		{
 			if (_layout != null || _layoutAsset == null)
 			{
@@ -71,8 +76,19 @@ namespace TrainingBuddy.UI
 			DrawLayout();
 		}
 
-		public virtual void DrawLayout()
+		public virtual async void DrawLayout()
 		{
+			if (_databaseManager.Auth != null)
+			{
+				_dataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
+				_uiManager.Header.Q<Label>("HeaderLevelLabel").RemoveFromClassList("hidden");
+				_uiManager.Header.Q<Label>("HeaderLevelLabel").text = _dataSnapshot.Child("Level").Value.ToString();
+			}
+			else
+			{
+				_uiManager.Header.Q<Label>("HeaderLevelLabel").AddToClassList("hidden");
+			}
+			
 			if (_layoutDrawn)
 			{
 				return;

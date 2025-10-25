@@ -11,14 +11,12 @@ namespace TrainingBuddy.UI
 	{
 		private Button _createButton;
 		
-		private readonly DatabaseManager _databaseManager;
 		private List<Button> _lobbyButtons = new ();
 		
-		protected FindLobbyScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager)
+		protected FindLobbyScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.FindLobbyScreenVisualTree, "find-lobby-wrapper");
 			_layoutData.FindLobbyScreen = this;
-			_databaseManager = databaseManager;
 		}
 		
 		public override void Initialize()

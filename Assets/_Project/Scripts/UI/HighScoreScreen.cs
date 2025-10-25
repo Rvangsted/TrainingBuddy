@@ -1,12 +1,13 @@
 
 
+using TrainingBuddy.Managers;
 using UnityEngine.UIElements;
 
 namespace TrainingBuddy.UI
 {
 	public class HighScoreScreen : UILayout
 	{
-		protected HighScoreScreen(LayoutData layoutData, UIManager uiManager) : base(layoutData, uiManager)
+		protected HighScoreScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.HighScoreVisualTree, "highscore-wrapper");
 			_layoutData.HighScoreScreen = this;

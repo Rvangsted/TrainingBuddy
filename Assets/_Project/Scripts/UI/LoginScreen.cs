@@ -1,5 +1,6 @@
 using BedtimeCore;
 using TrainingBuddy.FireBase;
+using TrainingBuddy.Managers;
 using UnityEngine;
 using UnityEngine.Android;
 using UnityEngine.UIElements;
@@ -19,7 +20,7 @@ namespace TrainingBuddy.UI
 
 		private readonly FirebaseController _firebaseController;
 		
-		public LoginScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController) : base(layoutData, uiManager)
+		public LoginScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.LoginScreenVisualTree, "login-wrapper");
 			_layoutData.LoginScreen = this;

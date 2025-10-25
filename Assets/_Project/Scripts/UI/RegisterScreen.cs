@@ -1,5 +1,6 @@
 using BedtimeCore;
 using TrainingBuddy.FireBase;
+using TrainingBuddy.Managers;
 using UnityEngine.UIElements;
 
 namespace TrainingBuddy.UI
@@ -16,7 +17,7 @@ namespace TrainingBuddy.UI
 		
 		private readonly FirebaseController _firebaseController;
 		
-		public RegisterScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController) : base(layoutData, uiManager)
+		public RegisterScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.RegisterScreenVisualTree, "register-wrapper");
 			_layoutData.RegisterScreen = this;
