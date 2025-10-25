@@ -22,7 +22,9 @@
 }
 
 .profile-screen .profile-picture-big.Mand {
-    background-image: url('project://database/Assets/_Project/Art/Characters/emil_friend.png');
+    background-image: url('project://database/Assets/_Project/Art/Characters/emil_figur_1.png');
+    left: -100px;
+    top: 60px;
 }
 
 .profile-screen .profile-picture-big.Kvinde {

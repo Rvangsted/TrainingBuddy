@@ -25,11 +25,13 @@ namespace TrainingBuddy.UI
 
 		private LayoutData _layoutData;
 		private DatabaseManager _databaseManager;
+		private UILayout _pendingLayout;
 		private VisualElement _safeAreaContainer;
 		private Rect _lastSafeArea;
 		private Vector2Int _lastScreenSize;
 		private ScreenOrientation _lastOrientation;
 		private bool _safeAreaRegistered;
+		private bool _hasStarted;
 
 		[Inject]
 		public void Construct(LayoutData layoutData, DatabaseManager databaseManager)
@@ -71,6 +73,12 @@ namespace TrainingBuddy.UI
 			ChangePage(_layoutData.ProfileScreen);
 		}
 
+		private void Start()
+		{
+			_hasStarted = true;
+			TryApplyPendingLayout();
+		}
+
 		public void ShowOverlay(string title, string message, string primaryButtonText = "OK", System.Action primaryAction = null, string secondaryButtonText = null, System.Action secondaryAction = null, bool allowBackgroundDismiss = false)
 		{
 			_universalOverlay?.Show(title, message, primaryButtonText, primaryAction, secondaryButtonText, secondaryAction, allowBackgroundDismiss);
@@ -83,6 +91,12 @@ namespace TrainingBuddy.UI
 
 		public void ChangePage(UILayout layout)
 		{
+			if (!_hasStarted)
+			{
+				_pendingLayout = layout;
+				return;
+			}
+
 			Content.Clear();
 
 			if (_databaseManager.Auth == null)
@@ -98,6 +112,18 @@ namespace TrainingBuddy.UI
 			Content.Add(layout.Layout);
 			CurrentLayout = layout;
 			CurrentLayout.DrawLayout();
+		}
+
+		private void TryApplyPendingLayout()
+		{
+			if (_pendingLayout == null || !_hasStarted)
+			{
+				return;
+			}
+
+			var layout = _pendingLayout;
+			_pendingLayout = null;
+			ChangePage(layout);
 		}
 
 		private void AddConditionalClasses(UILayout layout)
