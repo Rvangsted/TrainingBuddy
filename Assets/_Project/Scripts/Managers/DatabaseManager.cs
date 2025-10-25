@@ -300,10 +300,8 @@ namespace TrainingBuddy.Managers
 		{
 			DataSnapshot data = await FetchUserData(Auth.CurrentUser);
 
-			var stepSnapshot = (long)data.Child("StepCountSnapshot")
-			                             .Value;
-			var savedStepCount = (long)data.Child("StepCount")
-			                               .Value;
+			var stepSnapshot = (long)data.Child("StepCountSnapshot").Value;
+			var savedStepCount = (long)data.Child("StepCount").Value;
 
 
 			if (localStepCount >= stepSnapshot)

@@ -1,6 +1,7 @@
 using TrainingBuddy.Managers;
 using TrainingBuddy.UI.Controls;
 using UnityEngine;
+using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
 using VContainer;
 using VContainer.Unity;
@@ -51,6 +52,8 @@ namespace TrainingBuddy.UI
 			{
 				_universalOverlay = gameObject.AddComponent<UniversalOverlay>();
 			}
+
+			WarmupFonts();
 
 			_universalOverlay?.Configure(_uiDocument, _overlayAsset);
 		}
@@ -186,6 +189,42 @@ namespace TrainingBuddy.UI
         public void UpdateStepCounter(long steps)
         {
             Header.Q<Label>("StepCounter").text = "Steps: " + steps;
+        }
+        
+        private void WarmupFonts()
+        {
+	        var panelSettings = _uiDocument != null ? _uiDocument.panelSettings : null;
+	        var textSettings = panelSettings != null ? panelSettings.textSettings : null;
+
+	        if (textSettings == null)
+	        {
+		        return;
+	        }
+
+	        WarmupFontAsset(textSettings.defaultFontAsset);
+
+	        var fallbackFonts = textSettings.fallbackFontAssets;
+	        if (fallbackFonts == null)
+	        {
+		        return;
+	        }
+
+	        foreach (var fallback in fallbackFonts)
+	        {
+		        WarmupFontAsset(fallback);
+	        }
+        }
+
+        private static void WarmupFontAsset(FontAsset fontAsset)
+        {
+	        if (fontAsset == null)
+	        {
+		        return;
+	        }
+
+	        const string WarmupCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+	        fontAsset.TryAddCharacters(WarmupCharacters, out string _);
         }
     }
 }

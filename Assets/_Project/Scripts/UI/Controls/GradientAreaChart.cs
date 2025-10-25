@@ -22,10 +22,10 @@ namespace TrainingBuddy.UI.Controls
             public float Value { get; }
         }
 
-        private readonly GraphCanvas _canvas;
-        private readonly VisualElement _highlightDot;
-        private readonly Label _highlightValueLabel;
-        private readonly VisualElement _labelsContainer;
+        private GraphCanvas _canvas;
+        private VisualElement _highlightDot;
+        private Label _highlightValueLabel;
+        private VisualElement _labelsContainer;
         private readonly List<DataPoint> _dataPoints = new();
         private readonly List<Vector2> _pointPositions = new();
         private readonly Color _fillTopColor = new(0.733f, 0.592f, 0.996f, 0.78f);
@@ -38,6 +38,8 @@ namespace TrainingBuddy.UI.Controls
 
         private readonly List<Vector2> _sampledPoints = new();
 
+        private bool _initialized;
+        
         private int _highlightIndex = -1;
         private float _maxValue = 1f;
         private float _smoothness = 0.6f;
@@ -47,39 +49,10 @@ namespace TrainingBuddy.UI.Controls
             AddToClassList("activity-graph");
             style.flexDirection = FlexDirection.Column;
             pickingMode = PickingMode.Ignore;
-
-            ValueFormatter = value => $"{value:0.#} KM";
-
-            _canvas = new GraphCanvas(this)
-            {
-                name = "Canvas",
-            };
-            _canvas.AddToClassList("activity-graph__canvas");
-            _canvas.style.flexGrow = 1f;
-            _canvas.pickingMode = PickingMode.Ignore;
-            hierarchy.Add(_canvas);
-
-            _highlightDot = new VisualElement { name = "HighlightDot" };
-            _highlightDot.AddToClassList("activity-graph__highlight-dot");
-            _highlightDot.style.display = DisplayStyle.None;
-            _highlightDot.style.position = Position.Absolute;
-
-            _highlightValueLabel = new Label { name = "HighlightValueLabel" };
-            _highlightValueLabel.AddToClassList("activity-graph__value-label");
-            _highlightValueLabel.style.display = DisplayStyle.None;
-            _highlightValueLabel.style.position = Position.Absolute;
-
-            _canvas.Add(_highlightDot);
-            _canvas.Add(_highlightValueLabel);
-
-            _labelsContainer = new VisualElement { name = "LabelsContainer" };
-            _labelsContainer.AddToClassList("activity-graph__labels");
-            hierarchy.Add(_labelsContainer);
-
-            _canvas.RegisterCallback<GeometryChangedEvent>(_ => UpdateOverlay());
+            RegisterCallback<AttachToPanelEvent>(_ => EnsureInitialized());
         }
 
-        public Func<float, string> ValueFormatter { get; set; }
+        public Func<float, string> ValueFormatter { get; set; } = value => $"{value:0.#} KM";
 
         [UxmlAttribute]
         public float Smoothness
@@ -115,6 +88,8 @@ namespace TrainingBuddy.UI.Controls
 
         public void SetData(IEnumerable<DataPoint> dataPoints, int highlightIndex = -1)
         {
+	        EnsureInitialized();
+	        
             _dataPoints.Clear();
             if (dataPoints != null)
             {
@@ -140,6 +115,8 @@ namespace TrainingBuddy.UI.Controls
 
         public void Clear()
         {
+	        EnsureInitialized();
+	        
             _dataPoints.Clear();
             _labelsContainer.Clear();
             HighlightIndex = -1;
@@ -148,6 +125,11 @@ namespace TrainingBuddy.UI.Controls
 
         private void UpdateOverlay()
         {
+	        if (!_initialized)
+	        {
+		        return;
+	        }
+	        
             if (_canvas == null)
             {
                 return;
@@ -199,6 +181,49 @@ namespace TrainingBuddy.UI.Controls
             _highlightValueLabel.style.top = labelTop;
         }
 
+        private void EnsureInitialized()
+        {
+	        if (_initialized)
+	        {
+		        return;
+	        }
+
+	        _initialized = true;
+
+	        if (ValueFormatter == null)
+	        {
+		        ValueFormatter = value => $"{value:0.#} KM";
+	        }
+
+	        _canvas = new GraphCanvas(this)
+	        {
+		        name = "Canvas",
+	        };
+	        _canvas.AddToClassList("activity-graph__canvas");
+	        _canvas.style.flexGrow = 1f;
+	        _canvas.pickingMode = PickingMode.Ignore;
+	        hierarchy.Add(_canvas);
+
+	        _highlightDot = new VisualElement { name = "HighlightDot" };
+	        _highlightDot.AddToClassList("activity-graph__highlight-dot");
+	        _highlightDot.style.display = DisplayStyle.None;
+	        _highlightDot.style.position = Position.Absolute;
+
+	        _highlightValueLabel = new Label { name = "HighlightValueLabel" };
+	        _highlightValueLabel.AddToClassList("activity-graph__value-label");
+	        _highlightValueLabel.style.display = DisplayStyle.None;
+	        _highlightValueLabel.style.position = Position.Absolute;
+
+	        _canvas.Add(_highlightDot);
+	        _canvas.Add(_highlightValueLabel);
+
+	        _labelsContainer = new VisualElement { name = "LabelsContainer" };
+	        _labelsContainer.AddToClassList("activity-graph__labels");
+	        hierarchy.Add(_labelsContainer);
+
+	        _canvas.RegisterCallback<GeometryChangedEvent>(_ => UpdateOverlay());
+        }
+        
         private void CalculatePointPositions(Rect rect)
         {
             _pointPositions.Clear();

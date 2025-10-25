@@ -64,6 +64,9 @@ namespace TrainingBuddy.UI
 		private void DrawStatsSection()
 		{
 			var stepsToGo = 10000 - Convert.ToInt32(_dataSnapshot.Child("StepCount").Value);
+			var levelingProgressContainer = Layout.Q<VisualElement>("LevelingMiddleContainer");
+			levelingProgressContainer?.Clear();
+
 			var levelingProgressWrapper = new VisualElement();
 			levelingProgressWrapper.AddToClassList("leveling-progress-wrapper");
 			
@@ -113,9 +116,12 @@ namespace TrainingBuddy.UI
 			
 			levelingProgressWrapper.Add(circularProgressBar);
 			levelingProgressWrapper.Add(levelingProgressContent);
-			Layout.Q<VisualElement>("LevelingMiddleContainer").Add(levelingProgressWrapper);
+			levelingProgressContainer?.Add(levelingProgressWrapper);
 			
 			// SpeedStatUpperMiddle
+			var speedProgressWrapper = Layout.Q<VisualElement>("SpeedStatUpperMiddle");
+			speedProgressWrapper?.Clear();
+
 			var speedProgressBar = new LinearProgressBar
 			{
 				name = "SpeedProgressBar", 
@@ -130,11 +136,14 @@ namespace TrainingBuddy.UI
 				InnerKnobSize = 6f,
 			};
 			speedProgressBar.AddToClassList($"linear-progress-bar");
-			Layout.Q<VisualElement>("SpeedStatUpperMiddle").Add(speedProgressBar);
+			speedProgressWrapper?.Add(speedProgressBar);
 			Layout.Q<Label>("SpeedStatValue").text = $"{_dataSnapshot.Child("SpeedPoints").Value} point";
 			Layout.Q<Button>("SpeedStatLowerLeft").RegisterCallback<ClickEvent>(SpeedMinus);
 			Layout.Q<Button>("SpeedStatLowerRight").RegisterCallback<ClickEvent>(SpeedPlus);
 			
+			var accelerationProgressWrapper = Layout.Q<VisualElement>("AccelerationStatUpperMiddle");
+			accelerationProgressWrapper?.Clear();
+
 			var accelerationProgressBar = new LinearProgressBar
 			{
 				name = "AccelerationProgressBar", 
@@ -149,16 +158,17 @@ namespace TrainingBuddy.UI
 				InnerKnobSize = 6f,
 			};
 			accelerationProgressBar.AddToClassList($"linear-progress-bar");
-			Layout.Q<VisualElement>("AccelerationStatUpperMiddle").Add(accelerationProgressBar);
+			accelerationProgressWrapper?.Add(accelerationProgressBar);
 			Layout.Q<Label>("AccelerationStatValue").text = $"{_dataSnapshot.Child("AccelerationPoints").Value} point";
 			Layout.Q<Button>("AccelerationStatLowerLeft").RegisterCallback<ClickEvent>(AccelerationMinus);
 			Layout.Q<Button>("AccelerationStatLowerRight").RegisterCallback<ClickEvent>(AccelerationPlus);
-			
-			Layout.Q<VisualElement>("LevelingMiddleContainer").Add(levelingProgressWrapper);
 		}
 
 		private void DrawFriendsSection()
 		{
+			var friendsContent = Layout.Q<VisualElement>("FriendsContent");
+			friendsContent?.Clear();
+
 			for (var i = 1; i <= 6; i++)
 			{
 				var friendElement = new VisualElement();
@@ -195,13 +205,14 @@ namespace TrainingBuddy.UI
 				friendElement.Add(friendNameLabel);
 				friendElement.Add(friendDistanceLabel);
 			
-				Layout.Q<VisualElement>("FriendsContent").Add(friendElement);
+				friendsContent?.Add(friendElement);
 			}
 		}
 
 		private void DrawActivitySection()
         {
             var activityContainer = Layout.Q<VisualElement>("ActivityContainer");
+            activityContainer?.Clear();
             if (activityContainer == null)
             {
 				return;
