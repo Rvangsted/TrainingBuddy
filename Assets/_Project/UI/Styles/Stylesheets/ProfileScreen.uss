@@ -21,6 +21,14 @@
     top: -10px;
 }
 
+.profile-screen .profile-picture-big.Mand {
+    background-image: url('project://database/Assets/_Project/Art/Characters/emil_friend.png');
+}
+
+.profile-screen .profile-picture-big.Kvinde {
+    background-image: url('project://database/Assets/_Project/Art/Characters/emma_figur_1.png');
+}
+
 /*Info Container*/
 .info-wrapper {
     padding: 30px 50px;

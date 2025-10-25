@@ -3,6 +3,7 @@ namespace TrainingBuddy.FireBase
 	public struct UserData
 	{
 		public string UserName;
+		public string Sex;
 		public string UserID;
 		public string Email;
 		public float? Longitude;

@@ -7,6 +7,7 @@ namespace TrainingBuddy.UI
 	public class RegisterScreen : UILayout
 	{
 		private TextField _registerUsernameField;
+		private DropdownField _registerSexField;
 		private TextField _registerEmailField;
 		private TextField _registerPasswordField;
 		private TextField _registerPasswordConfirmField;
@@ -26,6 +27,7 @@ namespace TrainingBuddy.UI
 		public override void Initialize()
 		{
 			_registerUsernameField = Layout.Q<TextField>("Username");
+			_registerSexField = Layout.Q<DropdownField>("Sex");
 			_registerEmailField = Layout.Q<TextField>("Email");
 			_registerPasswordField = Layout.Q<TextField>("Password");
 			_registerPasswordConfirmField = Layout.Q<TextField>("PasswordConfirm");
@@ -37,7 +39,7 @@ namespace TrainingBuddy.UI
 
 		private async void OnRegister(ClickEvent evt)
 		{
-			if (await _firebaseController.FirebaseRegister(_registerUsernameField.value, _registerEmailField.value, _registerPasswordField.value, _registerPasswordConfirmField.value))
+			if (await _firebaseController.FirebaseRegister(_registerUsernameField.value, _registerSexField.value, _registerEmailField.value, _registerPasswordField.value, _registerPasswordConfirmField.value))
 			{
 				_uiManager.ChangePage(_layoutData.ProfileScreen);
 			}

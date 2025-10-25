@@ -3,7 +3,7 @@
     <ui:ScrollView name="ProfileScreen" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="profile-screen" style="flex-grow: 1; height: auto;">
         <ui:VisualElement name="InfoWrapper" class="info-wrapper">
             <ui:VisualElement name="InfoContainer" class="info-container">
-                <ui:VisualElement name="ProfilePicture" class="profile-picture" />
+                <ui:VisualElement name="ProfilePictureSmall" class="profile-picture" />
                 <ui:VisualElement name="MiddleLabels" class="middle-labels">
                     <ui:Label text="Jeanette Olsen" name="Name" class="name-label font-title" />
                     <ui:Label text="14 JUN 1985" name="DateOfBirth" class="date-of-birth-label" />

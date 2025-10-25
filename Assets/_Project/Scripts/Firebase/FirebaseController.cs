@@ -15,7 +15,7 @@ namespace TrainingBuddy.FireBase
 		public Task<bool> CheckDependencies();
 		public Task<bool> FirebaseLogin(string email, string password);
 		public void FirebaseLogout();
-		public Task<bool> FirebaseRegister(string username, string email, string password, string passwordConfirm);
+		public Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm);
 	}
 	
 	public class FirebaseController : IFirebaseController
@@ -92,11 +92,17 @@ namespace TrainingBuddy.FireBase
 			_databaseManager.Auth.SignOut();
 		}
 		
-		public async Task<bool> FirebaseRegister(string username, string email, string password, string passwordConfirm)
+		public async Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm)
 	    {
 		    if (username == "")
 		    {
 			    $"Username is empty".Log();
+			    return false;
+		    }
+		    
+		    if (sex == "")
+		    {
+			    $"Sex is empty".Log();
 			    return false;
 		    }
 	        
@@ -154,6 +160,7 @@ namespace TrainingBuddy.FireBase
 	        var user = new UserData
 	        {
 		        UserName = username,
+		        Sex = sex,
 		        UserID = _databaseManager.Auth.CurrentUser.UserId,
 		        Email = email,
 		        Longitude = 0,

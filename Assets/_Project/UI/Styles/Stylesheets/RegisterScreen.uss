@@ -19,6 +19,7 @@
 }
 
 .field-username,
+.field-sex,
 .field-email,
 .field-password {
     height: 50px;
@@ -26,6 +27,7 @@
 }
 
 .field-username .unity-text-field__input,
+.field-sex .unity-text-field__input,
 .field-email .unity-text-field__input,
 .field-password .unity-text-field__input {
     border-radius: 30;
@@ -34,6 +36,7 @@
 }
 
 .field-username .unity-text-element,
+.field-sex .unity-text-element,
 .field-email .unity-text-element,
 .field-password .unity-text-element {
     flex-shrink: 0;
@@ -45,6 +48,7 @@
 }
 
 .field-username>.unity-text-field__input.has-value .unity-text-element,
+.field-sex>.unity-text-field__input.has-value .unity-text-element,
 .field-email>.unity-text-field__input.has-value .unity-text-element,
 .field-password>.unity-text-field__input.has-value .unity-text-element {
     color: var(--font-color-gray);

@@ -38,26 +38,38 @@ namespace TrainingBuddy.UI
 		
 		public override void Initialize()
 		{
-			InitializeStatsSection();
-			InitializeActivitySection();
-			InitializeFriendsSection();
+			//InitializeStatsSection();
+			//InitializeActivitySection();
+			//InitializeFriendsSection();
 		}
 
 		public override async void DrawLayout()
 		{
+			_dataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
 			base.DrawLayout();
+				
+			Layout.Q<Label>("Name").text = _dataSnapshot.Child("UserName").Value.ToString();
+			Layout.Q<Label>("DateOfBirth").text = _dataSnapshot.Child("Email").Value.ToString();
+			Layout.Q<Label>("UserID").text = _dataSnapshot.Child("UserID").Value.ToString();
+			Layout.Q<VisualElement>("ProfilePicture").AddToClassList(_dataSnapshot.Child("Sex").Value.ToString());
+			
+			DrawStatsSection();
+			DrawActivitySection();
+			DrawFriendsSection();
+			
 			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.MainMenu));
         }
 		
-		private void InitializeStatsSection()
+		private void DrawStatsSection()
 		{
+			var stepsToGo = 10000 - Convert.ToInt32(_dataSnapshot.Child("StepCount").Value);
 			var levelingProgressWrapper = new VisualElement();
 			levelingProgressWrapper.AddToClassList("leveling-progress-wrapper");
 			
 			var circularProgressBar = new CircularProgressBar
 			{
 				name = "LevelingProgressBar", 
-				Value = 0.7f,
+				Value = Convert.ToInt32(_dataSnapshot.Child("StepCount").Value) / 10000f,
 				TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
 				ProgressColor = new Color(0.76f, 1f, 0f, 1f),
 				KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
@@ -82,7 +94,7 @@ namespace TrainingBuddy.UI
 			var levelingProgressValueLabel = new Label
 			{
 				name = "LevelingProgressValueLabel",
-				text = "64 KM",
+				text = $"{(10000 - Convert.ToInt32(_dataSnapshot.Child("StepCount").Value)).ToString()} skridt",
 			};
 			levelingProgressValueLabel.AddToClassList("leveling-progress-value-label");
 			levelingProgressValueLabel.AddToClassList("font-title");
@@ -137,7 +149,7 @@ namespace TrainingBuddy.UI
 			Layout.Q<VisualElement>("LevelingMiddleContainer").Add(levelingProgressWrapper);
 		}
 
-		private void InitializeFriendsSection()
+		private void DrawFriendsSection()
 		{
 			for (var i = 1; i <= 6; i++)
 			{
@@ -179,7 +191,7 @@ namespace TrainingBuddy.UI
 			}
 		}
 
-		private void InitializeActivitySection()
+		private void DrawActivitySection()
         {
             var activityContainer = Layout.Q<VisualElement>("ActivityContainer");
             if (activityContainer == null)

@@ -4,6 +4,7 @@
         <ui:Label text="Training Buddy" display-tooltip-when-elided="true" name="Title" class="font-title title" />
         <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
             <TrainingBuddy.UI.Controls.LocalizedTextInput name="Username" key="interface_text_username" hide-placeholder-on-focus="true" class="field-username" />
+            <ui:DropdownField label="Køn" name="Sex" choices="Mand,Kvinde" class="field-sex" />
             <TrainingBuddy.UI.Controls.LocalizedTextInput name="Email" key="interface_text_email" hide-placeholder-on-focus="true" class="field-email" />
             <TrainingBuddy.UI.Controls.LocalizedTextInput name="Password" key="interface_text_password" hide-placeholder-on-focus="true" password="true" class="field-password" />
             <TrainingBuddy.UI.Controls.LocalizedTextInput name="PasswordConfirm" password="true" hide-placeholder-on-focus="true" key="interface_text_password_confirm" class="field-password" />

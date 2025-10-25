@@ -81,7 +81,7 @@ namespace TrainingBuddy.Testing
 			_databaseManager.Auth.SignOut();
 		}
 
-		public Task<bool> FirebaseRegister(string username, string email, string password, string passwordConfirm)
+		public Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm)
 		{
 			throw new System.NotImplementedException();
 		}

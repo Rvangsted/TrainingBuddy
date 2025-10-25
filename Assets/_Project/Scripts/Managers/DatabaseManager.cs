@@ -64,51 +64,47 @@ namespace TrainingBuddy.Managers
 			string userID = user.UserId;
 			UserData currentUserdata;
 
-			await DatabaseReference.Child("Users")
-			                       .Child(userName + "_" + userID)
-			                       .GetValueAsync()
-			                       .ContinueWithOnMainThread(async task =>
-			                       {
-				                       if (task.IsFaulted)
-				                       {
-					                       $"UpdateUsers Read operation failed with {task.Exception}".Log();
-				                       }
-				                       else if (task.IsCompleted)
-				                       {
-					                       DataSnapshot snapshot = task.Result;
+			await DatabaseReference.Child("Users").Child(userName + "_" + userID).GetValueAsync().ContinueWithOnMainThread(async task =>
+			{
+			   if (task.IsFaulted)
+			   {
+			       $"UpdateUsers Read operation failed with {task.Exception}".Log();
+			   }
+			   else if (task.IsCompleted)
+			   {
+			       DataSnapshot snapshot = task.Result;
 
-					                       currentUserdata = JsonConvert.DeserializeObject<UserData>(snapshot.GetRawJsonValue(), JsonSettings);
+			       currentUserdata = JsonConvert.DeserializeObject<UserData>(snapshot.GetRawJsonValue(), JsonSettings);
 
-					                       userData.UserName ??= currentUserdata.UserName;
-					                       userData.UserID ??= currentUserdata.UserID;
-					                       userData.Email ??= currentUserdata.Email;
-					                       userData.Longitude ??= currentUserdata.Longitude;
-					                       userData.Latitude ??= currentUserdata.Latitude;
-					                       userData.Level ??= currentUserdata.Level;
-					                       userData.ExperiencePoints ??= currentUserdata.ExperiencePoints;
-					                       userData.SkillPoints ??= currentUserdata.SkillPoints;
-					                       userData.AccelerationPoints ??= currentUserdata.AccelerationPoints;
-					                       userData.SpeedPoints ??= currentUserdata.SpeedPoints;
-					                       userData.StepCount ??= currentUserdata.StepCount;
-					                       userData.StepCountSnapshot ??= currentUserdata.StepCountSnapshot;
+			       userData.UserName ??= currentUserdata.UserName;
+			       userData.Sex ??= currentUserdata.Sex;
+			       userData.UserID ??= currentUserdata.UserID;
+			       userData.Email ??= currentUserdata.Email;
+			       userData.Longitude ??= currentUserdata.Longitude;
+			       userData.Latitude ??= currentUserdata.Latitude;
+			       userData.Level ??= currentUserdata.Level;
+			       userData.ExperiencePoints ??= currentUserdata.ExperiencePoints;
+			       userData.SkillPoints ??= currentUserdata.SkillPoints;
+			       userData.AccelerationPoints ??= currentUserdata.AccelerationPoints;
+			       userData.SpeedPoints ??= currentUserdata.SpeedPoints;
+			       userData.StepCount ??= currentUserdata.StepCount;
+			       userData.StepCountSnapshot ??= currentUserdata.StepCountSnapshot;
 
-					                       string json = JsonConvert.SerializeObject(userData, JsonSettings);
+			       string json = JsonConvert.SerializeObject(userData, JsonSettings);
 
-					                       Task DBTask = DatabaseReference.Child("Users")
-					                                                      .Child(userName + "_" + userID)
-					                                                      .SetRawJsonValueAsync(json);
-					                       await DBTask;
+			       Task DBTask = DatabaseReference.Child("Users").Child(userName + "_" + userID).SetRawJsonValueAsync(json);
+			       await DBTask;
 
-					                       if (DBTask.IsFaulted)
-					                       {
-						                       $"UpdateUser Write operation failed with {DBTask.Exception}".Log();
-					                       }
-					                       else if (DBTask.IsCompleted)
-					                       {
-						                       //TODO: Handle the success??? 
-					                       }
-				                       }
-			                       });
+			       if (DBTask.IsFaulted)
+			       {
+			           $"UpdateUser Write operation failed with {DBTask.Exception}".Log();
+			       }
+			       else if (DBTask.IsCompleted)
+			       {
+			           //TODO: Handle the success??? 
+			       }
+			   }
+			});
 		}
 
 		public async Task<DataSnapshot> FetchUserData(FirebaseUser user)
@@ -196,7 +192,7 @@ namespace TrainingBuddy.Managers
 			var nearbyLobbies = new List<string>();
 			var userList = await NearbyUsers(10);
 			var raceList = await GetAllRaces();
-		
+
 			foreach (DataSnapshot raceListChild in raceList.Children)
 			{
 				foreach (string user in userList)
@@ -207,7 +203,7 @@ namespace TrainingBuddy.Managers
 					}
 				}
 			}
-		
+
 			return nearbyLobbies;
 		}
 
@@ -217,14 +213,14 @@ namespace TrainingBuddy.Managers
 			{
 				return null;
 			}
-		
+
 			if (Input.location.status != LocationServiceStatus.Running)
 			{
 				Input.location.Start();
 			}
-		
+
 			var userData = await GetAllUsers();
-		
+
 			return UtilityMethods.FindUsersInRange(userData, Input.location.lastData.latitude, Input.location.lastData.longitude, range);
 		}
 
@@ -250,22 +246,22 @@ namespace TrainingBuddy.Managers
 			{
 				return;
 			}
-		
+
 			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION"))
 			{
 				return;
 			}
-		
+
 			if (StepCounter.current == null)
 			{
 				InputSystem.AddDevice<StepCounter>();
 			}
-		
+
 			if (StepCounter.current == null)
 			{
 				return;
 			}
-		
+
 			if (!StepCounter.current.enabled)
 			{
 				InputSystem.EnableDevice(StepCounter.current);
@@ -274,12 +270,12 @@ namespace TrainingBuddy.Managers
 					Debug.Log("StepCounter is enabled");
 				}
 			}
-		
+
 			if (!StepCounter.current.enabled)
 			{
 				return;
 			}
-		
+
 			StepCounterRunning = true;
 			_ = StepCounterHandler();
 		}
