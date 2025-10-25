@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BedtimeCore;
 using Firebase.Database;
 using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
@@ -61,19 +62,22 @@ namespace TrainingBuddy.UI
 			base.DrawLayout();
         }
 		
-		private void DrawStatsSection()
+		private async void DrawStatsSection()
 		{
-			var stepsToGo = 10000 - Convert.ToInt32(_dataSnapshot.Child("StepCount").Value);
 			var levelingProgressContainer = Layout.Q<VisualElement>("LevelingMiddleContainer");
 			levelingProgressContainer?.Clear();
+			
+			Layout.Q<Label>("LevelingPointsLabelValue").text = _dataSnapshot.Child("SkillPoints").Value.ToString();
+			Layout.Q<Button>("LevelingPointsContainer").RegisterCallback<ClickEvent>(OnTraining);
 
 			var levelingProgressWrapper = new VisualElement();
 			levelingProgressWrapper.AddToClassList("leveling-progress-wrapper");
-			
+
+			float expToNextLevel = Convert.ToInt32(_dataSnapshot.Child("Level").Value) * 10000;
 			var circularProgressBar = new CircularProgressBar
 			{
 				name = "LevelingProgressBar", 
-				Value = Convert.ToInt32(_dataSnapshot.Child("StepCount").Value) / 10000f,
+				Value = Convert.ToInt32(_dataSnapshot.Child("StepCount").Value) / expToNextLevel,
 				TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
 				ProgressColor = new Color(0.76f, 1f, 0f, 1f),
 				KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
@@ -94,11 +98,16 @@ namespace TrainingBuddy.UI
 
 			var levelingProgressContent = new VisualElement();
 			levelingProgressContent.AddToClassList("leveling-progress-content");
-			
+
+			var stepsToGo = expToNextLevel - Convert.ToInt32(_dataSnapshot.Child("StepCount").Value);
+			if (stepsToGo <= 0)
+			{
+				stepsToGo = 0;
+			}
 			var levelingProgressValueLabel = new Label
 			{
 				name = "LevelingProgressValueLabel",
-				text = $"{(10000 - Convert.ToInt32(_dataSnapshot.Child("StepCount").Value)).ToString()}\n skridt",
+				text = $"{stepsToGo}\n skridt",
 			};
 			levelingProgressValueLabel.AddToClassList("leveling-progress-value-label");
 			levelingProgressValueLabel.AddToClassList("font-title");
@@ -249,50 +258,6 @@ namespace TrainingBuddy.UI
 			_uiManager.ChangePage(_layoutData.LoginScreen);
 		}
 		
-		// public override async void DrawLayout()
-		// {
-		// 	base.DrawLayout();
-		// 	_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.MainMenu));
-		// 	
-		// 	_accPlusButton = Layout.Q<Button>("AccPlus");
-		// 	_accPlusButton.RegisterCallback<ClickEvent>(AccelerationPlus);
-		// 	
-		// 	_accMinusButton = Layout.Q<Button>("AccMinus");
-		// 	_accMinusButton.RegisterCallback<ClickEvent>(AccelerationMinus);
-		// 	
-		// 	_spdPlusButton = Layout.Q<Button>("SpdPlus");
-		// 	_spdPlusButton.RegisterCallback<ClickEvent>(SpeedPlus);
-		// 	
-		// 	_spdMinusButton = Layout.Q<Button>("SpdMinus");
-		// 	_spdMinusButton.RegisterCallback<ClickEvent>(SpeedMinus);
-		// 	
-		// 	_trainingButton = Layout.Q<Button>("TrainingButton");
-		// 	_trainingButton.RegisterCallback<ClickEvent>(OnTraining);
-		// 	
-		// 	_logoutButton = Layout.Q<Button>("LogoutButton");
-		// 	_logoutButton.RegisterCallback<ClickEvent>(OnLogout);
-		// 	
-		// 	_dataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
-		// 	
-		// 	Layout.Q<Label>("Username").text = _dataSnapshot.Child("UserName").Value.ToString();
-		// 	
-		// 	Layout.Q<Label>("AccNumber").text = _dataSnapshot.Child("AccelerationPoints").Value.ToString();
-		// 	Layout.Q<Label>("SpdNumber").text = _dataSnapshot.Child("SpeedPoints").Value.ToString();
-		// 	
-		// 	Layout.Q<Label>("SkillPoints").text = $"Skill Points: {_dataSnapshot.Child("SkillPoints").Value}";
-		// 	
-		// 	var expInt = Convert.ToInt32(_dataSnapshot.Child("ExperiencePoints").Value);
-		// 	var userLevel = Convert.ToInt32(_dataSnapshot.Child("Level").Value);
-		// 	
-		// 	int expNeededToCurrentLevel = (userLevel - 1) * 10000 * userLevel / 2;
-		// 	int expNeededToNextLevel = userLevel * 10000 * (userLevel + 1) / 2;
-		// 	int maxExp = expNeededToNextLevel - expNeededToCurrentLevel;
-		// 	
-		// 	Layout.Q<Label>("Level").text = $"Level: {userLevel}";
-		// 	Layout.Q<ProgressBar>("ExperienceBar").title = $"{expInt - expNeededToCurrentLevel}/{maxExp} XP";
-		// 	Layout.Q<ProgressBar>("ExperienceBar").value = (expInt - expNeededToCurrentLevel) / (float) maxExp * 100;
-		// }
-		//
 		private async void AccelerationPlus(ClickEvent evt)
 		{
 			if (Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) <= 0)
@@ -352,18 +317,12 @@ namespace TrainingBuddy.UI
 			});
 			ReDrawLayout();
 		}
-		//
-		// private async void OnTraining(ClickEvent evt)
-		// {
-		// 	await _databaseManager.InvestInTraining(_layoutData);
-		// 	ReDrawLayout();
-		// }
-		//
-		// private void OnLogout(ClickEvent evt)
-		// {
-		// 	_firebaseController.FirebaseLogout();
-		// 	_uiManager.ChangePage(_layoutData.LoginScreen);
-		// }
+		
+		private async void OnTraining(ClickEvent evt)
+		{
+			await _databaseManager.InvestInTraining(_layoutData);
+			ReDrawLayout();
+		}
 		
 	}
 }

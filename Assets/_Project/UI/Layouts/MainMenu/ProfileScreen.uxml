@@ -19,9 +19,10 @@
                         <ui:VisualElement name="LevelingTopLeftElement" class="leveling-top-left-element" />
                     </ui:VisualElement>
                     <ui:VisualElement name="LevelingTopRightContainer" class="leveling-top-right-container">
-                        <ui:VisualElement name="LevelingPointsContainer" class="leveling-points-container">
-                            <ui:Label name="LevelingPointsLabel" class="leveling-points-label" />
-                        </ui:VisualElement>
+                        <ui:Button name="LevelingPointsContainer" class="leveling-points-container">
+                            <ui:Label name="LevelingPointsLabelValue" class="leveling-points-label font-title" />
+                            <ui:Label text="point" name="LevelingPointsLabel" class="leveling-points-label font-regular" />
+                        </ui:Button>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="LevelingMiddleContainer" class="leveling-middle-container" />

@@ -139,10 +139,20 @@
     background-color: var(--color-buttons);
     border-width: 0;
     border-radius: 50%;
+    justify-content: center;
 }
 
 .stats-container .leveling-container .leveling-top-container .leveling-top-right-container .leveling-points-container .leveling-points-label {
     /*display: none;*/
+    -unity-text-align: middle-center;
+}
+
+.stats-container .leveling-container .leveling-top-container .leveling-top-right-container .leveling-points-container .leveling-points-label.font-title {
+    font-size: var(--font-size-xl);
+}
+
+.stats-container .leveling-container .leveling-top-container .leveling-top-right-container .leveling-points-container .leveling-points-label.font-regular {
+    font-size: var(--font-size-l);
 }
 
 .stats-container .leveling-container .leveling-middle-container {

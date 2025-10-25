@@ -10,10 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 798b949131ae1544a87df2df760b1f65, type: 3}
-  m_Name: Android Debug
-  m_EditorClassIdentifier: 
-  fallbackConfiguration: {fileID: 11400000, guid: 88347cbbe331e7145854182a6c9c3c06,
-    type: 2}
+  m_Name: New Configuration
+  m_EditorClassIdentifier: com.bedtime.nest-builder.Editor::BedtimeCore.NestBuilder.BuildConfiguration
+  fallbackConfiguration: {fileID: 0}
   buildSettings:
     Main:
       Platform:
@@ -148,14 +147,14 @@ MonoBehaviour:
         isSet: 0
         value: 0
       AllowDebugging:
-        isSet: 1
-        value: 1
+        isSet: 0
+        value: 0
       BuildScriptsOnly:
         isSet: 0
         value: 0
       IsDevelopment:
-        isSet: 1
-        value: 1
+        isSet: 0
+        value: 0
       EnableHeadlessMode:
         isSet: 0
         value: 0
@@ -410,11 +409,11 @@ MonoBehaviour:
         isSet: 0
         value: 0
     _additionalModules:
-    - rid: 906395012849205358
+    - rid: 906395079260242326
   references:
     version: 2
     RefIds:
-    - rid: 906395012849205358
+    - rid: 906395079260242326
       type: {class: AppleModule, ns: BedtimeCore.NestBuilder, asm: com.bedtime.nest-builder.Editor}
       data:
         UseMacAppStoreValidation:

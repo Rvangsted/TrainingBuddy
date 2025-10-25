@@ -158,8 +158,8 @@ namespace TrainingBuddy.Managers
 			int userLevel = Mathf.FloorToInt((1 + Mathf.Sqrt(1 + 8 * (experience + investCap) / expIncrease)) / 2);
 
 			// TODO: Settings
-			float skillPointsPerLevel = 5;
-			var totalPoints = userLevel * skillPointsPerLevel;
+			int skillPointsPerLevel = 5;
+			var totalPoints = (userLevel * skillPointsPerLevel);
 			totalPoints -= (int)spdPoints;
 			totalPoints -= (int)accPoints;
 

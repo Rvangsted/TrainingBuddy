@@ -17,9 +17,9 @@ MonoBehaviour:
   buildSettings:
     Main:
       Platform:
-        isSet: 0
+        isSet: 1
         value:
-          buildTarget: 0
+          buildTarget: 13
       ScriptingBackend:
         isSet: 0
         value: 0
@@ -291,10 +291,10 @@ MonoBehaviour:
         isSet: 0
         value: 0
       AllowedAutorotateToLandscapeLeft:
-        isSet: 0
+        isSet: 1
         value: 0
       AllowedAutorotateToLandscapeRight:
-        isSet: 0
+        isSet: 1
         value: 0
       AllowedAutorotateToPortrait:
         isSet: 0
