@@ -2,12 +2,6 @@
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/RegisterScreen.uss?fileID=7433441132597879392&amp;guid=9032dd0ef1350974ab908536d4e001ad&amp;type=3#RegisterScreen" />
     <ui:VisualElement name="RegisterScreen" class="register-screen" style="flex-grow: 1;">
         <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
-            <TrainingBuddy.UI.Controls.LocalizedTextInput name="Username" key="interface_text_username" hide-placeholder-on-focus="true" class="field-username" />
-            <ui:DropdownField label="Køn" name="Sex" choices="Mand,Kvinde" class="field-sex" />
-            <TrainingBuddy.UI.Controls.LocalizedTextInput name="Email" key="interface_text_email" hide-placeholder-on-focus="true" class="field-email" />
-            <TrainingBuddy.UI.Controls.LocalizedTextInput name="Password" key="interface_text_password" hide-placeholder-on-focus="true" password="true" class="field-password" />
-            <TrainingBuddy.UI.Controls.LocalizedTextInput name="PasswordConfirm" password="true" hide-placeholder-on-focus="true" key="interface_text_password_confirm" class="field-password" />
-            <TrainingBuddy.UI.Controls.LocalizedButton name="RegisterButton" key="interface_button_register" class="button-large" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

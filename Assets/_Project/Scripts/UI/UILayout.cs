@@ -78,21 +78,37 @@ namespace TrainingBuddy.UI
 
 		public virtual async void DrawLayout()
 		{
+			var levelLabel = _uiManager.Header?.Q<Label>("HeaderLevelLabel");
+
 			if (_databaseManager.Auth != null)
 			{
 				_dataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
-				_uiManager.Header.Q<Label>("HeaderLevelLabel").RemoveFromClassList("hidden");
-				_uiManager.Header.Q<Label>("HeaderLevelLabel").text = _dataSnapshot.Child("Level").Value.ToString();
+
+				if (levelLabel != null)
+				{
+					var levelValue = _dataSnapshot?.Child("Level")?.Value?.ToString();
+
+					if (string.IsNullOrEmpty(levelValue))
+					{
+						levelLabel.AddToClassList("hidden");
+					}
+					else
+					{
+						levelLabel.RemoveFromClassList("hidden");
+						levelLabel.text = levelValue;
+					}
+				}
 			}
-			else
+			else if (levelLabel != null)
 			{
-				_uiManager.Header.Q<Label>("HeaderLevelLabel").AddToClassList("hidden");
+				levelLabel.AddToClassList("hidden");
 			}
-			
+
 			if (_layoutDrawn)
 			{
 				return;
 			}
+
 			_layoutDrawn = true;
 		}
 		
