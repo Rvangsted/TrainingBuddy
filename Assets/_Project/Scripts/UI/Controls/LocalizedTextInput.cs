@@ -8,12 +8,18 @@ namespace TrainingBuddy.UI.Controls
 	{
 		public static BindingId keyProperty = nameof(key);
 		[UxmlAttribute] public string key;
+
+		public bool hidePlaceholderOnFocus
+		{
+			get => textEdition.hidePlaceholderOnFocus;
+			set => textEdition.hidePlaceholderOnFocus = value;
+		}
 		
 		private readonly VisualElement _input;
 
 		public LocalizedTextInput()
 		{
-			_input = this.Q(className: inputUssClassName);
+			_input = this.Q(className: inputUssClassName); 
 			
 			RegisterCallback<InputEvent>(OnInputEvent);
 			

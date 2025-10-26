@@ -17,7 +17,7 @@ namespace TrainingBuddy.UI
 		private TextField _registerPasswordField;
 		private TextField _registerPasswordConfirmField;
 		
-		private Button _registerButton;
+		private LocalizedButton _registerButton;
 		
 		private readonly FirebaseController _firebaseController;
 		
@@ -70,54 +70,58 @@ namespace TrainingBuddy.UI
 		{
 			var container = Layout.Q<VisualElement>("Container");
 
-			var userNameInput = new LocalizedTextInput
+			_registerUsernameField = new LocalizedTextInput
 			{ 
 				name = "Username",
 				key = "interface_text_username",
+				hidePlaceholderOnFocus = true,
 			};
-			userNameInput.AddToClassList("field-username");
+			_registerUsernameField.AddToClassList("field-username");
 			
-			var dropdown = new DropdownField(new List<string> { "Mand", "Kvinde" }, 0);
-			dropdown.AddToClassList("field-sex");
+			_registerSexField = new DropdownField(new List<string> { "Mand", "Kvinde" }, 0);
+			_registerSexField.AddToClassList("field-sex");
 			
-			var emailInput = new LocalizedTextInput
+			_registerEmailField = new LocalizedTextInput
 			{ 
 				name = "Email",
 				key = "interface_text_email",
+				hidePlaceholderOnFocus = true,
 			};
-			userNameInput.AddToClassList("field-email");
+			_registerEmailField.AddToClassList("field-email");
 			
-			var passwordInput = new LocalizedTextInput
+			_registerPasswordField = new LocalizedTextInput
 			{ 
 				name = "Password",
 				key = "interface_text_password",
+				hidePlaceholderOnFocus = true,
 				isPasswordField = true,
 			};
-			userNameInput.AddToClassList("field-password");
+			_registerPasswordField.AddToClassList("field-password");
 			
-			var passwordConfirmInput = new LocalizedTextInput
+			_registerPasswordConfirmField = new LocalizedTextInput
 			{ 
 				name = "PasswordConfirm",
 				key = "interface_text_password_confirm",
+				hidePlaceholderOnFocus = true,
 				isPasswordField = true,
 			};
-			userNameInput.AddToClassList("field-password");
+			_registerPasswordConfirmField.AddToClassList("field-password");
 			
-			var registerButton = new LocalizedButton()
+			_registerButton = new LocalizedButton()
 			{ 
 				name = "RegisterButton",
 				key = "interface_button_register",
 			};
-			userNameInput.AddToClassList("button-large");
+			_registerButton.AddToClassList("button-large");
+			 
+			container.Add(_registerUsernameField);
+			container.Add(_registerSexField);
+			container.Add(_registerEmailField);
+			container.Add(_registerPasswordField);
+			container.Add(_registerPasswordConfirmField);
+			container.Add(_registerButton);
 			
-			container.Add(userNameInput);
-			container.Add(dropdown);
-			container.Add(emailInput);
-			container.Add(passwordInput);
-			container.Add(passwordConfirmInput);
-			container.Add(registerButton);
-			
-			registerButton.RegisterCallback<ClickEvent>(OnRegister);
+			_registerButton.RegisterCallback<ClickEvent>(OnRegister);
 			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.LoginScreen));
 			_uiManager.Header.Q<Label>("SiteTitle").text = "Min Profil";
 			
