@@ -4,13 +4,13 @@
     ".write": "false",
     "users": {
       "$uid": {
-        ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0 && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() == 2)",
+        ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0",
         ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || auth.uid == $uid)"
       }
     },
     "Users": {
       "$userKey": {
-        ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0 && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || data.child('UserID').val() == auth.uid)",
+        ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0",
         ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || newData.child('UserID').val() == auth.uid || data.child('UserID').val() == auth.uid)"
       }
     },

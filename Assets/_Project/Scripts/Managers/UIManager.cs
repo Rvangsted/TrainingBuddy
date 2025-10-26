@@ -142,6 +142,9 @@ namespace TrainingBuddy.UI
 				case LoginScreen:
 					_uiDocument.rootVisualElement.AddToClassList("show-splash-background");
 					break;
+				case FindLobbyScreen:
+					_uiDocument.rootVisualElement.AddToClassList("show-splash-background");
+					break;
 			}
 		}
 

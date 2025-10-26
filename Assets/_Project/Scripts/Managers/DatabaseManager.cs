@@ -30,6 +30,8 @@ namespace TrainingBuddy.Managers
 		public Task SubmitJoinRequestAsync(string raceId);
 		public Task RetractJoinRequestAsync(string raceId);
 		public Task<bool> HandleJoinRequestAsync(string raceId, string requesterUserId, bool approve);
+		public Task LeaveRaceAsync(string raceId);
+		public Task CancelRaceAsync(string raceId);
 	}
 
 	public class DatabaseManager : IDatabaseManager
@@ -50,18 +52,15 @@ namespace TrainingBuddy.Managers
 		{
 			string json = JsonConvert.SerializeObject(user, JsonSettings);
 
-			Task legacyTask = DatabaseReference.Child("Users").Child(user.UserName + "_" + user.UserID).SetRawJsonValueAsync(json);
+			Task task = DatabaseReference.Child("users").Child(user.UserID).SetRawJsonValueAsync(json);
 
-			Task userByIdTask = DatabaseReference.Child("users").Child(user.UserID).SetRawJsonValueAsync(json);
+			await Task.WhenAll(task);
 
-			await Task.WhenAll(legacyTask, userByIdTask);
-
-			if (legacyTask.IsFaulted || userByIdTask.IsFaulted)
+			if (task.IsFaulted)
 			{
-				Exception exception = legacyTask.Exception ?? userByIdTask.Exception;
-				$"CreateUser operation failed with {exception}".Log();
+				$"CreateUser operation failed with {task.Exception}".Log();
 			}
-			else if (legacyTask.IsCompleted && userByIdTask.IsCompleted)
+			else if (task.IsCompleted)
 			{
 				//TODO: Handle the success???
 			}
@@ -102,17 +101,15 @@ namespace TrainingBuddy.Managers
 
 			       string json = JsonConvert.SerializeObject(userData, JsonSettings);
 
-			       Task legacyTask = DatabaseReference.Child("Users").Child(userName + "_" + userID).SetRawJsonValueAsync(json);
-			       Task userByIdTask = DatabaseReference.Child("users").Child(userID).SetRawJsonValueAsync(json);
+			       Task updateTask = DatabaseReference.Child("users").Child(userID).SetRawJsonValueAsync(json);
 
-			       await Task.WhenAll(legacyTask, userByIdTask);
+			       await Task.WhenAll(updateTask);
 
-			       if (legacyTask.IsFaulted || userByIdTask.IsFaulted)
+			       if (updateTask.IsFaulted)
 			       {
-				       Exception exception = legacyTask.Exception ?? userByIdTask.Exception;
-				       $"UpdateUser Write operation failed with {exception}".Log();
+				       $"UpdateUser Write operation failed with {updateTask.Exception}".Log();
 			       }
-			       else if (legacyTask.IsCompleted && userByIdTask.IsCompleted)
+			       else if (updateTask.IsCompleted)
 			       {
 				       //TODO: Handle the success???
 			       }
@@ -219,6 +216,8 @@ namespace TrainingBuddy.Managers
             {
                 throw new InvalidOperationException("Deactivated users cannot host races.");
             }
+            
+            await EnsureUserCanHostRace(Auth.CurrentUser.UserId);
 
             string raceId = Guid.NewGuid().ToString("N");
             long timestamp = GetUnixTimestampMilliseconds();
@@ -239,7 +238,7 @@ namespace TrainingBuddy.Managers
                 [$"races/{raceId}/participants/{Auth.CurrentUser.UserId}/displayName"] = hostDisplayName,
                 [$"races/{raceId}/participants/{Auth.CurrentUser.UserId}/isHost"] = true,
                 [$"userRaces/{Auth.CurrentUser.UserId}/{raceId}/role"] = "host",
-                [$"userRaces/{Auth.CurrentUser.UserId}/{raceId}/joinedAt"] = timestamp
+                [$"userRaces/{Auth.CurrentUser.UserId}/{raceId}/joinedAt"] = timestamp,
             };
 
             await DatabaseReference.UpdateChildrenAsync(updates);
@@ -290,6 +289,8 @@ namespace TrainingBuddy.Managers
                 { "status", "pending" },
                 { "displayName", Auth.CurrentUser.DisplayName ?? string.Empty },
             };
+            
+            await EnsureUserCanJoinRace(Auth.CurrentUser.UserId, raceId);
 
             await DatabaseReference.Child("joinRequests").Child(raceId).Child(Auth.CurrentUser.UserId).SetValueAsync(requestData);
         }
@@ -351,6 +352,8 @@ namespace TrainingBuddy.Managers
             {
                 return false;
             }
+            
+            await EnsureUserCanJoinRace(requesterUserId, raceId);
 
             long timestamp = GetUnixTimestampMilliseconds();
             Dictionary<string, object> updates = new Dictionary<string, object>
@@ -394,29 +397,131 @@ namespace TrainingBuddy.Managers
             await DatabaseReference.UpdateChildrenAsync(updates);
             return true;
         }
+        
+        public async Task LeaveRaceAsync(string raceId)
+        {
+            if (Auth?.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Cannot leave a race without an authenticated user.");
+            }
 
-        public async Task<List<string>> FindNearbyLobbies()
-		{
-			var nearbyLobbies = new List<string>();
-			var userList = await NearbyUsers(10);
-			var raceList = await GetAllRaces();
+            int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
 
-			foreach (DataSnapshot raceListChild in raceList.Children)
-			{
-				foreach (string user in userList)
-				{
-					if (raceListChild.Key == user)
-					{
-						nearbyLobbies.Add(raceListChild.Key);
-					}
-				}
-			}
+            if (IsDeactivatedLevel(currentUserLevel))
+            {
+                throw new InvalidOperationException("Deactivated users cannot leave races.");
+            }
 
-			return nearbyLobbies;
-		}
+            DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
 
-		public async Task<List<string>> NearbyUsers(int range)
-		{
+            if (raceSnapshot is not { Exists: true })
+            {
+                throw new InvalidOperationException("Race not found.");
+            }
+
+            string status = raceSnapshot.Child("status").Value?.ToString();
+
+            if (string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "in_progress", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("You cannot leave a race that is in progress or completed.");
+            }
+
+            string hostId = raceSnapshot.Child("hostId").Value?.ToString();
+            if (hostId == Auth.CurrentUser.UserId)
+            {
+                throw new InvalidOperationException("Hosts must cancel their race instead of leaving it.");
+            }
+
+            if (raceSnapshot.Child("participants").Child(Auth.CurrentUser.UserId) is not { Exists: true })
+            {
+                return;
+            }
+
+            Dictionary<string, object> updates = new Dictionary<string, object>
+            {
+                [$"races/{raceId}/participants/{Auth.CurrentUser.UserId}"] = null,
+                [$"userRaces/{Auth.CurrentUser.UserId}/{raceId}"] = null,
+            };
+
+            updates[$"joinRequests/{raceId}/{Auth.CurrentUser.UserId}"] = null;
+
+            await DatabaseReference.UpdateChildrenAsync(updates);
+        }
+
+        public async Task CancelRaceAsync(string raceId)
+        {
+            if (Auth?.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Cannot cancel a race without an authenticated user.");
+            }
+
+            int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
+
+            if (IsDeactivatedLevel(currentUserLevel))
+            {
+                throw new InvalidOperationException("Deactivated users cannot cancel races.");
+            }
+
+            DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
+
+            if (raceSnapshot is not { Exists: true })
+            {
+                throw new InvalidOperationException("Race not found.");
+            }
+
+            string hostId = raceSnapshot.Child("hostId").Value?.ToString();
+
+            if (!IsAdminLevel(currentUserLevel) && hostId != Auth.CurrentUser.UserId)
+            {
+                throw new InvalidOperationException("Only the host or an admin can cancel this race.");
+            }
+
+            string status = raceSnapshot.Child("status").Value?.ToString();
+
+            if (string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Completed races cannot be cancelled.");
+            }
+
+            if (string.Equals(status, "cancelled", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            Dictionary<string, object> updates = new Dictionary<string, object>
+            {
+                [$"races/{raceId}/status"] = "cancelled",
+                [$"races/{raceId}/cancelledAt"] = GetUnixTimestampMilliseconds(),
+                [$"joinRequests/{raceId}"] = null,
+            };
+
+            await DatabaseReference.UpdateChildrenAsync(updates);
+        }
+
+  //       public async Task<List<string>> FindNearbyLobbies()
+		// {
+		// 	// var nearbyLobbies = new List<string>();
+		// 	var raceList = await NearbyRaces(10);
+		// 	// var raceList = await GetAllRaces();
+  //
+		// 	// foreach (DataSnapshot raceListChild in raceList.Children)
+		// 	// {
+		// 	// 	foreach (string user in userList)
+		// 	// 	{
+		// 	// 		if (raceListChild.Key == user)
+		// 	// 		{
+		// 	// 			nearbyLobbies.Add(raceListChild.Key);
+		// 	// 		}
+		// 	// 	}
+		// 	// }
+  //
+		// 	return raceList;
+		// }
+
+		public async Task<List<DataSnapshot>> NearbyRaces(int range)
+		{ 
+#if !UNITY_EDITOR
 			if (!Input.location.isEnabledByUser)
 			{
 				return null;
@@ -426,10 +531,14 @@ namespace TrainingBuddy.Managers
 			{
 				Input.location.Start();
 			}
+#endif
 
-			var userData = await GetAllUsers();
-
-			return UtilityMethods.FindUsersInRange(userData, Input.location.lastData.latitude, Input.location.lastData.longitude, range);
+			var raceData = await GetAllRaces();
+#if !UNITY_EDITOR
+			return UtilityMethods.FindRacesInRange(raceData, Input.location.lastData.latitude, Input.location.lastData.longitude, range);
+#else
+			return UtilityMethods.FindRacesInRange(raceData, 0, 0, range);
+#endif
 		}
 
 		private async Task<DataSnapshot> GetAllRaces()
@@ -441,7 +550,7 @@ namespace TrainingBuddy.Managers
 				return snapshot;
 			}
 
-			return await DatabaseReference.Child("Races").GetValueAsync();
+			return null;
 		}
 
 		private async Task<DataSnapshot> GetAllUsers()
@@ -453,7 +562,7 @@ namespace TrainingBuddy.Managers
 				return snapshot;
 			}
 	
-			return await DatabaseReference.Child("Users").GetValueAsync();
+			return null;
         }
 
         private async Task<DataSnapshot> GetRaceSnapshotAsync(string raceId)
@@ -465,7 +574,111 @@ namespace TrainingBuddy.Managers
                 return snapshot;
             }
 
-            return await DatabaseReference.Child("Races").Child(raceId).GetValueAsync();
+            return null;
+        }
+        
+        private async Task<DataSnapshot> GetUserRacesSnapshotAsync(string userId)
+        {
+            DataSnapshot snapshot = await DatabaseReference.Child("userRaces").Child(userId).GetValueAsync();
+
+            if (snapshot.Exists)
+            {
+                return snapshot;
+            }
+
+            return null;
+        }
+
+        private async Task EnsureUserCanHostRace(string userId)
+        {
+            var (isHostingActive, isParticipatingActive) = await GetActiveRaceParticipationAsync(userId);
+
+            if (isHostingActive)
+            {
+                throw new InvalidOperationException("You are already hosting an active race.");
+            }
+
+            if (isParticipatingActive)
+            {
+                throw new InvalidOperationException("You cannot host a race while participating in another active race.");
+            }
+        }
+
+        private async Task EnsureUserCanJoinRace(string userId, string raceIdToIgnore)
+        {
+            var (isHostingActive, isParticipatingActive) = await GetActiveRaceParticipationAsync(userId, raceIdToIgnore);
+
+            if (isHostingActive)
+            {
+                throw new InvalidOperationException("You cannot join another race while hosting an active race.");
+            }
+
+            if (isParticipatingActive)
+            {
+                throw new InvalidOperationException("You are already participating in an active race.");
+            }
+        }
+
+        private async Task<(bool isHostingActive, bool isParticipatingActive)> GetActiveRaceParticipationAsync(string userId, string raceIdToIgnore = null)
+        {
+            DataSnapshot snapshot = await GetUserRacesSnapshotAsync(userId);
+
+            bool hostingActive = false;
+            bool participatingActive = false;
+
+            if (snapshot is { Exists: true })
+            {
+                foreach (DataSnapshot raceEntry in snapshot.Children)
+                {
+                    if (string.Equals(raceEntry.Key, raceIdToIgnore, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceEntry.Key);
+
+                    if (raceSnapshot is not { Exists: true })
+                    {
+                        continue;
+                    }
+
+                    string status = raceSnapshot.Child("status").Value?.ToString();
+
+                    if (!IsActiveRaceStatus(status))
+                    {
+                        continue;
+                    }
+
+                    string role = raceEntry.Child("role").Value?.ToString();
+
+                    if (string.Equals(role, "host", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hostingActive = true;
+                    }
+                    else
+                    {
+                        participatingActive = true;
+                    }
+
+                    if (hostingActive && participatingActive)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return (hostingActive, participatingActive);
+        }
+
+        private static bool IsActiveRaceStatus(string status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return true;
+            }
+
+            return !string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase) &&
+                   !string.Equals(status, "cancelled", StringComparison.OrdinalIgnoreCase);
         }
 
         private async Task<DataSnapshot> FetchUserDataById(string userId)
@@ -475,16 +688,6 @@ namespace TrainingBuddy.Managers
             if (snapshot.Exists)
             {
                 return snapshot;
-            }
-
-            DataSnapshot legacySnapshot = await DatabaseReference.Child("Users").GetValueAsync();
-
-            foreach (DataSnapshot child in legacySnapshot.Children)
-            {
-                if (child.Child("UserID").Value?.ToString() == userId)
-                {
-                    return child;
-                }
             }
 
             return null;
@@ -578,7 +781,6 @@ namespace TrainingBuddy.Managers
 			}
 
 			StepCounterRunning = true;
-			Debug.Log("StepCounter Handler Call");
 			_ = StepCounterHandler();
 		}
 
@@ -606,12 +808,10 @@ namespace TrainingBuddy.Managers
 					}
 				}
 
-				Debug.Log("StepCounter is reading");
 				localStepCount = StepCounter.current.stepCounter.ReadValue();
 
 				if (localStepCount <= 0)
 				{
-					Debug.Log("StepCounter has no data yet");
 					await Task.Delay(1000);
 					continue;
 				}

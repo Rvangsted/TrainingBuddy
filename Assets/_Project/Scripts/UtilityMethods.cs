@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Firebase.Database;
+using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 
 namespace TrainingBuddy.Utility
@@ -40,6 +41,41 @@ namespace TrainingBuddy.Utility
 			}
 
 			return usersInRange;
+		}
+		
+		public static List<DataSnapshot> FindRacesInRange(DataSnapshot raceList, float latitude, float longitude, float radiusInKilometers)
+		{
+			var basePoint = ConvertLatLon(latitude, longitude);
+			var racesInRange = new List<DataSnapshot>();
+
+			foreach (DataSnapshot userListChild in raceList.Children)
+			{
+				var raceLatitude = 0f;
+				var raceLongitude = 0f;
+				
+				foreach (DataSnapshot dataSnapshot in userListChild.Children)
+				{
+					switch (dataSnapshot.Key)
+					{
+						case "Latitude":
+							raceLatitude = float.Parse(dataSnapshot.Value.ToString());
+							break;
+						case "Longitude":
+							raceLongitude = float.Parse(dataSnapshot.Value.ToString());
+							break;
+					}
+				}
+
+				var racePoint = ConvertLatLon(raceLatitude, raceLongitude);
+				var distance = Vector3.Distance(basePoint, racePoint);
+				
+				if (radiusInKilometers >= distance)
+				{
+					racesInRange.Add(userListChild);
+				}
+			}
+
+			return racesInRange;
 		}
 
 		private static Vector3 ConvertLatLon(float latitude, float longitude)

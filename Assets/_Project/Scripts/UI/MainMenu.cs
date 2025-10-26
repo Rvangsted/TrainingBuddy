@@ -1,3 +1,4 @@
+using System;
 using BedtimeCore;
 using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
@@ -61,7 +62,7 @@ namespace TrainingBuddy.UI
 			
 			_participateRaceButton.RegisterCallback<ClickEvent>(_ =>
 			{
-				// _uiManager.ChangePage(_layoutData.ProfileScreen);
+				_uiManager.ChangePage(_layoutData.FindLobbyScreen);
 			});
 			
 			_profileButton.RegisterCallback<ClickEvent>(_ =>
@@ -72,12 +73,15 @@ namespace TrainingBuddy.UI
 		
 		private async void CreateLobby(ClickEvent evt)
 		{
+			var _userDataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
+			var longitude = Convert.ToInt32(_userDataSnapshot.Child("Longitude").Value);
+			var latitude = Convert.ToInt32(_userDataSnapshot.Child("Latitude").Value);
 			await _databaseManager.CreateLobby(new RaceData
 			{
 				RaceName = $"{_databaseManager.Auth.CurrentUser.DisplayName}'s Race",
 				HostName = _databaseManager.Auth.CurrentUser.DisplayName,
-				Longitude = 0,
-				Latitude = 0,
+				Longitude = longitude,
+				Latitude = latitude,
 				Status = 0,
 			});
 			$"What happened?".Log();

@@ -55,3 +55,10 @@ The following structure supports race hosting with controlled participation limi
 2. **Join** – when a race is `open` and below capacity, a user posts to `joinRequests/<raceId>/<uid>`. Server-side logic (Cloud Functions, admin client) validates capacity and moves approved users into `races/<raceId>/participants` and `userRaces/<uid>/<raceId>`.
 3. **Leave** – the host (or automation running with elevated privileges) removes the user from `races/<raceId>/participants` and deletes the `userRaces` entry. Optionally, the user can set a `leave` flag inside their join request to trigger the removal.
 4. **Close** – the host updates `status` to `in_progress` or `completed` to prevent new join requests from being approved.
+
+### Participation restrictions
+
+- A user cannot host a second race or join another race while they are already hosting an active (non-cancelled, non-completed) race.
+- A user cannot submit or be approved for a new race if they are already participating in another active race.
+- Participants may leave races that are still `open` or `cancelled`, but must remain in races that are `in_progress` or `completed`.
+- Only the race host (or a level 2 admin) can cancel a race, which moves its status to `cancelled` and clears outstanding join requests.

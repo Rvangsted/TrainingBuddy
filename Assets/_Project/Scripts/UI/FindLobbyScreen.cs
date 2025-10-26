@@ -24,26 +24,28 @@ namespace TrainingBuddy.UI
 			// throw new System.NotImplementedException();
 		}
 
-		public override void DrawLayout()
+		public override async void DrawLayout()
 		{
 			base.DrawLayout();
-			// _uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.RaceMenuScreen));
+
+			var lobbies = await _databaseManager.NearbyRaces(10);
 			
-			for (var i = 0; i < 3; i++)
+			var listSize = lobbies.Count > 3 ? 3 : lobbies.Count;
+			for (var i = 0; i < listSize; i++)
 			{
 				_lobbyButtons.Add(new Button
 				{
-					name = "Test_" + i,
-					text = "Test " + i
+					name = $"{lobbies[i].Child("title").Value}_" + i,
+					text = $"{lobbies[i].Child("title").Value}",
 				});
 				_lobbyButtons[i].AddToClassList("button-large");
 				Layout.Q<VisualElement>("Container").Add(_lobbyButtons[i]);
 				int localIncrement = i;
-				_lobbyButtons[i].RegisterCallback<ClickEvent>(evt => JoinLobby(evt, localIncrement));
+				_lobbyButtons[i].RegisterCallback<ClickEvent>(async evt => await _databaseManager.SubmitJoinRequestAsync(lobbies[localIncrement].Key));
 			}
 			
-			// _createButton = Layout.Q<Button>("JoinButton");
-			// _createButton.RegisterCallback<ClickEvent>(JoinLobby);
+			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.MainMenu));
+			_uiManager.Header.Q<Label>("SiteTitle").text = "Tætteste Race";
 		}
 		
 		private async void JoinLobby(ClickEvent evt, int btnNum)
