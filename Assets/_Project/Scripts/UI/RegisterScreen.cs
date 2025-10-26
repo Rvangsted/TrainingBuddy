@@ -36,6 +36,14 @@ namespace TrainingBuddy.UI
 			
 			_registerButton.RegisterCallback<ClickEvent>(OnRegister);
 		}
+		
+		public override void DrawLayout()
+		{
+			base.DrawLayout();
+			
+			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.LoginScreen));
+			_uiManager.Header.Q<Label>("SiteTitle").text = "Min Profil";
+		}
 
 		private async void OnRegister(ClickEvent evt)
 		{

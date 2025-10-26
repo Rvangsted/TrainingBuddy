@@ -25,7 +25,7 @@
         "$requesterId": {
           ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0 && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || auth.uid == $requesterId || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
           ".write": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0 && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || auth.uid == $requesterId || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
-          ".validate": "root.child('users').child(auth.uid).child('UserLevel').val() == 2 || (auth.uid == $requesterId && (newData.isNull() || newData.child('status').val() == 'pending')) || (root.child('races').child($raceId).child('hostId').val() == auth.uid)"
+          ".validate": "root.child('users').child(auth.uid).child('UserLevel').val() == 2 || (auth.uid == $requesterId && (!newData.exists() || newData.child('status').val() == 'pending')) || (root.child('races').child($raceId).child('hostId').val() == auth.uid)"
         }
       }
     },

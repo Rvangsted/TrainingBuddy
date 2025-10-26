@@ -139,6 +139,9 @@ namespace TrainingBuddy.UI
 					Header.AddToClassList("hide");
 					_uiDocument.rootVisualElement.AddToClassList("show-splash-background");
 					break;
+				case RegisterScreen:
+					_uiDocument.rootVisualElement.AddToClassList("show-splash-background");
+					break;
 				case LoginScreen:
 					_uiDocument.rootVisualElement.AddToClassList("show-splash-background");
 					break;

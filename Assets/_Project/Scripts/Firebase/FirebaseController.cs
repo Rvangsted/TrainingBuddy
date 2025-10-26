@@ -153,7 +153,7 @@ namespace TrainingBuddy.FireBase
 	        await ProfileTask;
 	        if (ProfileTask.IsFaulted)
 	        {
-		        $"ProfileTask failed with {ProfileTask.Exception}".Log();
+		        $"ProfileTask failed with {ProfileTask.Exception}".Log(); 
 		        return false;
 	        }
 	        

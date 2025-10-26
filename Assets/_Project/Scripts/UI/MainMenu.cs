@@ -53,11 +53,6 @@ namespace TrainingBuddy.UI
 			_participateRaceButton = Layout.Q<Button>("ParticipateRaceButton");
 			_profileButton = Layout.Q<Button>("ProfileButton");
 			
-			// _startRaceButton.RegisterCallback<ClickEvent>(_ =>
-			// {
-			// 	// _uiManager.ChangePage(_layoutData.RaceMenuScreen);
-			// });
-			
 			_startRaceButton.RegisterCallback<ClickEvent>(CreateLobby);
 			
 			_participateRaceButton.RegisterCallback<ClickEvent>(_ =>
@@ -84,8 +79,8 @@ namespace TrainingBuddy.UI
 				Latitude = latitude,
 				Status = 0,
 			});
-			$"What happened?".Log();
-			// ReDrawLayout();
+			
+			_uiManager.ChangePage(_layoutData.LobbyScreen);
 		}
 	}
 }
