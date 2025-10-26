@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Firebase.Database;
-using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 
 namespace TrainingBuddy.Utility
