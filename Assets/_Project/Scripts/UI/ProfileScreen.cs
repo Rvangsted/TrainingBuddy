@@ -63,6 +63,7 @@ namespace TrainingBuddy.UI
 			DrawFriendsSection();
 			
 			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.MainMenu));
+			_uiManager.Header.Q<Label>("SiteTitle").text = "Min Profil";
 			
 			base.DrawLayout();
         }

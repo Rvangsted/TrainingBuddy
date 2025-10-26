@@ -1,3 +1,8 @@
+.login-wrapper {
+    position: absolute;
+    bottom: 0;
+}
+
 .login-screen {
     flex-direction: column;
     align-items: center;
@@ -32,7 +37,7 @@
 .field-password .unity-text-element {
     flex-shrink: 0;
     font-size: 20px;
-    -unity-font-definition: url("project://database/Assets/_Project/Fonts/SundayFunday/SundayFunday SDF.asset");
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
     -unity-font-style: normal;
     -unity-text-align: middle-center;
     color: var(--font-color-lightgray);
@@ -42,6 +47,11 @@
 .field-email>.unity-text-field__input.has-value .unity-text-element,
 .field-password>.unity-text-field__input.has-value .unity-text-element {
     color: var(--font-color-gray);
+}
+
+#PrivacyButton {
+    height: 30px;
+    margin-top: 60px;
 }
 
 .button-container {

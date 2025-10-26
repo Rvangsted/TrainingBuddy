@@ -289,15 +289,28 @@ namespace TrainingBuddy.Managers
 			_ = StepCounterHandler();
 		}
 
-		private async Task StepCounterHandler(float delay = 10f)
+		private async Task StepCounterHandler(float delay = 2f)
 		{
 			while (StepCounterRunning)
 			{
 				if (StepCounter.current == null)
 				{
-					Debug.Log("StepCounter is stopping");
-					StepCounterRunning = false;
-					break;
+					Debug.Log("StepCounter unavailable, attempting to re-register");
+					InputSystem.AddDevice<StepCounter>();
+					await Task.Delay(1000);
+					continue;
+				}
+
+				if (!StepCounter.current.enabled)
+				{
+					Debug.Log("StepCounter disabled, enabling");
+					InputSystem.EnableDevice(StepCounter.current);
+
+					if (!StepCounter.current.enabled)
+					{
+						await Task.Delay(1000);
+						continue;
+					}
 				}
 
 				Debug.Log("StepCounter is reading");
@@ -305,7 +318,7 @@ namespace TrainingBuddy.Managers
 
 				if (localStepCount <= 0)
 				{
-					Debug.Log("StepCounter is something");
+					Debug.Log("StepCounter has no data yet");
 					await Task.Delay(1000);
 					continue;
 				}
@@ -317,27 +330,63 @@ namespace TrainingBuddy.Managers
 		}
 
 		private async Task UpdateStepCount()
-		{
-			DataSnapshot data = await FetchUserData(Auth.CurrentUser);
+        {
+            DataSnapshot data = await FetchUserData(Auth.CurrentUser);
 
-			var stepSnapshot = (long)data.Child("StepCountSnapshot").Value;
-			var savedStepCount = (long)data.Child("StepCount").Value;
+            object stepSnapshotValue = data.Child("StepCountSnapshot").Value;
+            object savedStepCountValue = data.Child("StepCount").Value;
 
+            long savedStepCount = savedStepCountValue switch
+            {
+                long l => l,
+                int i => i,
+                double d => (long)d,
+                null => 0,
+                _ => Convert.ToInt64(savedStepCountValue)
+            };
 
-			if (localStepCount >= stepSnapshot)
-			{
-				long newStepCount = savedStepCount + (localStepCount - stepSnapshot);
+            long? stepSnapshot = stepSnapshotValue switch
+            {
+                long l => l,
+                int i => i,
+                double d => (long)d,
+                null => (long?)null,
+                _ => Convert.ToInt64(stepSnapshotValue)
+            };
 
-				await UpdateUser(Auth.CurrentUser, new UserData { StepCount = (int)newStepCount });
+            if (stepSnapshot is null or 0)
+            {
+                await UpdateUser(Auth.CurrentUser, new UserData { StepCountSnapshot = localStepCount });
+                return;
+            }
 
-				await UniTask.SwitchToMainThread();
-				UIManager.UpdateStepCounter(newStepCount);
-				StepCountChanged?.Invoke(newStepCount);
-				Debug.Log(newStepCount);
-			}
+            long? updatedStepCount = null;
 
-			await UpdateUser(Auth.CurrentUser, new UserData { StepCountSnapshot = localStepCount });
-		}
+            if (localStepCount > stepSnapshot)
+            {
+                updatedStepCount = savedStepCount + (localStepCount - stepSnapshot.Value);
+            }
+            else if (localStepCount < stepSnapshot)
+            {
+                updatedStepCount = savedStepCount + localStepCount;
+            }
+
+            if (updatedStepCount.HasValue)
+            {
+                await UpdateUser(Auth.CurrentUser, new UserData
+                {
+                    StepCount = (int)updatedStepCount.Value,
+                    StepCountSnapshot = localStepCount
+                });
+
+                await UniTask.SwitchToMainThread();
+                StepCountChanged?.Invoke(updatedStepCount.Value);
+                Debug.Log(updatedStepCount.Value);
+                return;
+            }
+
+            await UpdateUser(Auth.CurrentUser, new UserData { StepCountSnapshot = localStepCount });
+        }
 
 
 		// ---- OLD STUFF ----

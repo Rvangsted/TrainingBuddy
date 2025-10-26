@@ -136,7 +136,7 @@ namespace TrainingBuddy.UI
 			switch (layout)
 			{
 				case MainMenu:
-					Header.AddToClassList("hide-back-button");
+					Header.AddToClassList("hide");
 					_uiDocument.rootVisualElement.AddToClassList("show-splash-background");
 					break;
 				case LoginScreen:
@@ -147,7 +147,7 @@ namespace TrainingBuddy.UI
 
 		private void ClearConditionalClasses()
 		{
-			Header.RemoveFromClassList("hide-back-button");
+			Header.RemoveFromClassList("hide");
 			_uiDocument.rootVisualElement.RemoveFromClassList("show-splash-background");
 		}
 

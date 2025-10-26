@@ -27,7 +27,7 @@ namespace TrainingBuddy.UI
 		public override void DrawLayout()
 		{
 			base.DrawLayout();
-			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.RaceMenuScreen));
+			// _uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.RaceMenuScreen));
 			
 			for (var i = 0; i < 3; i++)
 			{

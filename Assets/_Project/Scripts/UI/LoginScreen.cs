@@ -35,6 +35,9 @@ namespace TrainingBuddy.UI
 			_loginButton = Layout.Q<Button>("LoginButton");
 			_registerButton = Layout.Q<Button>("RegisterButton");
 			_testButton = Layout.Q<Button>("TestButton");
+			
+			var privacyButton = TextButton("PrivacyButton", "interface_button_privacy", "<u>", "</u>");
+			Layout.Q<VisualElement>("LoginScreen").Add(privacyButton);
 
 			_loginButton.RegisterCallback<ClickEvent>(OnLogin);
 			_registerButton.RegisterCallback<ClickEvent>(OnRegister);

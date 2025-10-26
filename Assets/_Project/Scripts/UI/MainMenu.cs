@@ -52,7 +52,7 @@ namespace TrainingBuddy.UI
 			
 			_startRaceButton.RegisterCallback<ClickEvent>(_ =>
 			{
-				_uiManager.ChangePage(_layoutData.RaceMenuScreen);
+				// _uiManager.ChangePage(_layoutData.RaceMenuScreen);
 			});
 			
 			_participateRaceButton.RegisterCallback<ClickEvent>(_ =>

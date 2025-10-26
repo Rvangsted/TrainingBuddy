@@ -59,15 +59,14 @@
 .unity-button {
     height: 70px;
     width: 100%;
-    border-radius: 10;
+    border-radius: 40;
     border-width: 0;
     background-color: var(--color-buttons);
     flex-shrink: 0;
     padding: 0;
     margin: 0;
-    font-size: 20px;
-    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
-    -unity-font-style: bold;
+    font-size: 24px;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
     color: var(--color-dark);
 }
 
@@ -153,6 +152,10 @@
     display: none;
 }
 
+.layout-header.hide {
+    display: none;
+}
+
 .safe-area-container {
     flex-grow: 1;
     width: 100%;
@@ -163,7 +166,8 @@
 }
 
 .layout-content {
-    justify-content: flex-end;
+    position: relative;
+    justify-content: flex-start;
     align-items: center;
     height: 100%;
     width: 100%;

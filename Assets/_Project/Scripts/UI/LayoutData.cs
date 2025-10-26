@@ -13,7 +13,6 @@ namespace TrainingBuddy.UI
 		[field:SerializeField] public VisualTreeAsset ProfileScreenVisualTree { get; set; }
 		[field:SerializeField] public VisualTreeAsset HighScoreVisualTree { get; set; }
 		[field:SerializeField] public VisualTreeAsset RaceScreenVisualTree { get; set; }
-		[field:SerializeField] public VisualTreeAsset RaceMenuScreenVisualTree { get; set; }
 		[field:SerializeField] public VisualTreeAsset LobbyScreenVisualTree { get; set; }
 		[field:SerializeField] public VisualTreeAsset HostScreenVisualTree { get; set; }
 		[field:SerializeField] public VisualTreeAsset FindLobbyScreenVisualTree { get; set; }
@@ -23,7 +22,6 @@ namespace TrainingBuddy.UI
 		public MainMenu MainMenu { get; set; }
 		public ProfileScreen ProfileScreen { get; set; }
 		public HighScoreScreen HighScoreScreen { get; set; }
-		public RaceMenuScreen RaceMenuScreen { get; set; }
 		public LobbyScreen LobbyScreen { get; set; }
 		public RaceScreen RaceScreen { get; set; }
 		public HostScreen HostScreen { get; set; }
