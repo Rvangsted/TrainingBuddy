@@ -25,6 +25,11 @@ namespace TrainingBuddy.Managers
 		public FirebaseAuth Auth { get; set; }
 		public DatabaseReference DatabaseReference { get; set; }
 		public JsonSerializerSettings JsonSettings { get; set; }
+
+		public Task<string> HostRaceAsync(RaceData race, int capacity, string description = null);
+		public Task SubmitJoinRequestAsync(string raceId);
+		public Task RetractJoinRequestAsync(string raceId);
+		public Task<bool> HandleJoinRequestAsync(string raceId, string requesterUserId, bool approve);
 	}
 
 	public class DatabaseManager : IDatabaseManager
@@ -45,16 +50,18 @@ namespace TrainingBuddy.Managers
 		{
 			string json = JsonConvert.SerializeObject(user, JsonSettings);
 
-			Task DBTask = DatabaseReference.Child("Users")
-			                               .Child(user.UserName + "_" + user.UserID)
-			                               .SetRawJsonValueAsync(json);
-			await DBTask;
+			Task legacyTask = DatabaseReference.Child("Users").Child(user.UserName + "_" + user.UserID).SetRawJsonValueAsync(json);
 
-			if (DBTask.IsFaulted)
+			Task userByIdTask = DatabaseReference.Child("users").Child(user.UserID).SetRawJsonValueAsync(json);
+
+			await Task.WhenAll(legacyTask, userByIdTask);
+
+			if (legacyTask.IsFaulted || userByIdTask.IsFaulted)
 			{
-				$"CreateUser operation failed with {DBTask.Exception}".Log();
+				Exception exception = legacyTask.Exception ?? userByIdTask.Exception;
+				$"CreateUser operation failed with {exception}".Log();
 			}
-			else if (DBTask.IsCompleted)
+			else if (legacyTask.IsCompleted && userByIdTask.IsCompleted)
 			{
 				//TODO: Handle the success???
 			}
@@ -95,16 +102,19 @@ namespace TrainingBuddy.Managers
 
 			       string json = JsonConvert.SerializeObject(userData, JsonSettings);
 
-			       Task DBTask = DatabaseReference.Child("Users").Child(userName + "_" + userID).SetRawJsonValueAsync(json);
-			       await DBTask;
+			       Task legacyTask = DatabaseReference.Child("Users").Child(userName + "_" + userID).SetRawJsonValueAsync(json);
+			       Task userByIdTask = DatabaseReference.Child("users").Child(userID).SetRawJsonValueAsync(json);
 
-			       if (DBTask.IsFaulted)
+			       await Task.WhenAll(legacyTask, userByIdTask);
+
+			       if (legacyTask.IsFaulted || userByIdTask.IsFaulted)
 			       {
-			           $"UpdateUser Write operation failed with {DBTask.Exception}".Log();
+				       Exception exception = legacyTask.Exception ?? userByIdTask.Exception;
+				       $"UpdateUser Write operation failed with {exception}".Log();
 			       }
-			       else if (DBTask.IsCompleted)
+			       else if (legacyTask.IsCompleted && userByIdTask.IsCompleted)
 			       {
-			           //TODO: Handle the success??? 
+				       //TODO: Handle the success???
 			       }
 			   }
 			});
@@ -116,24 +126,35 @@ namespace TrainingBuddy.Managers
 			string userID = user.UserId;
 			DataSnapshot snapshot = null;
 
-			await DatabaseReference.Child("Users")
-			                       .Child(userName + "_" + userID)
-			                       .GetValueAsync()
-			                       .ContinueWithOnMainThread(task =>
-			                       {
-				                       if (task.IsFaulted)
-				                       {
-					                       $"FetchUserData Read operation failed with {task.Exception}".Log();
-				                       }
-				                       else if (task.IsCompleted)
-				                       {
-					                       snapshot = task.Result;
-				                       }
+            try
+            {
+                DataSnapshot newStructureSnapshot = await DatabaseReference.Child("users").Child(userID).GetValueAsync();
 
-				                       return Task.CompletedTask;
-			                       });
-			return snapshot;
-		}
+                if (newStructureSnapshot.Exists)
+                {
+                    return newStructureSnapshot;
+                }
+            }
+            catch (Exception exception)
+            {
+                $"FetchUserData Read operation failed with {exception}".Log();
+            }
+
+            await DatabaseReference.Child("Users").Child(userName + "_" + userID).GetValueAsync().ContinueWithOnMainThread(task =>
+			{
+			   if (task.IsFaulted)
+			   {
+					$"FetchUserData Read operation failed with {task.Exception}".Log();
+			   }
+			   else if (task.IsCompleted)
+			   {
+					snapshot = task.Result;
+			   }
+		
+			   return Task.CompletedTask;
+			});
+            return snapshot;
+    }
 
 		public async Task InvestInTraining(LayoutData _layoutData)
 		{
@@ -177,24 +198,204 @@ namespace TrainingBuddy.Managers
 
 		public async Task CreateLobby(RaceData race)
 		{
-			var lobbyId = Guid.NewGuid();
-
-			string json = JsonConvert.SerializeObject(race, JsonSettings);
-
-			Task DBTask = DatabaseReference.Child("Races").Child(race.RaceName + "_" + lobbyId).SetRawJsonValueAsync(json);
-			await DBTask;
-
-			if (DBTask.IsFaulted)
-			{
-				$"CreateLobby operation failed with {DBTask.Exception}".Log();
-			}
-			else if (DBTask.IsCompleted)
-			{
-				//TODO: Handle the success???
-			}
+			await HostRaceAsync(race, 3);
 		}
 
-		public async Task<List<string>> FindNearbyLobbies()
+		public async Task<string> HostRaceAsync(RaceData race, int capacity, string description = null)
+        {
+            if (Auth?.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Cannot host a race without an authenticated user.");
+            }
+
+            if (capacity <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(capacity), "Race capacity must be greater than zero.");
+            }
+
+            int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
+
+            if (IsDeactivatedLevel(currentUserLevel))
+            {
+                throw new InvalidOperationException("Deactivated users cannot host races.");
+            }
+
+            string raceId = Guid.NewGuid().ToString("N");
+            long timestamp = GetUnixTimestampMilliseconds();
+            string hostDisplayName = race.HostName ?? Auth.CurrentUser.DisplayName ?? string.Empty;
+            string raceStatus = MapRaceStatus(race.Status);
+
+            Dictionary<string, object> updates = new Dictionary<string, object>
+            {
+                [$"races/{raceId}/hostId"] = Auth.CurrentUser.UserId,
+                [$"races/{raceId}/title"] = race.RaceName ?? string.Empty,
+                [$"races/{raceId}/description"] = description ?? string.Empty,
+                [$"races/{raceId}/capacity"] = capacity,
+                [$"races/{raceId}/status"] = raceStatus,
+                [$"races/{raceId}/createdAt"] = timestamp,
+                [$"races/{raceId}/longitude"] = race.Longitude,
+                [$"races/{raceId}/latitude"] = race.Latitude,
+                [$"races/{raceId}/participants/{Auth.CurrentUser.UserId}/joinedAt"] = timestamp,
+                [$"races/{raceId}/participants/{Auth.CurrentUser.UserId}/displayName"] = hostDisplayName,
+                [$"races/{raceId}/participants/{Auth.CurrentUser.UserId}/isHost"] = true,
+                [$"userRaces/{Auth.CurrentUser.UserId}/{raceId}/role"] = "host",
+                [$"userRaces/{Auth.CurrentUser.UserId}/{raceId}/joinedAt"] = timestamp
+            };
+
+            await DatabaseReference.UpdateChildrenAsync(updates);
+
+            return raceId;
+        }
+
+        public async Task SubmitJoinRequestAsync(string raceId)
+        {
+            if (Auth?.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Cannot join a race without an authenticated user.");
+            }
+
+            int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
+
+            if (IsDeactivatedLevel(currentUserLevel))
+            {
+                throw new InvalidOperationException("Deactivated users cannot submit join requests.");
+            }
+
+            DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
+
+            if (raceSnapshot is not { Exists: true })
+            {
+                throw new InvalidOperationException("Race not found.");
+            }
+
+            string status = raceSnapshot.Child("status").Value?.ToString();
+            if (!string.IsNullOrEmpty(status) && status != "open")
+            {
+                throw new InvalidOperationException("Race is not open for join requests.");
+            }
+
+            int capacity = ConvertToNullableInt(raceSnapshot.Child("capacity").Value) ?? 0;
+            long participantsCount = raceSnapshot.Child("participants").ChildrenCount;
+
+            if (capacity > 0 && participantsCount >= capacity)
+            {
+                throw new InvalidOperationException("Race is already at capacity.");
+            }
+
+            long timestamp = GetUnixTimestampMilliseconds();
+
+            var requestData = new Dictionary<string, object>
+            {
+                { "requestedAt", timestamp },
+                { "status", "pending" },
+                { "displayName", Auth.CurrentUser.DisplayName ?? string.Empty },
+            };
+
+            await DatabaseReference.Child("joinRequests").Child(raceId).Child(Auth.CurrentUser.UserId).SetValueAsync(requestData);
+        }
+
+        public async Task RetractJoinRequestAsync(string raceId)
+        {
+            if (Auth?.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Cannot retract a request without an authenticated user.");
+            }
+
+            int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
+
+            if (IsDeactivatedLevel(currentUserLevel))
+            {
+                throw new InvalidOperationException("Deactivated users cannot retract join requests.");
+            }
+
+            await DatabaseReference.Child("joinRequests").Child(raceId).Child(Auth.CurrentUser.UserId).RemoveValueAsync();
+        }
+
+        public async Task<bool> HandleJoinRequestAsync(string raceId, string requesterUserId, bool approve)
+        {
+            if (Auth?.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Cannot handle requests without an authenticated user.");
+            }
+
+            int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
+
+            if (IsDeactivatedLevel(currentUserLevel))
+            {
+                throw new InvalidOperationException("Deactivated users cannot manage races.");
+            }
+
+            DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
+
+            if (raceSnapshot is not { Exists: true })
+            {
+                return false;
+            }
+
+            string hostId = raceSnapshot.Child("hostId").Value?.ToString();
+
+            if (!IsAdminLevel(currentUserLevel) && hostId != Auth.CurrentUser.UserId)
+            {
+                throw new InvalidOperationException("Only the host or an admin can handle join requests.");
+            }
+
+            DataSnapshot requestSnapshot = await DatabaseReference.Child("joinRequests").Child(raceId).Child(requesterUserId).GetValueAsync();
+
+            if (requestSnapshot is not { Exists: true })
+            {
+                    return false;
+            }
+
+            string currentStatus = requestSnapshot.Child("status").Value?.ToString();
+            if (!string.Equals(currentStatus, "pending", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            long timestamp = GetUnixTimestampMilliseconds();
+            Dictionary<string, object> updates = new Dictionary<string, object>
+            {
+                [$"joinRequests/{raceId}/{requesterUserId}/status"] = approve ? "approved" : "rejected",
+                [$"joinRequests/{raceId}/{requesterUserId}/processedAt"] = timestamp,
+                [$"joinRequests/{raceId}/{requesterUserId}/processedBy"] = Auth.CurrentUser.UserId
+            };
+
+            if (approve)
+            {
+                int capacity = ConvertToNullableInt(raceSnapshot.Child("capacity").Value) ?? 0;
+                long participantsCount = raceSnapshot.Child("participants").ChildrenCount;
+
+                if (capacity > 0 && participantsCount >= capacity)
+                {
+                    updates[$"joinRequests/{raceId}/{requesterUserId}/status"] = "rejected";
+                    await DatabaseReference.UpdateChildrenAsync(updates);
+                    return false;
+                }
+
+                string displayName = requestSnapshot.Child("displayName").Value?.ToString();
+
+                if (string.IsNullOrWhiteSpace(displayName))
+                {
+                    DataSnapshot userSnapshot = await FetchUserDataById(requesterUserId);
+                    displayName = userSnapshot?.Child("UserName").Value?.ToString() ?? string.Empty;
+                }
+
+                updates[$"races/{raceId}/participants/{requesterUserId}/joinedAt"] = timestamp;
+                updates[$"races/{raceId}/participants/{requesterUserId}/displayName"] = displayName ?? string.Empty;
+                updates[$"races/{raceId}/participants/{requesterUserId}/isHost"] = false;
+                updates[$"userRaces/{requesterUserId}/{raceId}/role"] = "participant";
+                updates[$"userRaces/{requesterUserId}/{raceId}/joinedAt"] = timestamp;
+            }
+            else
+            {
+                updates[$"userRaces/{requesterUserId}/{raceId}"] = null;
+            }
+
+            await DatabaseReference.UpdateChildrenAsync(updates);
+            return true;
+        }
+
+        public async Task<List<string>> FindNearbyLobbies()
 		{
 			var nearbyLobbies = new List<string>();
 			var userList = await NearbyUsers(10);
@@ -233,24 +434,117 @@ namespace TrainingBuddy.Managers
 
 		private async Task<DataSnapshot> GetAllRaces()
 		{
-			Task<DataSnapshot> DBTask = DatabaseReference.Child("Races")
-			                                             .GetValueAsync();
+			DataSnapshot snapshot = await DatabaseReference.Child("races").GetValueAsync();
 
-			return await DBTask;
+			if (snapshot.Exists)
+			{
+				return snapshot;
+			}
+
+			return await DatabaseReference.Child("Races").GetValueAsync();
 		}
 
 		private async Task<DataSnapshot> GetAllUsers()
 		{
-			Task<DataSnapshot> DBTask = DatabaseReference.Child("Users")
-			                                             .GetValueAsync();
+			DataSnapshot snapshot = await DatabaseReference.Child("users").GetValueAsync();
 
-			return await DBTask;
-		}
-
-		public void StartStepCounter()
-		{
-			if (StepCounterRunning)
+			if (snapshot.Exists)
 			{
+				return snapshot;
+			}
+	
+			return await DatabaseReference.Child("Users").GetValueAsync();
+        }
+
+        private async Task<DataSnapshot> GetRaceSnapshotAsync(string raceId)
+        {
+            DataSnapshot snapshot = await DatabaseReference.Child("races").Child(raceId).GetValueAsync();
+
+            if (snapshot.Exists)
+            {
+                return snapshot;
+            }
+
+            return await DatabaseReference.Child("Races").Child(raceId).GetValueAsync();
+        }
+
+        private async Task<DataSnapshot> FetchUserDataById(string userId)
+        {
+            DataSnapshot snapshot = await DatabaseReference.Child("users").Child(userId).GetValueAsync();
+
+            if (snapshot.Exists)
+            {
+                return snapshot;
+            }
+
+            DataSnapshot legacySnapshot = await DatabaseReference.Child("Users").GetValueAsync();
+
+            foreach (DataSnapshot child in legacySnapshot.Children)
+            {
+                if (child.Child("UserID").Value?.ToString() == userId)
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        private async Task<int?> GetUserLevelAsync(string userId)
+        {
+            DataSnapshot snapshot = await FetchUserDataById(userId);
+
+            if (snapshot is not { Exists: true })
+            {
+                return null;
+            }
+
+            return ConvertToNullableInt(snapshot.Child("UserLevel").Value);
+        }
+
+        private static int? ConvertToNullableInt(object value)
+        {
+            return value switch
+            {
+                null => null,
+                long l => (int)l,
+                int i => i,
+                double d => (int)d,
+                string s when int.TryParse(s, out int parsed) => parsed,
+                _ => null
+            };
+        }
+
+        private static bool IsAdminLevel(int? level)
+        {
+            return level.HasValue && level.Value >= 2;
+        }
+
+        private static bool IsDeactivatedLevel(int? level)
+        {
+            return level.HasValue && level.Value == 0;
+        }
+
+        private static string MapRaceStatus(int status)
+        {
+            return status switch
+            {
+                1 => "in_progress",
+                2 => "completed",
+                3 => "cancelled",
+                _ => "open",
+            };
+        }
+
+        private static long GetUnixTimestampMilliseconds()
+        {
+            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        }
+
+        public void StartStepCounter()
+        {
+            if (StepCounterRunning)
+            {
 				return;
 			}
 
@@ -386,49 +680,5 @@ namespace TrainingBuddy.Managers
 
             await UpdateUser(Auth.CurrentUser, new UserData { StepCountSnapshot = localStepCount });
         }
-
-
-		// ---- OLD STUFF ----
-		//
-		// public void StartLocationUpdater()
-		// {
-		// 	if (Permission.HasUserAuthorizedPermission("android.permission.ACCESS_FINE_LOCATION"))
-		// 	{
-		// 		if (!Input.location.isEnabledByUser)
-		// 		{
-		// 			return;
-		// 		}
-		//
-		// 		if (Input.location.status != LocationServiceStatus.Running)
-		// 		{
-		// 			Input.location.Start();
-		// 		}
-		// 		
-		// 		LocationHandler();
-		// 	}
-		// }
-		//
-		// private async Task LocationHandler(float delay = 10f)
-		// {
-		// 	if (isLocationUpdaterRunning)
-		// 	{
-		// 		return;
-		// 	}
-		// 	
-		// 	isLocationUpdaterRunning = true;
-		// 	
-		// 	while (true)
-		// 	{
-		// 		if (Input.location.status == LocationServiceStatus.Failed)
-		// 		{
-		// 			print("Unable to determine device location");
-		// 		}
-		//
-		// 		await DatabaseManager.Instance.WriteCurrentUserData("Latitude", Input.location.lastData.latitude);
-		// 		await DatabaseManager.Instance.WriteCurrentUserData("Longitude", Input.location.lastData.longitude);
-		//
-		// 		await Task.Delay((int)delay * 1000);
-		// 	}
-		// }
 	}
 }

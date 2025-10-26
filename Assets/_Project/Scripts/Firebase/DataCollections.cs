@@ -22,10 +22,8 @@ namespace TrainingBuddy.FireBase
 	{
 		public string RaceName;
 		public string HostName;
-		public string HostID;
 		public float Longitude;
 		public float Latitude;
 		public int Status;
-		public string Timestamp;
 	}
 }

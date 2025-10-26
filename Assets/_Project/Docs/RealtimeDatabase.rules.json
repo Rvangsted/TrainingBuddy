@@ -1,0 +1,41 @@
+﻿{
+  "rules": {
+    ".read": "false",
+    ".write": "false",
+    "users": {
+      "$uid": {
+        ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0 && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() == 2)",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || auth.uid == $uid)"
+      }
+    },
+    "Users": {
+      "$userKey": {
+        ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0 && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || data.child('UserID').val() == auth.uid)",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || newData.child('UserID').val() == auth.uid || data.child('UserID').val() == auth.uid)"
+      }
+    },
+    "races": {
+      "$raceId": {
+        ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || (root.child('users').child(auth.uid).child('UserLevel').val() != 0 && ((!data.exists() && newData.child('hostId').val() == auth.uid) || data.child('hostId').val() == auth.uid)))"
+      }
+    },
+    "joinRequests": {
+      "$raceId": {
+        "$requesterId": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0 && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || auth.uid == $requesterId || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
+          ".write": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0 && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || auth.uid == $requesterId || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
+          ".validate": "root.child('users').child(auth.uid).child('UserLevel').val() == 2 || (auth.uid == $requesterId && (newData.isNull() || newData.child('status').val() == 'pending')) || (root.child('races').child($raceId).child('hostId').val() == auth.uid)"
+        }
+      }
+    },
+    "userRaces": {
+      "$uid": {
+        "$raceId": {
+          ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0 && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() == 2)",
+          ".write": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() != 0 && (root.child('users').child(auth.uid).child('UserLevel').val() == 2 || auth.uid == $uid || root.child('races').child($raceId).child('hostId').val() == auth.uid)"
+        }
+      }
+    }
+  }
+}

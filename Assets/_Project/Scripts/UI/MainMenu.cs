@@ -1,3 +1,5 @@
+using BedtimeCore;
+using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
 using TrainingBuddy.UI.Controls;
 using TrainingBuddy.UI.Effects;
@@ -50,10 +52,12 @@ namespace TrainingBuddy.UI
 			_participateRaceButton = Layout.Q<Button>("ParticipateRaceButton");
 			_profileButton = Layout.Q<Button>("ProfileButton");
 			
-			_startRaceButton.RegisterCallback<ClickEvent>(_ =>
-			{
-				// _uiManager.ChangePage(_layoutData.RaceMenuScreen);
-			});
+			// _startRaceButton.RegisterCallback<ClickEvent>(_ =>
+			// {
+			// 	// _uiManager.ChangePage(_layoutData.RaceMenuScreen);
+			// });
+			
+			_startRaceButton.RegisterCallback<ClickEvent>(CreateLobby);
 			
 			_participateRaceButton.RegisterCallback<ClickEvent>(_ =>
 			{
@@ -64,6 +68,20 @@ namespace TrainingBuddy.UI
 			{
 				_uiManager.ChangePage(_layoutData.ProfileScreen);
 			});
+		}
+		
+		private async void CreateLobby(ClickEvent evt)
+		{
+			await _databaseManager.CreateLobby(new RaceData
+			{
+				RaceName = $"{_databaseManager.Auth.CurrentUser.DisplayName}'s Race",
+				HostName = _databaseManager.Auth.CurrentUser.DisplayName,
+				Longitude = 0,
+				Latitude = 0,
+				Status = 0,
+			});
+			$"What happened?".Log();
+			// ReDrawLayout();
 		}
 	}
 }

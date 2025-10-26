@@ -35,11 +35,9 @@ namespace TrainingBuddy.UI
 			{
 				RaceName = Layout.Q<TextField>("RaceName").value,
 				HostName = _databaseManager.Auth.CurrentUser.DisplayName,
-				HostID = _databaseManager.Auth.CurrentUser.UserId,
 				Longitude = 0,
 				Latitude = 0,
 				Status = 0,
-				Timestamp = DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
 			});
 			// ReDrawLayout();
 		}
