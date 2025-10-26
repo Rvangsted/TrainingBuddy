@@ -91,6 +91,7 @@ namespace TrainingBuddy.Managers
 			       userData.SpeedPoints ??= currentUserdata.SpeedPoints;
 			       userData.StepCount ??= currentUserdata.StepCount;
 			       userData.StepCountSnapshot ??= currentUserdata.StepCountSnapshot;
+			       userData.UserLevel ??= currentUserdata.UserLevel;
 
 			       string json = JsonConvert.SerializeObject(userData, JsonSettings);
 
@@ -180,9 +181,7 @@ namespace TrainingBuddy.Managers
 
 			string json = JsonConvert.SerializeObject(race, JsonSettings);
 
-			Task DBTask = DatabaseReference.Child("Races")
-			                               .Child(race.RaceName + "_" + lobbyId)
-			                               .SetRawJsonValueAsync(json);
+			Task DBTask = DatabaseReference.Child("Races").Child(race.RaceName + "_" + lobbyId).SetRawJsonValueAsync(json);
 			await DBTask;
 
 			if (DBTask.IsFaulted)

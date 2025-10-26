@@ -15,6 +15,7 @@ namespace TrainingBuddy.FireBase
 		public int? SpeedPoints;
 		public int? StepCount;
 		public int? StepCountSnapshot;
+		public int? UserLevel;
 	}
 	
 	public struct RaceData

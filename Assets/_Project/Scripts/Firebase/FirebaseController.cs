@@ -172,6 +172,7 @@ namespace TrainingBuddy.FireBase
 		        SpeedPoints = 0,
 		        StepCount = 0,
 		        StepCountSnapshot = 0,
+		        UserLevel = 1,
 	        };
 			        
 	        _databaseManager.CreateUser(user);
