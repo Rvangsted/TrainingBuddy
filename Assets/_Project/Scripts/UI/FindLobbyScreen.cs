@@ -27,6 +27,9 @@ namespace TrainingBuddy.UI
 		public override async void DrawLayout()
 		{
 			base.DrawLayout();
+			var container = Layout.Q<VisualElement>("Container");
+			container?.Clear();
+			_lobbyButtons.Clear();
 
 			var lobbies = await _databaseManager.NearbyRaces(10);
 			
@@ -39,12 +42,11 @@ namespace TrainingBuddy.UI
 					text = $"{lobbies[i].Child("title").Value}",
 				});
 				_lobbyButtons[i].AddToClassList("button-large");
-				Layout.Q<VisualElement>("Container").Add(_lobbyButtons[i]);
+				container?.Add(_lobbyButtons[i]);
 				int localIncrement = i;
 				_lobbyButtons[i].RegisterCallback<ClickEvent>(async evt => await _databaseManager.SubmitJoinRequestAsync(lobbies[localIncrement].Key));
 			}
 			
-			_uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.MainMenu));
 			_uiManager.Header.Q<Label>("SiteTitle").text = "Tætteste Race";
 		}
 		

@@ -27,11 +27,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 124037095424
-    m_Localized: Adgangskode
+    m_Localized: Kodeord
     m_Metadata:
       m_Items: []
   - m_Id: 406619564269568
-    m_Localized: "Bekr\xE6ft Adgangskode"
+    m_Localized: "Bekr\xE6ft kodeord"
     m_Metadata:
       m_Items: []
   - m_Id: 265096767987712
@@ -39,23 +39,23 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 265147846221824
-    m_Localized: Opret
+    m_Localized: Opret bruger
     m_Metadata:
       m_Items: []
   - m_Id: 762710412222464
-    m_Localized: "Start L\xF8b"
+    m_Localized: "Start l\xF8b"
     m_Metadata:
       m_Items: []
   - m_Id: 762746575511552
-    m_Localized: Min Profil
+    m_Localized: Min profil
     m_Metadata:
       m_Items: []
   - m_Id: 762771472900096
-    m_Localized: "Deltag i L\xF8b"
+    m_Localized: "Deltag i l\xF8b"
     m_Metadata:
       m_Items: []
   - m_Id: 1089054102773760
-    m_Localized: "Invester i Tr\xE6ning"
+    m_Localized: "Invester i tr\xE6ning"
     m_Metadata:
       m_Items: []
   - m_Id: 1089077116919808
@@ -63,11 +63,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 27969683410903040
-    m_Localized: Lav et Race
+    m_Localized: "Lav et l\xF8b"
     m_Metadata:
       m_Items: []
   - m_Id: 27969726511570944
-    m_Localized: Find Race
+    m_Localized: "Find l\xF8b"
     m_Metadata:
       m_Items: []
   - m_Id: 27969756739919872
@@ -86,12 +86,90 @@ MonoBehaviour:
     m_Localized: Training Buddy's Privatpolitik
     m_Metadata:
       m_Items: []
-  - m_Id: 149671989717491712
-    m_Localized: Instillinger
-    m_Metadata:
-      m_Items: []
   - m_Id: 149672116762959872
     m_Localized: Om Training Buddy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203575645457866752
+    m_Localized: "Velkommen\t"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203576714195886080
+    m_Localized: "Velkommen tilbage\t"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203578559605760000
+    m_Localized: Glemt dit kodeord?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203580374564986880
+    m_Localized: "Er du klar til at l\xF8be om kap?\nValget er dit: Log ind eller
+      opret en ny bruger."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203581161240256512
+    m_Localized: "Klar til at hoppe i l\xF8beskoene igen?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203585625611296768
+    m_Localized: Har du ikke en konto?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203585694834089984
+    m_Localized: Har du en konto?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203585854523826176
+    m_Localized: Log ind med
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203585894545874944
+    m_Localized: Opret bruger med
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203604730707959808
+    m_Localized: "Opret \nbruger"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203604771656949760
+    m_Localized: "Klar til at s\xE6tte din kondition p\xE5 pr\xF8ve?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203624022446956544
+    m_Localized: "Find p\xE5 et nyt og st\xE6rkt kodeord!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203623991820148736
+    m_Localized: Nulstil kodeord
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203623891710500864
+    m_Localized: Nulstil kodeord
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203623844868513792
+    m_Localized: Vi finder lynhurtigt et nyt til dig!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203623765654888448
+    m_Localized: Glemt kodeord?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203715980435644416
+    m_Localized: Er du sikker?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203716050316943360
+    m_Localized: "Er du sikker p\xE5, at du gerne vil slette din bruger? Alt vil
+      g\xE5 tabt."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203716149558370304
+    m_Localized: Annuller
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203716264650072064
+    m_Localized: Slet bruger
     m_Metadata:
       m_Items: []
   references:

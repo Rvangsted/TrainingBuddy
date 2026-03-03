@@ -84,9 +84,9 @@
             <ui:VisualElement name="FriendsContent" class="friends-content" />
         </ui:VisualElement>
         <ui:VisualElement name="MenuContainer" class="menu-container">
-            <TrainingBuddy.UI.Controls.LocalizedButton name="AboutButton" key="interface_button_about" class="about-button" />
-            <TrainingBuddy.UI.Controls.LocalizedButton name="SettingsButton" key="interface_button_settings" class="settings-button" />
-            <TrainingBuddy.UI.Controls.LocalizedButton name="LogoutButton" key="interface_button_logout" class="logout-button" />
+            <TrainingBuddy.UI.Controls.LocalizedButton name="AboutButton" key="button_about" class="about-button" />
+            <TrainingBuddy.UI.Controls.LocalizedButton name="SettingsButton" key="button_settings" class="settings-button" />
+            <TrainingBuddy.UI.Controls.LocalizedButton name="LogoutButton" key="button_logout" class="logout-button" />
         </ui:VisualElement>
         <ui:VisualElement name="ProfilePicture" class="profile-picture-big" />
     </ui:ScrollView>

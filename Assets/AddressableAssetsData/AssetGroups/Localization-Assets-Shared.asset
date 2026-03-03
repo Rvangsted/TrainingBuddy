@@ -16,7 +16,7 @@ MonoBehaviour:
   m_GUID: 4be9ceffaf0c81146b0d81ab287b770e
   m_SerializeEntries:
   - m_GUID: 69365ed0fa1f6e54fa3a60ae833556a1
-    m_Address: Assets/_Project/Localization/Interface Shared Data.asset
+    m_Address: Assets/_Project/Localization/Buttons Shared Data.asset
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

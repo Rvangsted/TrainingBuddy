@@ -3,4 +3,6 @@
         <ui:VisualElement name="FemaleChar" class="female-char-left" />
         <ui:VisualElement name="MaleChar" class="male-char-right" />
     </ui:VisualElement>
+    <ui:VisualElement name="BottomContainer" class="bottom-container" />
+    <ui:VisualElement name="ProfileContainer" class="profile-container" />
 </ui:UXML>

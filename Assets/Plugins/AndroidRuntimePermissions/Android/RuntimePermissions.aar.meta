@@ -35,6 +35,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 117803
   packageName: Android Runtime Permissions
-  packageVersion: 1.2.1
+  packageVersion: 1.3.0
   assetPath: Assets/Plugins/AndroidRuntimePermissions/Android/RuntimePermissions.aar
-  uploadId: 649294
+  uploadId: 746910

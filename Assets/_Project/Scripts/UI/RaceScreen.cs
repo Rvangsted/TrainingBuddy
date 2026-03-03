@@ -19,7 +19,7 @@ namespace TrainingBuddy.UI
 		public override void DrawLayout()
 		{
 			base.DrawLayout();
-			// _uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.RaceMenuScreen));
+			// _uiManager.SetBackAction(() => _uiManager.ChangePage(_layoutData.RaceMenu));
 		}
 	}
 }

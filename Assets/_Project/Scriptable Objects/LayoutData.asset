@@ -12,9 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 720932b009e149759d4185868efaf4b6, type: 3}
   m_Name: LayoutData
   m_EditorClassIdentifier: 
+  <SplashScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: b0c9d92bfe3784140b313f58da7dddbc,
+    type: 3}
+  <WelcomeScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 73806bb16db3f1c4aa9be804d6ed9436,
+    type: 3}
   <LoginScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: dfe909e47b3fa464380c1eee7c2cc92b,
     type: 3}
   <RegisterScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 609276061f4f8f14087862a6a2e69a9c,
+    type: 3}
+  <ForgotPasswordScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 6d3fc83b96184e34874280f1e8820275,
+    type: 3}
+  <ResetPasswordScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: bf84a1cd05044a74b8e8cd589737bd33,
     type: 3}
   <MainMenuVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 025d6e30183f27343a03bedb15c11a51,
     type: 3}
@@ -23,8 +31,6 @@ MonoBehaviour:
   <HighScoreVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 34c8b585f662d1740b8f5247fb88f277,
     type: 3}
   <RaceScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 20b18b6401f30a142a82758619d9221f,
-    type: 3}
-  <RaceMenuScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 258b27d75b5ba624285b453d626eb356,
     type: 3}
   <LobbyScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 396af9188d3f6f6478d1fd70da3652bf,
     type: 3}

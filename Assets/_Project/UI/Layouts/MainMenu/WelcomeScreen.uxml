@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/WelcomeScreen.uss?fileID=7433441132597879392&amp;guid=a9418585407b493eaec817476b8abb60&amp;type=3#WelcomeScreen"/>
+    <ui:VisualElement name="WelcomeScreen" class="welcome-screen" style="flex-grow: 1;">
+        <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
+            <TrainingBuddy.UI.Controls.LocalizedLabel name="Title" key="text_welcome" class="font-title welcome-title"/>
+            <TrainingBuddy.UI.Controls.LocalizedLabel key="text_welcome_subtitle" name="SubTitle" class="welcome-sub-title"/>
+            <ui:VisualElement name="Image" class="welcome-image"/>
+            <ui:VisualElement name="ButtonContainer" class="button-container">
+                <TrainingBuddy.UI.Controls.LocalizedButton name="RegisterButton" key="button_register_user" class="button-large alt-button"/>
+                <TrainingBuddy.UI.Controls.LocalizedButton key="button_login" name="LoginButton" class="button-large"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <TrainingBuddy.UI.Controls.LocalizedButton key="button_privacy" name="PrivacyButton" start-tag="&lt;u&gt;" end-tag="&lt;/u&gt;" class="text-button privacy-button"/>
+    </ui:VisualElement>
+</ui:UXML>

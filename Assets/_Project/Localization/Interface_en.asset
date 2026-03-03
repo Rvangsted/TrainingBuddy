@@ -31,7 +31,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 265147846221824
-    m_Localized: Register
+    m_Localized: Create Account
     m_Metadata:
       m_Items: []
   - m_Id: 406176226336768
@@ -86,12 +86,20 @@ MonoBehaviour:
     m_Localized: Training Buddy's Privacy Policy
     m_Metadata:
       m_Items: []
-  - m_Id: 149671989717491712
-    m_Localized: Settings
-    m_Metadata:
-      m_Items: []
   - m_Id: 149672116762959872
     m_Localized: About Training Buddy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203575645457866752
+    m_Localized: Welcome
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203576714195886080
+    m_Localized: Welcome back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203578559605760000
+    m_Localized: Forgot your password?
     m_Metadata:
       m_Items: []
   references:

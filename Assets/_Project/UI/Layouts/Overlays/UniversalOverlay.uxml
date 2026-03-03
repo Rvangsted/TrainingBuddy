@@ -2,12 +2,20 @@
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/UniversalOverlay.uss" />
     <ui:VisualElement name="UniversalOverlay" class="overlay-root">
         <ui:VisualElement name="OverlayBackground" class="overlay-background" />
-        <ui:VisualElement name="OverlayCard" class="overlay-card">
-            <ui:Label name="OverlayTitle" class="overlay-title font-title" text="Overlay Title" />
-            <ui:Label name="OverlayMessage" class="overlay-message" text="Overlay message content goes here." />
-            <ui:VisualElement name="OverlayButtonRow" class="overlay-button-row">
-                <ui:Button name="OverlaySecondaryButton" class="overlay-button overlay-secondary" text="Cancel" />
-                <ui:Button name="OverlayPrimaryButton" class="overlay-button overlay-primary" text="OK" />
+        <ui:VisualElement name="OverlaySafeContent" class="overlay-safe-content">
+            <ui:VisualElement name="OverlayCard" class="overlay-card">
+                <ui:VisualElement name="OverlayContent" class="overlay-content">
+                    <ui:Label name="OverlayTitle" class="overlay-title font-title" text="Overlay Title" />
+                    <ui:Label name="OverlayMessage" class="overlay-message" text="Overlay message content goes here." />
+                    <ui:VisualElement name="OverlaySingleRow" class="overlay-single-row">
+<!--                        <ui:Button name="OverlayPrimaryButton" class="overlay-primary" text="OK" />-->
+                    </ui:VisualElement>
+                    <ui:VisualElement name="OverlayTwoButtonRow" class="overlay-two-button-row">
+                        <ui:Button name="OverlayPrimaryButton" class="overlay-button primary" text="OK" />
+                        <ui:VisualElement name="ButtonSpace" class="button-space" />
+                        <ui:Button name="OverlaySecondaryButton" class="overlay-button secondary" text="Cancel" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

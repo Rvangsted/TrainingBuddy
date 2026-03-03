@@ -23,13 +23,17 @@ namespace TrainingBuddy.UI
 		public override void DrawLayout()
 		{
 			base.DrawLayout();
-			// _uiManager.Header.Q<Button>("BackButton").RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.RaceMenuScreen));
+			// _uiManager.SetBackAction(() => _uiManager.ChangePage(_layoutData.RaceMenu));
 			
 			_createButton = Layout.Q<Button>("CreateButton");
-			_createButton.RegisterCallback<ClickEvent>(CreateLobby);
+			if (_createButton != null)
+			{
+				_createButton.clicked -= CreateLobby;
+				_createButton.clicked += CreateLobby;
+			}
 		}
 		
-		private async void CreateLobby(ClickEvent evt)
+		private async void CreateLobby()
 		{
 			await _databaseManager.CreateLobby(new RaceData
 			{

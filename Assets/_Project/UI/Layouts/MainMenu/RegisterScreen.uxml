@@ -1,7 +1,27 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/RegisterScreen.uss?fileID=7433441132597879392&amp;guid=9032dd0ef1350974ab908536d4e001ad&amp;type=3#RegisterScreen" />
     <ui:VisualElement name="RegisterScreen" class="register-screen" style="flex-grow: 1;">
-        <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
+        <ui:VisualElement name="MainContainer" class="main-container">
+            <TrainingBuddy.UI.Controls.LocalizedLabel key="text_register_user" name="Title" class="font-title register-title"/>
+            <TrainingBuddy.UI.Controls.LocalizedLabel key="text_register_user_subtitle" name="SubTitle" class="register-sub-title"/>
+            <TrainingBuddy.UI.Controls.LocalizedTextInput name="Username" key="text_username" hide-placeholder-on-focus="true" class="field-username"/>
+            <TrainingBuddy.UI.Controls.LocalizedTextInput name="Email" key="text_email" hide-placeholder-on-focus="true" class="field-email"/>
+            <TrainingBuddy.UI.Controls.LocalizedTextInput name="Password" key="text_password" hide-placeholder-on-focus="true" password="true" class="field-password"/>
+            <TrainingBuddy.UI.Controls.LocalizedButton key="button_register_user" name="RegisterButton" class="button-large alt-button register-button"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="Separator" class="separator-container">
+            <ui:VisualElement name="BoxLeft" class="box-left"/>
+            <TrainingBuddy.UI.Controls.LocalizedLabel name="RegisterOptionsTitle" key="text_register_with" class="register-options-title"/>
+            <ui:VisualElement name="BoxRight" class="box-right"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="RegisterOptions" class="register-options-container">
+            <ui:Button text="" name="Facebook" class="facebook-button"/>
+            <ui:Button text="" name="Google" class="google-button"/>
+            <ui:Button text="" name="Apple" class="apple-button"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="BottomLink" class="bottom-link-container">
+            <TrainingBuddy.UI.Controls.LocalizedLabel name="HaveAccount" key="text_have_account_prompt" class="bottom-link-label"/>
+            <TrainingBuddy.UI.Controls.LocalizedButton name="LoginAccount" key="button_login" class="text-button bottom-link-button"/>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

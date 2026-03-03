@@ -1,73 +1,160 @@
 .login-wrapper {
-    position: absolute;
-    bottom: 0;
+    flex-grow: 1;
+    width: 100%;
+    align-items: center;
 }
 
 .login-screen {
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: flex-end;
     height: 100%;
+    width: 100%;
+    max-width: 320px;
 }
 
-.container {
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    margin-top: 280px;
+.main-container {
+    width: 100%;
 }
 
-.field-username,
-.field-email,
-.field-password {
-    height: 50px;
-    width: 300px;
-}
-
-.field-username .unity-text-field__input,
-.field-email .unity-text-field__input,
-.field-password .unity-text-field__input {
-    border-radius: 30;
-    border-width: 2px;
-    border-color: var(--font-color-darkgray);
-}
-
-.field-username .unity-text-element,
-.field-email .unity-text-element,
-.field-password .unity-text-element {
-    flex-shrink: 0;
-    font-size: 20px;
-    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
-    -unity-font-style: normal;
+.login-title {
+    width: 100%;
+    white-space: normal;
     -unity-text-align: middle-center;
-    color: var(--font-color-lightgray);
+    margin-bottom: 11px;
 }
 
-.field-username>.unity-text-field__input.has-value .unity-text-element,
-.field-email>.unity-text-field__input.has-value .unity-text-element,
-.field-password>.unity-text-field__input.has-value .unity-text-element {
-    color: var(--font-color-gray);
+.login-sub-title {
+    -unity-text-align: middle-center;
+    font-size: var(--font-size-xs);
+    margin-bottom: 67px;
 }
 
-#PrivacyButton {
-    height: 30px;
-    margin-top: 60px;
+.field-email {
+    width: 325px;
+    height: 52px;
+    margin-bottom: 21px;
 }
 
-.button-container {
-    margin-top: 10px;
+.field-password {
+    width: 325px;
+    height: 52px;
+}
+
+.forgot-password {
+    color: var(--color-magenta);
+    align-self: flex-end;
+    margin-top: 9px;
+}
+
+.login-button {
+    margin-bottom: 48px;
+    margin-top: 21px;
+}
+
+/* Separator */
+.separator-container {
+    height: 15px;
+    width: 100%;
     flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-    width: 300px;
 }
 
-.button-large {
-    margin-top: 40px;
-    width: 300px;
+.box-left, .box-right {
+    border-top-width: 1px;
+    border-top-color: var(--color-separator);
+    flex: 1;
 }
 
-.button-small {
-    margin-top: 0;
-    width: 140px;
+.login-options-title {
+    font-size: var(--font-size-xs);
+    -unity-text-align: upper-center;
+    margin: -5px 30px 5px 30px;
 }
+
+/* Login Options */
+.login-options-container {
+    height: 118px;
+}
+
+.facebook-button {
+    
+}
+
+.google {
+    
+}
+
+.apple {
+    
+}
+
+/* Bottom Link */
+.bottom-link-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.bottom-link-label {
+    font-size: var(--font-size-xs);
+}
+
+.bottom-link-button {
+    margin-left: 5px;
+    color: var(--color-magenta);
+}
+
+/*.field-username,*/
+/*.field-email,*/
+/*.field-password {*/
+/*    height: 50px;*/
+/*    width: 300px;*/
+/*}*/
+
+/*.field-username .unity-text-field__input,*/
+/*.field-email .unity-text-field__input,*/
+/*.field-password .unity-text-field__input {*/
+/*    border-radius: 30;*/
+/*    border-width: 2px;*/
+/*    border-color: var(--font-color-darkgray);*/
+/*}*/
+
+/*.field-username .unity-text-element,*/
+/*.field-email .unity-text-element,*/
+/*.field-password .unity-text-element {*/
+/*    flex-shrink: 0;*/
+/*    font-size: 20px;*/
+/*    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");*/
+/*    -unity-font-style: normal;*/
+/*    -unity-text-align: middle-center;*/
+/*    color: var(--font-color-lightgray);*/
+/*}*/
+
+/*.field-username>.unity-text-field__input.has-value .unity-text-element,*/
+/*.field-email>.unity-text-field__input.has-value .unity-text-element,*/
+/*.field-password>.unity-text-field__input.has-value .unity-text-element {*/
+/*    color: var(--font-color-gray);*/
+/*}*/
+
+/*#PrivacyButton {*/
+/*    height: 30px;*/
+/*    margin-top: 24px;*/
+/*    margin-bottom: 12px;*/
+/*}*/
+
+/*.button-container {*/
+/*    flex-direction: row;*/
+/*    align-items: flex-start;*/
+/*    justify-content: space-between;*/
+/*    width: 300px;*/
+/*    margin-top: 4px;*/
+/*}*/
+
+/*.button-large {*/
+/*    margin-top: 12px;*/
+/*    width: 300px;*/
+/*}*/
+
+/*.button-small {*/
+/*    margin-top: 0;*/
+/*    width: 140px;*/
+/*}*/

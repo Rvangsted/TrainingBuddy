@@ -30,10 +30,10 @@ namespace TrainingBuddy.UI
 				ShadowOffsetY = 10,
 			};
 
-			var startRaceButton = ShadowButton("StartRaceButton", "interface_button_start_race", shadowSettings);
-			var participateRaceButton = ShadowButton("ParticipateRaceButton", "interface_button_participate_race", shadowSettings);
-			var profileButton = ShadowButton("ProfileButton", "interface_button_profile", shadowSettings);
-			var privacyButton = TextButton("PrivacyButton", "interface_button_privacy", "<u>", "</u>");
+			var startRaceButton = ShadowButton("StartRaceButton", "button_start_race", shadowSettings);
+			var participateRaceButton = ShadowButton("ParticipateRaceButton", "button_participate_race", shadowSettings);
+			var profileButton = ShadowButton("ProfileButton", "button_profile", shadowSettings);
+			var privacyButton = TextButton("PrivacyButton", "button_privacy", "<u>", "</u>");
 			
 			Layout.Q<VisualElement>("MainMenu").Add(startRaceButton);
 			Layout.Q<VisualElement>("MainMenu").Add(participateRaceButton);
@@ -53,20 +53,27 @@ namespace TrainingBuddy.UI
 			_participateRaceButton = Layout.Q<Button>("ParticipateRaceButton");
 			_profileButton = Layout.Q<Button>("ProfileButton");
 			
-			_startRaceButton.RegisterCallback<ClickEvent>(CreateLobby);
-			
-			_participateRaceButton.RegisterCallback<ClickEvent>(_ =>
-			{
-				_uiManager.ChangePage(_layoutData.FindLobbyScreen);
-			});
-			
-			_profileButton.RegisterCallback<ClickEvent>(_ =>
-			{
-				_uiManager.ChangePage(_layoutData.ProfileScreen);
-			});
+			_startRaceButton.clicked -= CreateLobby;
+			_startRaceButton.clicked += CreateLobby;
+
+			_participateRaceButton.clicked -= OpenFindLobby;
+			_participateRaceButton.clicked += OpenFindLobby;
+
+			_profileButton.clicked -= OpenProfile;
+			_profileButton.clicked += OpenProfile;
 		}
 		
-		private async void CreateLobby(ClickEvent evt)
+		private void OpenFindLobby()
+		{
+			_uiManager.ChangePage(_layoutData.FindLobbyScreen);
+		}
+
+		private void OpenProfile()
+		{
+			_uiManager.ChangePage(_layoutData.ProfileScreen);
+		}
+
+		private async void CreateLobby()
 		{
 			var _userDataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
 			var longitude = Convert.ToInt32(_userDataSnapshot.Child("Longitude").Value);

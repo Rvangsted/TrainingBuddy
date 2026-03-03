@@ -1,0 +1,53 @@
+﻿.welcome-wrapper {
+    height: 100%;
+    width: 100%;
+}
+
+.welcome-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100%;
+    padding-top: 70px;
+}
+
+.container {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+.welcome-title {
+    -unity-text-align: middle-center;
+}
+
+.welcome-sub-title {
+    -unity-text-align: middle-center;
+    font-size: var(--font-size-xs);
+}
+
+.welcome-image {
+    width: 300px;
+    height: 400px;
+    background-image: url('project://database/Assets/_Project/Art/Characters/emma_figur_1.png');
+    background-size: 160px;
+}
+
+.button-container {
+    flex-direction: column;
+    align-self: flex-end;
+}
+
+.button-large {
+    margin-top: 21px;
+}
+
+.button-small {
+    margin-top: 0;
+    width: 140px;
+}
+ 
+.privacy-button {
+    align-self: center;
+}

@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: c599b638ebdeebb48bcde04e24d278ed
   m_currentHash:
     serializedVersion: 2
-    Hash: de5bcf791024d7892b822ade47e563fb
+    Hash: b4e7aaa46c43de6ca48cb3effcf93223
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -33,6 +33,7 @@ MonoBehaviour:
   m_UniqueBundleIds: 0
   m_EnableJsonCatalog: 0
   m_NonRecursiveBuilding: 1
+  m_AllowNestedBundleFolders: 0
   m_CCDEnabled: 0
   m_maxConcurrentWebRequests: 3
   m_UseUWRForLocalBundles: 0
@@ -53,7 +54,7 @@ MonoBehaviour:
     m_Id: 
   m_RemoteCatalogLoadPath:
     m_Id: 
-  m_ContentStateBuildPathProfileVariableName: 
+  m_ContentStateBuildPathProfileVariableName: <default settings path>
   m_CustomContentStateBuildPath: 
   m_ContentStateBuildPath: 
   m_BuildAddressablesWithPlayerBuild: 0
@@ -106,6 +107,7 @@ MonoBehaviour:
     - Locale
     - Locale-en
     - Locale-da
+    - Preload
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 62058042782fb0f4bb506d448c1bfdf3, type: 2}

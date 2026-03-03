@@ -2,7 +2,8 @@
 
 :root {
     /* Primary */
-    --color-dark: rgba(26, 26, 26, 1);
+    --color-dark: rgba(38, 38, 38, 1);
+    --color-mid: rgba(214, 214, 214, 1);
     --color-light: rgba(247, 247, 247, 1);
     --color-lime: rgba(200, 255, 0, 1);
     --color-magenta: rgba(175, 89, 255, 1);
@@ -18,11 +19,14 @@
     --color-white: rgba(255, 255, 255, 1);
     --color-buttons: rgba(237, 237, 237, 1);
     --color-font: rgba(38, 38, 38, 1);
+    --color-bottom-container: rgba(245, 245, 245, 1);
+    --color-separator: rgba(157, 157, 157, 1);
+    --color-input-field: rgba(209, 209, 209, 1);
     
     /* Font Sizes */
-    --font-size-xl: 24px;
+    --font-size-xl: 20px;
     --font-size-l: 18px;
-    --font-size-m: 16px;
+    --font-size-m: 15px;
     --font-size-s: 14px;
     --font-size-xs: 12px;
 }
@@ -31,8 +35,20 @@
     background-color: var(--color-light);
 }
 
+.unity-text-element {
+    color: var(--color-dark);
+}
+
 .unity-ui-document__root.show-splash-background {
     background-image: url('project://database/Assets/_Project/Art/TrainingBuddyBG.png');
+}
+
+.unity-ui-document__root.show-emma-background {
+    background-color: var(--color-mid);
+    background-image: url('project://database/Assets/_Project/Art/TrainingBuddyAltBG.png');
+    background-size: 280px;
+    background-position-x: right 0;
+    background-position-y: top -60px;
 }
 
 .show-splash-background .background-overlay {
@@ -56,8 +72,17 @@
     width: 50%;
 }
 
+.show-bottom-container .bottom-container {
+    position: absolute;
+    bottom: 0;
+    border-top-left-radius: 50px;
+    border-top-right-radius: 50px;
+    width: 100%;
+    height: 690px;
+    background-color: var(--color-bottom-container);
+}
+
 .unity-button {
-    height: 70px;
     width: 100%;
     border-radius: 40;
     border-width: 0;
@@ -65,22 +90,32 @@
     flex-shrink: 0;
     padding: 0;
     margin: 0;
-    font-size: 24px;
+    font-size: var(--font-size-xl);
     -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
     color: var(--color-dark);
 }
 
 .unity-ui-document__root .unity-button:hover {
     background-color: var(--color-magenta);
+    color: var(--color-light);
+}
+
+.alt-button {
+    background-color: var(--color-magenta);
+    color: var(--color-light);
+}
+
+.unity-button:hover.alt-button {
+    background-color: var(--color-buttons);
+    color: var(--color-dark);
 }
 
 .text-button {
-    height: 70px;
-    width: 259px;
+    height: auto;
+    width: auto;
     border-width: 0;
     background-color: transparent;
-    color: var(--color-light);
-    font-size: 14px;
+    font-size: var(--font-size-xs);
     -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
     -unity-font-style: normal;
     -unity-text-align: middle-center;
@@ -95,51 +130,56 @@
 }
 
 .button-large {
-    width: 300px;
+    width: 325px;
+    height: 70px;
 }
 
 .button-small {
     width: 140px;
 }
 
-.button-back {
-    width: 50px;
-}
-
-.hide-back-button .button-back {
-    display: none;
-}
-
-/*Header*/
+/*Headers*/
 .layout-header {
-    height: 100px;
     width: 100%;
-    padding: 0 30px;
+    padding: 0 24px;
     flex-direction: row;
 }
 
 .layout-header .button-back {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     background-color: var(--color-buttons);
     border-width: 0;
     border-radius: 50%;
     background-image: url('project://database/Assets/_Project/Art/Icons/arrow-left.png');
-    background-size: 48px;
+    background-size: 40px;
     -unity-background-image-tint-color: var(--color-dark);
 }
 
+.layout-header.simple .button-back {
+    background-color: var(--color-light);
+}
+
 .layout-header .site-title {
-    -unity-text-align: lower-center;
+    -unity-text-align: middle-center;
+    font-size: var(--font-size-xl);
     flex-grow: 1;
 }
 
+.layout-header.simple .site-title {
+    display: none;
+}
+
 .layout-header .header-level-container {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     background-color: var(--color-buttons);
     border-width: 0;
     border-radius: 50%;
+}
+
+.layout-header.simple .header-level-container {
+    display: none;
 }
 
 .layout-header .header-level-label {
@@ -175,4 +215,17 @@
 
 .layout-footer {
     height: 50px;
+}
+
+/* Input Fields */
+.unity-base-field__input {
+    border-color: var(--color-input-field);
+    border-width: 1px;
+    border-radius: 10px;
+}
+
+.unity-text-element--inner-input-field-component {
+    font-size: var(--font-size-xl);
+    color: var(--color-separator);
+    margin: 4px 10px 0;
 }

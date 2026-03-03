@@ -1,13 +1,10 @@
-﻿.overlay-root {
+.overlay-root {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    justify-content: center;
-    align-items: center;
     z-index: 100;
-    padding: 24px;
 }
 
 .overlay-background {
@@ -19,58 +16,119 @@
     background-color: rgba(0, 0, 0, 0.65);
 }
 
-.overlay-card {
-    min-width: 280px;
-    max-width: 420px;
-    width: 100%;
-    gap: 16px;
+.overlay-safe-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
     padding: 24px;
+}
+
+.overlay-card.has-background-image {
+    padding-top: 135px;
+    background-size: auto 180px;
+    background-position-y: top 0;
+    background-position-x: center;
+}
+
+.overlay-card.background-worry {
+    background-image: url('project://database/Assets/_Project/Art/Characters/worry.png');
+}
+
+.overlay-card.background-friends {
+    background-image: url('project://database/Assets/_Project/Art/Characters/invite_friends.png');
+}
+
+.overlay-content {
+    width: 100%;
+    padding: 20px 37px;
     background-color: var(--color-light);
-    border-radius: 18px;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+    border-radius: 30px;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .overlay-title {
-    font-size: var(--font-size-l);
+    font-size: var(--font-size-xl);
     color: var(--color-dark);
+    -unity-text-align: middle-center;
 }
 
 .overlay-message {
-    color: var(--color-font);
+    margin-top: 15px;
+    font-size: var(--font-size-m);
+    color: var(--color-dark);
     white-space: normal;
-    -unity-text-align: upper-left;
+    -unity-text-align: upper-center;
 }
 
-.overlay-button-row {
+.overlay-single-row {
+    /*    flex-direction: row;*/
+    /*    justify-content: flex-end;*/
+    /*    gap: 12px;*/
+}
+
+.overlay-two-button-row {
+    margin-top: 15px;
     flex-direction: row;
-    justify-content: flex-end;
-    gap: 12px;
+    width: 100%;
 }
 
 .overlay-button {
-    min-width: 100px;
-    height: 48px;
-    padding: 0 16px;
-    border-radius: 12px;
-    border-width: 0;
-    font-size: var(--font-size-m);
+    width: 108px;
+    height: 34px;
+    border-radius: 15px;
     -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
+    font-size: var(--font-size-m);
+    padding-top: 3px;
 }
 
-.overlay-primary {
-    background-color: var(--color-magenta);
+.overlay-button.primary {
+    background-color: var(--color-dark);
     color: var(--color-light);
 }
 
-.overlay-secondary {
-    background-color: rgba(0, 0, 0, 0);
-    color: var(--color-dark);
-    border-width: 1px;
-    border-color: var(--color-dark);
+.button-space {
+    flex: 1;
 }
 
-.overlay-secondary:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+.overlay-button.secondary {
+    background-color: var(--color-light);
+    color: var(--color-dark);
+    border-color: var(--color-dark);
+    border-width: 1px;
 }
+
+.hide-row {
+    display: none;
+}
+
+/*.overlay-button {*/
+/*    min-width: 100px;*/
+/*    height: 48px;*/
+/*    padding: 0 16px;*/
+/*    border-radius: 12px;*/
+/*    border-width: 0;*/
+/*    font-size: var(--font-size-m);*/
+/*    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");*/
+/*}*/
+
+/*.overlay-primary {*/
+/*    background-color: var(--color-magenta);*/
+/*    color: var(--color-light);*/
+/*}*/
+
+/*.overlay-secondary {*/
+/*    background-color: rgba(0, 0, 0, 0);*/
+/*    color: var(--color-dark);*/
+/*    border-width: 1px;*/
+/*    border-color: var(--color-dark);*/
+/*}*/
+
+/*.overlay-secondary:hover {*/
+/*    background-color: rgba(0, 0, 0, 0.05);*/
+/*}*/

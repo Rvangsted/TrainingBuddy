@@ -3,8 +3,8 @@
     <ui:VisualElement name="HostScreen" class="host-screen" style="flex-grow: 1;">
         <ui:Label text="Race" display-tooltip-when-elided="true" name="Title" class="font-title title" />
         <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
-            <TrainingBuddy.UI.Controls.LocalizedTextInput name="RaceName" key="interface_text_racename" hide-placeholder-on-focus="true" class="field-race-name" />
-            <TrainingBuddy.UI.Controls.LocalizedButton key="interface_button_create" name="CreateButton" class="button-large" />
+            <TrainingBuddy.UI.Controls.LocalizedTextInput name="RaceName" key="text_racename" hide-placeholder-on-focus="true" class="field-race-name" />
+            <TrainingBuddy.UI.Controls.LocalizedButton key="button_create" name="CreateButton" class="button-large" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

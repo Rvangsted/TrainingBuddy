@@ -16,79 +16,155 @@ MonoBehaviour:
   m_TableCollectionNameGuidString: 69365ed0fa1f6e54fa3a60ae833556a1
   m_Entries:
   - m_Id: 46392139776
-    m_Key: interface_text_username
+    m_Key: text_username
     m_Metadata:
       m_Items: []
   - m_Id: 406176226336768
-    m_Key: interface_text_email
+    m_Key: text_email
     m_Metadata:
       m_Items: []
   - m_Id: 124037095424
-    m_Key: interface_text_password
+    m_Key: text_password
     m_Metadata:
       m_Items: []
   - m_Id: 406619564269568
-    m_Key: interface_text_password_confirm
+    m_Key: text_password_confirm
     m_Metadata:
       m_Items: []
   - m_Id: 265096767987712
-    m_Key: interface_button_login
-    m_Metadata:
-      m_Items: []
-  - m_Id: 265147846221824
-    m_Key: interface_button_register
-    m_Metadata:
-      m_Items: []
-  - m_Id: 762710412222464
-    m_Key: interface_button_start_race
+    m_Key: button_login
     m_Metadata:
       m_Items: []
   - m_Id: 762746575511552
-    m_Key: interface_button_profile
+    m_Key: button_profile
+    m_Metadata:
+      m_Items: []
+  - m_Id: 265147846221824
+    m_Key: button_register_user
+    m_Metadata:
+      m_Items: []
+  - m_Id: 762710412222464
+    m_Key: button_start_race
     m_Metadata:
       m_Items: []
   - m_Id: 762771472900096
-    m_Key: interface_button_participate_race
+    m_Key: button_participate_race
     m_Metadata:
       m_Items: []
   - m_Id: 1089054102773760
-    m_Key: interface_button_training
+    m_Key: button_training
     m_Metadata:
       m_Items: []
   - m_Id: 1089077116919808
-    m_Key: interface_button_logout
+    m_Key: button_logout
     m_Metadata:
       m_Items: []
   - m_Id: 27969683410903040
-    m_Key: interface_button_hostrace
+    m_Key: button_hostrace
     m_Metadata:
       m_Items: []
   - m_Id: 27969726511570944
-    m_Key: interface_button_findrace
+    m_Key: button_findrace
     m_Metadata:
       m_Items: []
   - m_Id: 27969756739919872
-    m_Key: interface_button_watchrace
+    m_Key: button_watchrace
     m_Metadata:
       m_Items: []
   - m_Id: 28321958012641280
-    m_Key: interface_button_create
+    m_Key: button_create
     m_Metadata:
       m_Items: []
   - m_Id: 28338152832753664
-    m_Key: interface_text_racename
+    m_Key: text_racename
     m_Metadata:
       m_Items: []
   - m_Id: 125716274996051968
-    m_Key: interface_button_privacy
-    m_Metadata:
-      m_Items: []
-  - m_Id: 149671989717491712
-    m_Key: interface_button_settings
+    m_Key: button_privacy
     m_Metadata:
       m_Items: []
   - m_Id: 149672116762959872
-    m_Key: interface_button_about
+    m_Key: button_about
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203575645457866752
+    m_Key: text_welcome
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203576714195886080
+    m_Key: text_welcome_back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203578559605760000
+    m_Key: button_forgot_password
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203580374564986880
+    m_Key: text_welcome_subtitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203581161240256512
+    m_Key: text_welcome_back_subtitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203585625611296768
+    m_Key: text_need_account_prompt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203585694834089984
+    m_Key: text_have_account_prompt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203585854523826176
+    m_Key: text_login_with
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203585894545874944
+    m_Key: text_register_with
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203604730707959808
+    m_Key: text_register_user
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203604771656949760
+    m_Key: text_register_user_subtitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203623765654888448
+    m_Key: text_forgot_password
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203623844868513792
+    m_Key: text_forgot_password_subtitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203623891710500864
+    m_Key: button_reset_password
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203623991820148736
+    m_Key: text_reset_password
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203624022446956544
+    m_Key: text_reset_password_subtitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203715980435644416
+    m_Key: text_are_you_sure
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203716050316943360
+    m_Key: text_are_you_sure_subtitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203716149558370304
+    m_Key: button_cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 203716264650072064
+    m_Key: button_delete_user
     m_Metadata:
       m_Items: []
   m_Metadata:

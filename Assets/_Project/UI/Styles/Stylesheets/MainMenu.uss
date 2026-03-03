@@ -1,18 +1,23 @@
 .main-menu-wrapper {
-    position: absolute;
-    bottom: 0;
+    flex-grow: 1;
+    width: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 24px 0;
 }
 
 .main-menu {
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100%;
+    justify-content: flex-end;
+    width: 100%;
+    max-width: 320px;
+    flex-grow: 1;
 }
 
 .main-menu #PrivacyButton {
     height: 30px;
-    margin-top: 60px;
+    margin-top: 24px;
 }
 
 .drop-shadow {
@@ -34,7 +39,7 @@
 }
 
 .shadow-button {
-    margin-top: 40px;
+    margin-top: 24px;
 }
 
 .gradient-container .content {

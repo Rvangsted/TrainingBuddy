@@ -1,22 +1,17 @@
-using BedtimeCore;
 using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
-using UnityEngine;
-using UnityEngine.Android;
+using TrainingBuddy.UI.Controls;
 using UnityEngine.UIElements;
-using Button = UnityEngine.UIElements.Button;
-using UnityEngine.InputSystem;
 
 namespace TrainingBuddy.UI
 {
 	public class LoginScreen : UILayout
 	{
-		private TextField _loginEmailField;
-		private TextField _loginPasswordField;
-		
-		private Button _loginButton;
-		private Button _registerButton;
-		private Button _testButton;
+		private LocalizedTextInput _loginEmailField;
+		private LocalizedTextInput _loginPasswordField;
+		private LocalizedButton _forgotPasswordButton;
+		private LocalizedButton _loginButton;
+		private LocalizedButton _registerSiteButton;
 
 		private readonly FirebaseController _firebaseController;
 		
@@ -29,87 +24,20 @@ namespace TrainingBuddy.UI
 		
 		public override void Initialize()
 		{
-			_loginEmailField = Layout.Q<TextField>("Email");
-			_loginPasswordField = Layout.Q<TextField>("Password");
-			
-			_loginButton = Layout.Q<Button>("LoginButton");
-			_registerButton = Layout.Q<Button>("RegisterButton");
-			_testButton = Layout.Q<Button>("TestButton");
-			
-			var privacyButton = TextButton("PrivacyButton", "interface_button_privacy", "<u>", "</u>");
-			Layout.Q<VisualElement>("LoginScreen").Add(privacyButton);
+			_loginEmailField = Layout.Q<LocalizedTextInput>("Email");
+			_loginPasswordField = Layout.Q<LocalizedTextInput>("Password");
+			_forgotPasswordButton = Layout.Q<LocalizedButton>("PasswordRecovery");
+			_loginButton = Layout.Q<LocalizedButton>("LoginButton");
+			_registerSiteButton = Layout.Q<LocalizedButton>("RegisterAccount");
 
 			_loginButton.RegisterCallback<ClickEvent>(OnLogin);
-			_registerButton.RegisterCallback<ClickEvent>(OnRegister);
-			_testButton.RegisterCallback<ClickEvent>(OnTest);
-		}
-
-		internal void PermissionCallbacks_PermissionGranted(string permissionName)
-		{
-			Debug.Log($"{permissionName} PermissionCallbacks_PermissionGranted");
-		}
-
-		internal void PermissionCallbacks_PermissionDenied(string permissionName)
-		{
-			Debug.Log($"{permissionName} PermissionCallbacks_PermissionDenied");
+			_forgotPasswordButton.RegisterCallback<ClickEvent>(OnForgotPassword);
+			_registerSiteButton.RegisterCallback<ClickEvent>(_ => _uiManager.ChangePage(_layoutData.RegisterScreen));
 		}
 
 		public override void DrawLayout()
 		{
 			base.DrawLayout();
-			var callbacks = new PermissionCallbacks();
-			callbacks.PermissionDenied += PermissionCallbacks_PermissionDenied;
-			callbacks.PermissionGranted += PermissionCallbacks_PermissionGranted;
-			
-			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION") || !Permission.HasUserAuthorizedPermission("android.permission.ACCESS_FINE_LOCATION"))
-			{
-				RequestPermission();
-			}
-		}
-		
-		void Update()
-		{
-			Vector2? pointerPosition = null;
-			bool pressed = false;
-
-			var mouse = Mouse.current;
-			if (mouse != null)
-			{
-				pointerPosition = mouse.position.ReadValue();
-				pressed = mouse.leftButton.wasPressedThisFrame;
-			}
-
-			if (!pressed)
-			{
-				var touch = Touchscreen.current?.primaryTouch;
-				if (touch != null)
-				{
-					pointerPosition = touch.position.ReadValue();
-					pressed = touch.press.wasPressedThisFrame;
-				}
-			}
-
-			if (pressed && pointerPosition.HasValue)
-			{
-				var position = pointerPosition.Value;
-				if (position.x > Screen.width * 0.8f && position.y < Screen.height * 0.2f)
-				{
-					RequestPermission();
-				}
-			}
-		}
-
-		async void RequestPermission()
-		{
-			AndroidRuntimePermissions.Permission[] result = await AndroidRuntimePermissions.RequestPermissionsAsync("android.permission.ACCESS_FINE_LOCATION", "android.permission.ACTIVITY_RECOGNITION");
-			if (result[0] == AndroidRuntimePermissions.Permission.Granted && result[1] == AndroidRuntimePermissions.Permission.Granted)
-			{
-				Debug.Log("We have all the permissions!");
-			}
-			else
-			{
-				Debug.Log("Some permission(s) are not granted...");
-			}
 		}
 
 		private async void OnLogin(ClickEvent evt)
@@ -127,7 +55,7 @@ namespace TrainingBuddy.UI
 			}
 		}
 		
-		private void OnRegister(ClickEvent evt)
+		private void OnForgotPassword(ClickEvent evt)
 		{
 #if !UNITY_EDITOR
 			CheckPermission();
@@ -137,7 +65,7 @@ namespace TrainingBuddy.UI
 			}
 #endif
 
-			_uiManager.ChangePage(_layoutData.RegisterScreen);
+			_uiManager.ChangePage(_layoutData.ForgotPasswordScreen);
 		}
 		
 		private async void OnTest(ClickEvent evt)
@@ -154,17 +82,6 @@ namespace TrainingBuddy.UI
 			{
 				_uiManager.ChangePage(_layoutData.MainMenu);
 			}
-		}
-
-		private bool CheckPermission()
-		{
-			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION") || !Permission.HasUserAuthorizedPermission("android.permission.ACCESS_FINE_LOCATION"))
-			{
-				_uiManager.ChangePage(_layoutData.LoginScreen);
-				return false;
-			}
-
-			return true;
 		}
 	}
 }
