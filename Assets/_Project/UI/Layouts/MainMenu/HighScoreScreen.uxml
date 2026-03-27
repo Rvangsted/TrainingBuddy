@@ -1,7 +1,43 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/HighScoreScreen.uss?fileID=7433441132597879392&amp;guid=b207a9ee00073634b9b96446bcdd5026&amp;type=3#HighScoreScreen" />
     <ui:VisualElement name="HighScoreScreen" class="highscore-screen" style="flex-grow: 1;">
-        <ui:Label text="Highscore" display-tooltip-when-elided="true" name="Title" class="font-title title" />
-        <ui:VisualElement name="Container" class="container" style="flex-grow: 1;" />
+        <ui:VisualElement name="Content" class="highscore-content">
+            <ui:VisualElement name="PodiumRow" class="podium-row">
+                <ui:VisualElement name="SecondPlaceWrap" class="podium-wrap second-place">
+                    <ui:VisualElement name="SecondPlaceCard" class="podium-card second-place">
+                        <ui:VisualElement name="SecondPlaceAvatar" class="podium-avatar avatar-man" />
+                        <ui:Label text="PETER" name="SecondPlaceName" class="podium-name font-title" />
+                        <ui:Label text="84 km" name="SecondPlaceDistance" class="podium-distance font-regular" />
+                    </ui:VisualElement>
+                    <ui:Label text="2" name="SecondPlaceRank" class="podium-rank font-title" />
+                </ui:VisualElement>
+                <ui:VisualElement name="FirstPlaceWrap" class="podium-wrap first-place">
+                    <ui:VisualElement name="FirstPlaceCard" class="podium-card first-place">
+                        <ui:VisualElement name="FirstPlaceAvatar" class="podium-avatar avatar-woman" />
+                        <ui:Label text="MARIE" name="FirstPlaceName" class="podium-name font-title" />
+                        <ui:Label text="120 km" name="FirstPlaceDistance" class="podium-distance font-regular" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="FirstPlaceCrown" class="podium-crown">
+                        <ui:Label text="1" name="FirstPlaceRank" class="podium-crown-rank font-title" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="ThirdPlaceWrap" class="podium-wrap third-place">
+                  <ui:VisualElement name="ThirdPlaceCard" class="podium-card third-place">
+                      <ui:VisualElement name="ThirdPlaceAvatar" class="podium-avatar avatar-runner" />
+                      <ui:Label text="ANNE" name="ThirdPlaceName" class="podium-name font-title" />
+                      <ui:Label text="55 km" name="ThirdPlaceDistance" class="podium-distance font-regular" />
+                  </ui:VisualElement>
+                  <ui:Label text="3" name="ThirdPlaceRank" class="podium-rank font-title" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="LeaderboardPanel" class="leaderboard-panel">
+                <ui:VisualElement name="LeaderboardHeader" class="leaderboard-header">
+                    <ui:Label text="Rank" name="HeaderRank" class="leaderboard-header-label align-left font-regular" />
+                    <ui:Label text="Spiller" name="HeaderPlayer" class="leaderboard-header-label align-center font-regular" />
+                    <ui:Label text="Km lobet" name="HeaderDistance" class="leaderboard-header-label align-right font-regular" />
+                </ui:VisualElement>
+                <ui:ScrollView name="LeaderboardList" class="leaderboard-list" mode="Vertical" />
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -221,7 +221,10 @@ namespace TrainingBuddy.UI
 					_uiDocument.rootVisualElement.AddToClassList("show-bottom-container");
 					break;
 				case FindLobbyScreen:
-					_uiDocument.rootVisualElement.AddToClassList("show-splash-background");
+					// _uiDocument.rootVisualElement.AddToClassList("show-splash-background");
+					break;
+				case HighScoreScreen:
+					_uiDocument.rootVisualElement.AddToClassList("show-small-bottom-container");
 					break;
 			}
 		}
@@ -233,6 +236,7 @@ namespace TrainingBuddy.UI
 			_uiDocument.rootVisualElement.RemoveFromClassList("show-emma-background");
 			_uiDocument.rootVisualElement.RemoveFromClassList("show-splash-background");
 			_uiDocument.rootVisualElement.RemoveFromClassList("show-bottom-container");
+			_uiDocument.rootVisualElement.RemoveFromClassList("show-small-bottom-container");
 		}
 
 		private void SetupSafeAreaContainer()

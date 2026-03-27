@@ -46,140 +46,162 @@ namespace TrainingBuddy.UI
 
 		public override async void DrawLayout()
 		{
+			base.DrawLayout();
+			_uiManager.Header.Q<Label>("SiteTitle").text = "Min Profil";
+			
 			_dataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
 			
-			if (_layoutDrawn)
-			{
-				return;
-			}
+			// if (_layoutDrawn)
+			// {
+			// 	return;
+			// }
+			
+			_levelingProgressBar = Layout.Q<CircularProgressBar>("LevelingProgressBar");
 				
 			Layout.Q<Label>("Name").text = _dataSnapshot.Child("UserName").Value.ToString();
 			Layout.Q<Label>("DateOfBirth").text = _dataSnapshot.Child("Email").Value.ToString();
 			Layout.Q<Label>("UserID").text = _dataSnapshot.Child("UserID").Value.ToString();
-			Layout.Q<VisualElement>("ProfilePicture").AddToClassList(_dataSnapshot.Child("Sex").Value.ToString()); 
+			Layout.Q<VisualElement>("ProfilePicture").AddToClassList("Kvinde"); 
+			// Layout.Q<VisualElement>("ProfilePicture").AddToClassList(_dataSnapshot.Child("Sex").Value.ToString()); 
+
+			_activityGraph = Layout.Q<ActivityGraph>("WeeklyDistanceGraph");
+			_activityGraph.ValueFormatter = value => $"{value:0.#} KM";
 			
-			DrawStatsSection();
-			DrawActivitySection();
+			// {
+				// name = "WeeklyDistanceGraph", 
+				// ValueFormatter = value => $"{value:0.#} KM",
+			// };
+
+
+			var sampleData = new List<ActivityGraph.DataPoint>
+			{
+				new ActivityGraph.DataPoint("28. april", 2.8f),
+				new ActivityGraph.DataPoint("29. april", 3.6f),
+				new ActivityGraph.DataPoint("30. april", 2.9f),
+				new ActivityGraph.DataPoint("I dag", 5.0f),
+				new ActivityGraph.DataPoint("1. maj", 2.4f),
+			};
+
+			_activityGraph.SetData(sampleData, 3);
+			
+			// DrawStatsSection();
+			// DrawActivitySection();
 			DrawFriendsSection();
-			
-			_uiManager.Header.Q<Label>("SiteTitle").text = "Min Profil";
-			
-			base.DrawLayout();
         }
 		
 		private async void DrawStatsSection()
 		{
-			var levelingProgressContainer = Layout.Q<VisualElement>("LevelingMiddleContainer");
-			levelingProgressContainer?.Clear();
-			
-			Layout.Q<Label>("LevelingPointsLabelValue").text = _dataSnapshot.Child("SkillPoints").Value.ToString();
-			Layout.Q<Button>("LevelingPointsContainer").RegisterCallback<ClickEvent>(OnTraining);
-
-			var levelingProgressWrapper = new VisualElement();
-			levelingProgressWrapper.AddToClassList("leveling-progress-wrapper");
-
-			_stepsRequiredForNextLevel = Convert.ToInt32(_dataSnapshot.Child("Level").Value) * 10000f;
-			_currentStepCount = Convert.ToInt64(_dataSnapshot.Child("StepCount").Value);
-
-			var circularProgressBar = new CircularProgressBar
-			{
-				name = "LevelingProgressBar",
-				Value = _stepsRequiredForNextLevel <= 0f
-					? 1f
-					: Mathf.Clamp01((float)_currentStepCount / _stepsRequiredForNextLevel),
-				TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
-				ProgressColor = new Color(0.76f, 1f, 0f, 1f),
-				KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
-				InnerKnobColor = new Color(0.88f, 0.88f, 0.88f, 1f),
-				ArrowColor = new Color(0, 0f, 0f, 1f),
-				
-				LineThickness = 30f,
-				StartAngle = 270f,
-				KnobSize = 20f,
-				InnerKnobSize = 6f,
-				ShowKnob = true,
-				ShowArrow = true,
-				ArrowLength = 18f,
-				ArrowWidth = 18f,
-				ArrowOffset = 6f,
-			};
-			circularProgressBar.AddToClassList($"leveling-progress-bar");
-			_levelingProgressBar = circularProgressBar;
-
-			var levelingProgressContent = new VisualElement();
-			levelingProgressContent.AddToClassList("leveling-progress-content");
-
-			var stepsToGo = Mathf.Max(0, Mathf.CeilToInt(_stepsRequiredForNextLevel - _currentStepCount));
-			var levelingProgressValueLabel = new Label
-			{
-				name = "LevelingProgressValueLabel",
-				text = $"{stepsToGo}\n skridt",
-			};
-			levelingProgressValueLabel.AddToClassList("leveling-progress-value-label");
-			levelingProgressValueLabel.AddToClassList("font-title");
-			_levelingProgressValueLabel = levelingProgressValueLabel;
-			
-			var levelingProgressSubtitleLabel = new Label
-			{
-				name = "LevelingProgressSubtitleLabel",
-				text = "Til næste niveau",
-			};
-			levelingProgressSubtitleLabel.AddToClassList("leveling-progress-subtitle-label");
-			levelingProgressSubtitleLabel.AddToClassList("font-regular");
-			
-			levelingProgressContent.Add(levelingProgressValueLabel);
-			levelingProgressContent.Add(levelingProgressSubtitleLabel);
-			
-			levelingProgressWrapper.Add(circularProgressBar);
-			levelingProgressWrapper.Add(levelingProgressContent);
-			levelingProgressContainer?.Add(levelingProgressWrapper);
-
-			UpdateLevelingProgress();
-			
-			// SpeedStatUpperMiddle
-			var speedProgressWrapper = Layout.Q<VisualElement>("SpeedStatUpperMiddle");
-			speedProgressWrapper?.Clear();
-
-			var speedProgressBar = new LinearProgressBar
-			{
-				name = "SpeedProgressBar", 
-				Value = (float)Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) / ((Convert.ToInt32(_dataSnapshot.Child("Level").Value) - 1) * 10),
-				TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
-				ProgressColor = new Color(0.76f, 1f, 0f, 1f),
-				KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
-				InnerKnobColor = new Color(0.88f, 0.88f, 0.88f, 1f),
-				
-				LineThickness = 35f,
-				KnobSize = 25f,
-				InnerKnobSize = 6f,
-			};
-			speedProgressBar.AddToClassList($"linear-progress-bar");
-			speedProgressWrapper?.Add(speedProgressBar);
-			Layout.Q<Label>("SpeedStatValue").text = $"{_dataSnapshot.Child("SpeedPoints").Value} point";
-			Layout.Q<Button>("SpeedStatLowerLeft").RegisterCallback<ClickEvent>(SpeedMinus);
-			Layout.Q<Button>("SpeedStatLowerRight").RegisterCallback<ClickEvent>(SpeedPlus);
-			
-			var accelerationProgressWrapper = Layout.Q<VisualElement>("AccelerationStatUpperMiddle");
-			accelerationProgressWrapper?.Clear();
-
-			var accelerationProgressBar = new LinearProgressBar
-			{
-				name = "AccelerationProgressBar", 
-				Value = (float)Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) / ((Convert.ToInt32(_dataSnapshot.Child("Level").Value) - 1) * 10),
-				TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
-				ProgressColor = new Color(0.76f, 1f, 0f, 1f),
-				KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
-				InnerKnobColor = new Color(0.88f, 0.88f, 0.88f, 1f),
-				
-				LineThickness = 35f,
-				KnobSize = 25f,
-				InnerKnobSize = 6f,
-			};
-			accelerationProgressBar.AddToClassList($"linear-progress-bar");
-			accelerationProgressWrapper?.Add(accelerationProgressBar);
-			Layout.Q<Label>("AccelerationStatValue").text = $"{_dataSnapshot.Child("AccelerationPoints").Value} point";
-			Layout.Q<Button>("AccelerationStatLowerLeft").RegisterCallback<ClickEvent>(AccelerationMinus);
-			Layout.Q<Button>("AccelerationStatLowerRight").RegisterCallback<ClickEvent>(AccelerationPlus);
+			// var levelingProgressContainer = Layout.Q<VisualElement>("LevelingMiddleContainer");
+			// levelingProgressContainer?.Clear();
+			//
+			// Layout.Q<Label>("LevelingPointsLabelValue").text = _dataSnapshot.Child("SkillPoints").Value.ToString();
+			// Layout.Q<Button>("LevelingPointsContainer").RegisterCallback<ClickEvent>(OnTraining);
+			//
+			// var levelingProgressWrapper = new VisualElement();
+			// levelingProgressWrapper.AddToClassList("leveling-progress-wrapper");
+			//
+			// _stepsRequiredForNextLevel = Convert.ToInt32(_dataSnapshot.Child("Level").Value) * 10000f;
+			// _currentStepCount = Convert.ToInt64(_dataSnapshot.Child("StepCount").Value);
+			//
+			// var circularProgressBar = new CircularProgressBar
+			// {
+			// 	name = "LevelingProgressBar",
+			// 	Value = _stepsRequiredForNextLevel <= 0f
+			// 		? 1f
+			// 		: Mathf.Clamp01((float)_currentStepCount / _stepsRequiredForNextLevel),
+			// 	TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
+			// 	ProgressColor = new Color(0.76f, 1f, 0f, 1f),
+			// 	KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
+			// 	InnerKnobColor = new Color(0.88f, 0.88f, 0.88f, 1f),
+			// 	ArrowColor = new Color(0, 0f, 0f, 1f),
+			// 	
+			// 	LineThickness = 30f,
+			// 	StartAngle = 270f,
+			// 	KnobSize = 20f,
+			// 	InnerKnobSize = 6f,
+			// 	ShowKnob = true,
+			// 	ShowArrow = true,
+			// 	ArrowLength = 18f,
+			// 	ArrowWidth = 18f,
+			// 	ArrowOffset = 6f,
+			// };
+			// circularProgressBar.AddToClassList($"leveling-progress-bar");
+			// _levelingProgressBar = circularProgressBar;
+			//
+			// var levelingProgressContent = new VisualElement();
+			// levelingProgressContent.AddToClassList("leveling-progress-content");
+			//
+			// var stepsToGo = Mathf.Max(0, Mathf.CeilToInt(_stepsRequiredForNextLevel - _currentStepCount));
+			// var levelingProgressValueLabel = new Label
+			// {
+			// 	name = "LevelingProgressValueLabel",
+			// 	text = $"{stepsToGo}\n skridt",
+			// };
+			// levelingProgressValueLabel.AddToClassList("leveling-progress-value-label");
+			// levelingProgressValueLabel.AddToClassList("font-title");
+			// _levelingProgressValueLabel = levelingProgressValueLabel;
+			//
+			// var levelingProgressSubtitleLabel = new Label
+			// {
+			// 	name = "LevelingProgressSubtitleLabel",
+			// 	text = "Til næste niveau",
+			// };
+			// levelingProgressSubtitleLabel.AddToClassList("leveling-progress-subtitle-label");
+			// levelingProgressSubtitleLabel.AddToClassList("font-regular");
+			//
+			// levelingProgressContent.Add(levelingProgressValueLabel);
+			// levelingProgressContent.Add(levelingProgressSubtitleLabel);
+			//
+			// levelingProgressWrapper.Add(circularProgressBar);
+			// levelingProgressWrapper.Add(levelingProgressContent);
+			// levelingProgressContainer?.Add(levelingProgressWrapper);
+			//
+			// UpdateLevelingProgress();
+			//
+			// // SpeedStatUpperMiddle
+			// var speedProgressWrapper = Layout.Q<VisualElement>("SpeedStatUpperMiddle");
+			// speedProgressWrapper?.Clear();
+			//
+			// var speedProgressBar = new LinearProgressBar
+			// {
+			// 	name = "SpeedProgressBar", 
+			// 	Value = (float)Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) / ((Convert.ToInt32(_dataSnapshot.Child("Level").Value) - 1) * 10),
+			// 	TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
+			// 	ProgressColor = new Color(0.76f, 1f, 0f, 1f),
+			// 	KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
+			// 	InnerKnobColor = new Color(0.88f, 0.88f, 0.88f, 1f),
+			// 	
+			// 	LineThickness = 35f,
+			// 	KnobSize = 25f,
+			// 	InnerKnobSize = 6f,
+			// };
+			// speedProgressBar.AddToClassList($"linear-progress-bar");
+			// speedProgressWrapper?.Add(speedProgressBar);
+			// Layout.Q<Label>("SpeedStatValue").text = $"{_dataSnapshot.Child("SpeedPoints").Value} point";
+			// Layout.Q<Button>("SpeedStatLowerLeft").RegisterCallback<ClickEvent>(SpeedMinus);
+			// Layout.Q<Button>("SpeedStatLowerRight").RegisterCallback<ClickEvent>(SpeedPlus);
+			//
+			// var accelerationProgressWrapper = Layout.Q<VisualElement>("AccelerationStatUpperMiddle");
+			// accelerationProgressWrapper?.Clear();
+			//
+			// var accelerationProgressBar = new LinearProgressBar
+			// {
+			// 	name = "AccelerationProgressBar", 
+			// 	Value = (float)Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) / ((Convert.ToInt32(_dataSnapshot.Child("Level").Value) - 1) * 10),
+			// 	TrackColor = new Color(0.88f, 0.88f, 0.88f, 1f),
+			// 	ProgressColor = new Color(0.76f, 1f, 0f, 1f),
+			// 	KnobColor = new Color(0.68f, 0.94f, 0f, 1f),
+			// 	InnerKnobColor = new Color(0.88f, 0.88f, 0.88f, 1f),
+			// 	
+			// 	LineThickness = 35f,
+			// 	KnobSize = 25f,
+			// 	InnerKnobSize = 6f,
+			// };
+			// accelerationProgressBar.AddToClassList($"linear-progress-bar");
+			// accelerationProgressWrapper?.Add(accelerationProgressBar);
+			// Layout.Q<Label>("AccelerationStatValue").text = $"{_dataSnapshot.Child("AccelerationPoints").Value} point";
+			// Layout.Q<Button>("AccelerationStatLowerLeft").RegisterCallback<ClickEvent>(AccelerationMinus);
+			// Layout.Q<Button>("AccelerationStatLowerRight").RegisterCallback<ClickEvent>(AccelerationPlus);
 		}
 
 		private void OnStepCountChanged(long stepCount)

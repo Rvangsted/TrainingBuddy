@@ -1,4 +1,10 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/MainMenu.uss?fileID=7433441132597879392&amp;guid=7fd040a38d96d5942946b2e6a20b6219&amp;type=3#MainMenu" />
-    <ui:VisualElement name="MainMenu" class="main-menu" style="flex-grow: 1;" />
+    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/MainMenu.uss?fileID=7433441132597879392&amp;guid=7fd040a38d96d5942946b2e6a20b6219&amp;type=3#MainMenu"/>
+    <ui:VisualElement name="MainMenu" class="main-menu">
+        <TrainingBuddy.UI.Controls.LocalizedButton name="StartRaceButton" class="button-large button-start-race" key="button_start_race" />
+        <TrainingBuddy.UI.Controls.LocalizedButton name="JoinRaceButton" class="button-large button-join-race" key="button_participate_race" />
+        <TrainingBuddy.UI.Controls.LocalizedButton name="ProfileButton" class="button-large button-profile" key="button_profile" />
+        <TrainingBuddy.UI.Controls.LocalizedButton name="HighScoreButton" class="button-large button-highscore" key="button_highscore" />
+    </ui:VisualElement>
+    <TrainingBuddy.UI.Controls.LocalizedButton key="button_privacy" name="PrivacyButton" start-tag="&lt;u&gt;" end-tag="&lt;/u&gt;" class="text-button privacy-button"/>
 </ui:UXML>

@@ -12,19 +12,19 @@
 .profile-screen .profile-picture-big {
     position: absolute;
     background-image: url('project://database/Assets/_Project/Art/Characters/emma_figur_1.png');
-    background-position-x: right;
-    background-position-y: top;
-    background-size: 430px;
+    background-position-y: top 0;
+    background-size: auto 488px;
     width: 328px;
-    height: 645px;
-    left: -125px;
+    height: 488px;
+    left: -175px;
     top: -10px;
 }
 
 .profile-screen .profile-picture-big.Mand {
     background-image: url('project://database/Assets/_Project/Art/Characters/emil_figur_1.png');
-    left: -100px;
-    top: 60px;
+    width: 400px;
+    left: -178px;
+    top: 18px;
 }
 
 .profile-screen .profile-picture-big.Kvinde {
@@ -33,57 +33,49 @@
 
 /*Info Container*/
 .info-wrapper {
-    padding: 30px 50px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 22px;
 }
 
 .info-container {
     position: relative;
     flex-direction: row;
     align-items: center;
-    background-color: var(--color-white);
-    height: 120px;
-    border-radius: 60px;
-}
-
-.info-container .profile-picture {
-    display: none;
-    position: absolute;
-    background-image: url('project://database/Assets/_Project/Art/Characters/emma_figur_1.png');
-    background-position-x: right;
-    background-position-y: top;
-    background-size: 430px;
-    width: 328px;
-    height: 645px;
-    left: -175px;
-    top: -30px;
+    background-color: var(--color-buttons);
+    height: 86px;
+    width: 319px;
+    border-radius: 50px;
 }
 
 .info-container .middle-labels {
     justify-content: center;
     flex-grow: 1;
     height: 100%;
-    margin-left: 105px;
+    margin-left: 100px;
+    overflow: hidden;
 }
 
 .info-container .middle-labels .name-label {
-    font-size: var(--font-size-xl);
-}
-
-.info-container .middle-labels .date-of-birth-label {
-    padding: 10px 0 3px 7px;
     font-size: var(--font-size-l);
 }
 
+.info-container .middle-labels .date-of-birth-label {
+    padding: 10px 0;
+    font-size: var(--font-size-m);
+}
+
 .info-container .middle-labels .user-id-label {
-    padding-left: 10px;
     font-size: var(--font-size-xs);
 }
 
 .info-container .edit-button {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     background-color: var(--color-buttons);
-    border-width: 0;
+    border-color: black;
+    border-width: 1px;
     border-radius: 50%;
     background-image: url('project://database/Assets/_Project/Art/Icons/edit.png');
     background-size: 40px;
@@ -97,7 +89,9 @@
     flex-direction: row;
     align-items: flex-start;
     background-color: var(--color-white);
-    border-radius: 60px;
+    border-color: black;
+    border-width: 1px;
+    border-radius: 50px;
     margin-top: 20px;
     padding-bottom: 30px;
 }
@@ -133,9 +127,9 @@
 }
 
 .stats-container .leveling-container .leveling-top-container .leveling-top-right-container .leveling-points-container {
-    margin: 30px 30px 0 0;
-    width: 80px;
-    height: 80px;
+    margin: 15px 15px 0 0;
+    width: 60px;
+    height: 60px;
     background-color: var(--color-buttons);
     border-width: 0;
     border-radius: 50%;
@@ -156,26 +150,24 @@
 }
 
 .stats-container .leveling-container .leveling-middle-container {
-    min-height: 320px;
-    width: 100%;
     flex-direction: row;
     justify-content: center;
     align-items: flex-start;
-    margin-top: -40px;
+    margin-top: -25px;
 }
 
 .stats-container .leveling-container .leveling-middle-container .leveling-progress-wrapper {
     position: relative;
     justify-content: center;
     align-items: center;
-    width: 320px;
-    height: 320px;
+    width: 260px;
+    height: 260px;
 }
 
 .stats-container .leveling-container .leveling-middle-container .leveling-progress-wrapper .leveling-progress-bar {
     position: absolute;
-    width: 100%;
-    height: 100%;
+    width: 253px;
+    height: 253px;
 }
 
 .stats-container .leveling-container .leveling-middle-container .leveling-progress-wrapper .leveling-progress-content {
@@ -213,9 +205,9 @@
 /* Unused */
 .stats-container .leveling-container .leveling-bottom-container .leveling-bottom-left-container .leveling-bottom-left-element {
     display: none;
-    margin: 0 0 30px 30px;
-    width: 80px;
-    height: 80px;
+    margin: 0 0 15px 15px;
+    width: 60px;
+    height: 60px;
     background-color: var(--color-buttons);
     border-width: 0;
     border-radius: 50%;
@@ -228,12 +220,13 @@
 .stats-container .leveling-container .leveling-bottom-container .leveling-bottom-right-container {
     flex-grow: 1;
     align-items: flex-end;
+    justify-content: flex-end;
 }
 
 .stats-container .leveling-container .leveling-bottom-container .leveling-bottom-right-container .leveling-bottom-right-element {
-    margin: 0 30px 30px 0;
-    width: 80px;
-    height: 80px;
+    margin: 0 15px 20px 0;
+    width: 60px;
+    height: 60px;
     background-color: var(--color-buttons);
     border-width: 0;
     border-radius: 50%;
@@ -246,173 +239,98 @@
 }
 
 /* Stats */
-.stats-container .speed-stat-container {
-    flex-grow: 1;
-}
-
-.stats-container .speed-stat-container .speed-stat-title {
-    flex-grow: 1;
-    font-size: var(--font-size-xl);
-    padding: 5px 35px;
-}
-
-.stats-container .speed-stat-container .speed-stat-subtitle {
-    flex-grow: 1;
-    font-size: var(--font-size-m);
-    padding: 5px 35px 15px 35px;
-}
-
-.stats-container .speed-stat-container .speed-stat-upper {
-    flex-grow: 1;
-    flex-direction: row;
-}
-
-.stats-container .speed-stat-container .speed-stat-upper .speed-stat-left {
-    flex-grow: 1;
-    background-image: url('project://database/Assets/_Project/Art/Icons/turtle.png');
-    background-size: 60px auto;
-    background-position-x: right 10px;
-    background-position-y: top 5px;
-}
-
-.stats-container .speed-stat-container .speed-stat-upper .speed-stat-middle {
-    width: 290px;
-    min-height: 20px;
-}
-
-.stats-container .speed-stat-container .speed-stat-upper .speed-stat-middle .linear-progress-bar {
-    width: 100%;
-    height: 50px;
-    margin: 10px 0;
-}
-
-.stats-container .speed-stat-container .speed-stat-upper .speed-stat-right {
-    flex-grow: 1;
-    background-image: url('project://database/Assets/_Project/Art/Icons/hare.png');
-    background-size: auto 50px;
-    background-position-x: left 10px;
-    background-position-y: top 5px;
-}
-
-.stats-container .speed-stat-container .speed-stat-lower {
-    flex-grow: 1;
-    flex-direction: row;
-}
-
-.stats-container .speed-stat-container .speed-stat-lower .speed-stat-left {
-    flex-grow: 1;
-    height: 40px;
-    background-image: url('project://database/Assets/_Project/Art/Icons/minus.png');
-    background-size: 40px 10px;
-    background-position-y: top 14px;
-    background-position-x: right 24px;
-    width: auto;
-    border-radius: 0;
-    background-color: rgba(0,0,0,0);
-}
-
-.stats-container .speed-stat-container .speed-stat-lower .speed-stat-middle {
-    width: 290px;
-    justify-content: center;
-}
-
-.stats-container .speed-stat-container .speed-stat-lower .speed-stat-middle .speed-stat-value {
-    font-size: var(--font-size-m);
-    align-self: center;
-}
-
-.stats-container .speed-stat-container .speed-stat-lower .speed-stat-right {
-    flex-grow: 1;
-    height: 40px;
-    background-image: url('project://database/Assets/_Project/Art/Icons/plus.png');
-    background-size: 40px 40px;
-    background-position-y: top 0;
-    background-position-x: left 13px;
-    width: auto;
-    border-radius: 0;
-    background-color: rgba(0,0,0,0);
-}
-
+.stats-container .speed-stat-container,
 .stats-container .acceleration-stat-container {
     flex-grow: 1;
 }
 
+.stats-container .speed-stat-container .speed-stat-title,
 .stats-container .acceleration-stat-container .acceleration-stat-title {
     flex-grow: 1;
     font-size: var(--font-size-xl);
-    padding: 5px 35px;
+    padding: 5px 20px;
 }
 
+.stats-container .speed-stat-container .speed-stat-subtitle,
 .stats-container .acceleration-stat-container .acceleration-stat-subtitle {
     flex-grow: 1;
     font-size: var(--font-size-m);
-    padding: 5px 35px 15px 35px;
+    padding: 5px 20px 15px 20px;
 }
 
+.stats-container .speed-stat-container .speed-stat-upper,
 .stats-container .acceleration-stat-container .acceleration-stat-upper {
     flex-grow: 1;
     flex-direction: row;
 }
 
-.stats-container .acceleration-stat-container .acceleration-stat-upper .acceleration-stat-left {
+.stats-container .speed-stat-container .speed-stat-upper .speed-stat-left,
+.stats-container .acceleration-stat-container .acceleration-stat-upper .acceleration-stat-left{
     flex-grow: 1;
     background-image: url('project://database/Assets/_Project/Art/Icons/turtle.png');
-    background-size: 60px auto;
+    background-size: 38px auto;
     background-position-x: right 10px;
-    background-position-y: top 5px;
 }
 
+.stats-container .speed-stat-container .speed-stat-upper .speed-stat-middle,
 .stats-container .acceleration-stat-container .acceleration-stat-upper .acceleration-stat-middle {
-    width: 290px;
+    width: 246px;
+    min-height: 20px;
 }
 
+.stats-container .speed-stat-container .speed-stat-upper .speed-stat-middle .linear-progress-bar,
 .stats-container .acceleration-stat-container .acceleration-stat-upper .acceleration-stat-middle .linear-progress-bar {
     width: 100%;
-    height: 50px;
+    height: 20px;
     margin: 10px 0;
 }
 
+.stats-container .speed-stat-container .speed-stat-upper .speed-stat-right,
 .stats-container .acceleration-stat-container .acceleration-stat-upper .acceleration-stat-right {
     flex-grow: 1;
     background-image: url('project://database/Assets/_Project/Art/Icons/hare.png');
-    background-size: auto 50px;
+    background-size: auto 34px;
     background-position-x: left 10px;
-    background-position-y: top 5px;
 }
 
+.stats-container .speed-stat-container .speed-stat-lower,
 .stats-container .acceleration-stat-container .acceleration-stat-lower {
     flex-grow: 1;
     flex-direction: row;
 }
 
+.stats-container .speed-stat-container .speed-stat-lower .speed-stat-left,
 .stats-container .acceleration-stat-container .acceleration-stat-lower .acceleration-stat-left {
     flex-grow: 1;
     height: 40px;
     background-image: url('project://database/Assets/_Project/Art/Icons/minus.png');
-    background-size: 40px 10px;
-    background-position-y: top 14px;
-    background-position-x: right 24px;
+    background-size: 29px 7px;
+    background-position-y: center;
+    background-position-x: right 18px;
     width: auto;
     border-radius: 0;
     background-color: rgba(0,0,0,0);
 }
 
+.stats-container .speed-stat-container .speed-stat-lower .speed-stat-middle,
 .stats-container .acceleration-stat-container .acceleration-stat-lower .acceleration-stat-middle {
-    width: 290px;
+    width: 246px;
     justify-content: center;
 }
 
+.stats-container .speed-stat-container .speed-stat-lower .speed-stat-middle .speed-stat-value,
 .stats-container .acceleration-stat-container .acceleration-stat-lower .acceleration-stat-middle .acceleration-stat-value {
     font-size: var(--font-size-m);
     align-self: center;
 }
 
+.stats-container .speed-stat-container .speed-stat-lower .speed-stat-right,
 .stats-container .acceleration-stat-container .acceleration-stat-lower .acceleration-stat-right {
     flex-grow: 1;
     height: 40px;
     background-image: url('project://database/Assets/_Project/Art/Icons/plus.png');
-    background-size: 40px 40px;
-    background-position-y: top 0;
+    background-size: 29px 29px;
+    background-position-y: center;
     background-position-x: left 13px;
     width: auto;
     border-radius: 0;
@@ -422,10 +340,9 @@
 /*Activity Container*/
 .activity-container {
     margin-top: 20px;
-    padding: 40px 35px;
-    border-radius: 60px;
     display: flex;
     flex-direction: column;
+    padding-bottom: 12px;
 }
 
 .activity-container .activity-header {
@@ -433,72 +350,95 @@
 }
 
 .activity-container .activity-title {
+    flex-grow: 1;
     font-size: var(--font-size-xl);
-    color: var(--color-dark);
+    padding: 5px 20px 0 20px;
 }
 
 .activity-container .activity-subtitle {
+    flex-grow: 1;
     font-size: var(--font-size-m);
-    color: rgba(0, 0, 0, 0.55);
+    padding: 2px 20px 18px 20px;
+    opacity: 0.65;
 }
 
 .activity-container .activity-graph {
     width: 100%;
+    margin-top: 6px;
 }
 
 .activity-graph {
-    height: 220px;
+    --activity-graph-fill-top-color: rgba(194, 144, 255, 0.50);
+    --activity-graph-fill-bottom-color: rgba(194, 144, 255, 0.04);
+    --activity-graph-stroke-color: rgba(138, 83, 241, 0.14);
+    --activity-graph-stroke-width: 4;
+    --activity-graph-highlight-line-color: rgba(39, 39, 39, 0.18);
+    --activity-graph-highlight-line-width: 4;
+    --activity-graph-highlight-dash-length: 18;
+    --activity-graph-highlight-dash-gap: 16;
+    --activity-graph-highlight-dot-color: rgb(39, 39, 39);
+    --activity-graph-highlight-dot-size: 8;
+    --activity-graph-value-label-offset: 19;
+    --activity-graph-top-padding: 56;
+    --activity-graph-horizontal-plot-padding: 18;
+    height: 260px;
     position: relative;
     flex-direction: column;
+    padding: 0;
 }
 
 .activity-graph__canvas {
     position: relative;
     flex-grow: 1;
-    height: 180px;
+    height: 188px;
 }
 
 .activity-graph__highlight-dot {
-    width: 12px;
-    height: 12px;
-    background-color: var(--color-dark);
+    width: 8px;
+    height: 8px;
+    background-color: rgb(39, 39, 39);
     border-radius: 50%;
 }
 
 .activity-graph__value-label {
-    color: var(--color-dark);
-    font-size: var(--font-size-xl);
-    letter-spacing: 14px;
+    color: rgb(39, 39, 39);
+    font-size: 15px;
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
+    -unity-font-style: normal;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
 }
 
 .activity-graph__labels {
     flex-direction: row;
     justify-content: space-between;
-    margin-top: 16px;
+    margin-top: 20px;
+    padding: 0 18px;
 }
 
 .activity-graph__labels .activity-graph__label {
-    font-size: var(--font-size-m);
-    color: rgba(0, 0, 0, 0.5);
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.78);
+    -unity-text-align: middle-center;
 }
 
 /*Friends Container*/
 .friends-container {
-    align-self: center;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 .friends-container .friend-title {
-    width: 430px;
-    border-width: 1px;
-    align-self: center;
+    flex-grow: 1;
     font-size: var(--font-size-xl);
+    padding: 5px 20px;
 }
 
 .friends-container .friend-subtitle {
-    width: 430px;
-    border-width: 1px;
-    align-self: center;
-    font-size: var(--font-size-l);
+    flex-grow: 1;
+    font-size: var(--font-size-m);
+    padding: 5px 20px 15px 20px;
 }
 
 .friends-container .friends-content {
@@ -510,13 +450,13 @@
 
 .friends-container .friend-element {
     position: relative;
-    background-color: white;
+    background-color: var(--color-buttons);
     align-items: center;
     justify-content: flex-end;
-    width: 104px;
-    height: 135px;
-    border-radius: 30px;
-    margin: 20px 59px 20px 0;
+    width: 79px;
+    height: 103px;
+    border-radius: 15px;
+    margin: 20px 43px 20px 0;
 }
 
 .friends-container .friend-element.no-margin {
@@ -525,30 +465,30 @@
 
 .friends-container .friends-content .friend-element .friend-image {
     position: absolute;
-    width: 140px;
-    height: 140px;
-    top: -40px;
+    width: 100px;
+    height: 100px;
+    top: -28px;
     background-image: url('project://database/Assets/_Project/Art/Characters/emma_friend.png');
-    background-size: 140px;
+    background-size: 100px;
 }
 
 .friends-container .friends-content .friend-element .friend-favorite-icon {
     position: absolute;
-    width: 60px;
-    height: 60px;
-    top: -50px;
-    right: -30px;
+    width: 39px;
+    height: 39px;
+    top: -28px;
+    right: -20px;
     background-image: url('project://database/Assets/_Project/Art/icons/favorite_star.png');
-    background-size: 60px;
+    background-size: 39px;
 }
 
 .friends-container .friends-content .friend-element .friend-name-label {
-    font-size: var(--font-size-l);
-    margin-bottom: 5px;
+    font-size: var(--font-size-xs);
+    margin-bottom: 1px;
 }
 
 .friends-container .friends-content .friend-element .friend-distance-label {
-    font-size: var(--font-size-s);
+    font-size: var(--font-size-xs);
     margin-bottom: 5px;
 }
 
@@ -563,14 +503,6 @@
     margin-bottom: 10px;
 }
 
-.menu-container .about-button {
-    /*display: none;*/
-}
-
-.menu-container .settings-button {
-    /*display: none;*/
-}
-
-.menu-container .logout-button {
-    /*display: none;*/
+.privacy-button {
+    margin-top: 10px;
 }

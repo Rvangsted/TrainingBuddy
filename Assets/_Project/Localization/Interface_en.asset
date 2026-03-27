@@ -102,6 +102,10 @@ MonoBehaviour:
     m_Localized: Forgot your password?
     m_Metadata:
       m_Items: []
+  - m_Id: 204079161624485888
+    m_Localized: Leaderboard
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

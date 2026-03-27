@@ -2,33 +2,35 @@
 
 :root {
     /* Primary */
-    --color-dark: rgba(38, 38, 38, 1);
-    --color-mid: rgba(214, 214, 214, 1);
-    --color-light: rgba(247, 247, 247, 1);
-    --color-lime: rgba(200, 255, 0, 1);
-    --color-magenta: rgba(175, 89, 255, 1);
+    --color-dark: rgba(38, 38, 38, 1); /* 262626 */
+    --color-mid: rgba(214, 214, 214, 1); /* D6D6D6 */
+    --color-light: rgba(247, 247, 247, 1); /* F7F7F7 */
+    --color-lime: rgba(200, 255, 0, 1); /* C8FF00 */
+    --color-magenta: rgba(175, 89, 255, 1); /* AF59FF */
     
     /* Secondary */
-    --color-red: rgba(255, 59, 59, 1);
-    --color-blue: rgba(71, 163, 255, 1);
+    --color-red: rgba(255, 59, 59, 1); /* FF3B3B */
+    --color-blue: rgba(71, 163, 255, 1); /* 47A3FF */
 
     /* Others */
-    --color-olive: rgba(82, 105, 76, 1);
-    --color-orange: rgba(222, 97, 78, 1);
-    --color-creme: rgba(255, 196, 176, 1);
-    --color-white: rgba(255, 255, 255, 1);
-    --color-buttons: rgba(237, 237, 237, 1);
-    --color-font: rgba(38, 38, 38, 1);
-    --color-bottom-container: rgba(245, 245, 245, 1);
-    --color-separator: rgba(157, 157, 157, 1);
-    --color-input-field: rgba(209, 209, 209, 1);
+    --color-olive: rgba(82, 105, 76, 1); /* 52694C */
+    --color-orange: rgba(222, 97, 78, 1); /* DE614E */
+    --color-creme: rgba(255, 196, 176, 1); /* FFC4B0 */
+    --color-white: rgba(255, 255, 255, 1); /* FFFFFF */
+    --color-buttons: rgba(237, 237, 237, 1); /* EDEDED */
+    --color-font: rgba(38, 38, 38, 1); /* 262626 */
+    --color-bottom-container: rgba(245, 245, 245, 1); /* F5F5F5 */
+    --color-separator: rgba(157, 157, 157, 1); /* 9D9D9D */
+    --color-input-field: rgba(209, 209, 209, 1); /* D1D1D1 */
     
     /* Font Sizes */
+    --font-size-main-menu: 25px;
     --font-size-xl: 20px;
     --font-size-l: 18px;
     --font-size-m: 15px;
     --font-size-s: 14px;
     --font-size-xs: 12px;
+    --font-size-tiny: 8px;
 }
 
 .unity-ui-document__root {
@@ -82,6 +84,18 @@
     background-color: var(--color-bottom-container);
 }
 
+.show-small-bottom-container .bottom-container {
+    position: absolute;
+    bottom: 0;
+    border-top-left-radius: 50px;
+    border-top-right-radius: 50px;
+    width: 100%;
+    height: 460px;
+    background-color: var(--color-bottom-container);
+    border-color: aquamarine;
+    border-width: 1px;
+}
+
 .unity-button {
     width: 100%;
     border-radius: 40;
@@ -93,6 +107,13 @@
     font-size: var(--font-size-xl);
     -unity-font-definition: url("project://database/Assets/_Project/Fonts/Bungee/Bungee-Regular SDF.asset");
     color: var(--color-dark);
+}
+
+.square-button {
+    border-radius: 10;
+    font-size: var(--font-size-m);
+    -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Bold SDF.asset");
+    padding: 10px 0;
 }
 
 .unity-ui-document__root .unity-button:hover {
@@ -142,6 +163,7 @@
 .layout-header {
     width: 100%;
     padding: 0 24px;
+    min-height: 60px;
     flex-direction: row;
 }
 

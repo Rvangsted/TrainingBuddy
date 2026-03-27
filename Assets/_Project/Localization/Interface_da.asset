@@ -172,6 +172,14 @@ MonoBehaviour:
     m_Localized: Slet bruger
     m_Metadata:
       m_Items: []
+  - m_Id: 204079161624485888
+    m_Localized: Leaderboard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 210799447593967616
+    m_Localized: Indstillinger
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

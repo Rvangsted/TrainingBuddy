@@ -7,24 +7,224 @@
 .highscore-screen {
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     height: 100%;
     width: 100%;
-    max-width: 320px;
+    padding: 18px 0 0;
 }
 
-.title {
-    -unity-text-align: middle-center;
-    white-space: normal;
-    margin-top: 16px;
+.highscore-content {
+    flex-grow: 1;
+    width: 100%;
+    max-width: 390px;
+    align-items: center;
+    justify-content: flex-start;
 }
 
-.container {
+.podium-row {
+    width: 100%;
+    flex-direction: row;
+    padding: 0 18px;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.podium-wrap {
     flex-direction: column;
     align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.podium-wrap.first-place {
+    width: 107px;
+    height: 183px;
+    margin-bottom: 20px;
+}
+
+.podium-wrap.second-place,
+.podium-wrap.third-place {
+    width: 86px;
+    height: 142px;
+}
+
+.podium-card {
+    border-radius: 25px;
+    background-color: var(--color-buttons);
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.podium-card.second-place,
+.podium-card.third-place {
+    height: 103px;
+    width: 79px;
+}
+
+.podium-card.first-place {
+    width: 98px;
+    height: 128px;
+}
+
+.podium-crown {
+    position: absolute;
+    top: 0;
+    width: 63px;
+    height: 47px;
+    background-image: url("project://database/Assets/_Project/Art/Icons/crown.png");
+    align-items: center;
     justify-content: center;
-    width: 300px;
-    max-width: 100%;
-    gap: 12px;
-    padding: 24px 0;
+}
+
+.podium-crown-rank {
+    font-size: 16px;
+    color: var(--color-white);
+}
+
+.podium-rank {
+    font-size: 40px;
+    position: absolute;
+    top: -14px;
+}
+
+.podium-avatar {
+    position: absolute;
+    top: -14px;
+    width: 86px;
+    height: 86px;
+    border-radius: 45px;
+    background-color: var(--color-creme);
+    background-size: cover;
+    background-position: center;
+}
+
+.first-place .podium-avatar {
+    top: -20px;
+    width: 107px;
+    height: 107px;
+    border-radius: 53px;
+}
+
+.avatar-man {
+    background-image: url("project://database/Assets/_Project/Art/Frontpage/male.png");
+}
+
+.avatar-woman {
+    background-image: url("project://database/Assets/_Project/Art/Frontpage/female.png");
+}
+
+.avatar-runner {
+    background-image: url("project://database/Assets/_Project/Art/TrainingBuddyAltBG.png");
+}
+
+.podium-name {
+    font-size: var(--font-size-xs);
+    -unity-text-align: middle-center;
+}
+
+.podium-distance {
+    font-size: var(--font-size-tiny);
+    color: var(--color-font);
+    margin-bottom: 2px;
+}
+
+.first-place .podium-name {
+    font-size: var(--font-size-l);
+}
+
+.leaderboard-panel {
+    flex-grow: 1;
+    width: 100%;
+    margin-top: 30px;
+    align-items: center;
+}
+
+.leaderboard-header {
+    width: 343px;
+    height: 37px;
+    padding: 0 18px;
+    border-radius: 10px;
+    background-color: var(--color-buttons);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.leaderboard-header-label {
+    font-size: var(--font-size-m);
+    color: rgba(38, 38, 38, 0.8);
+    flex-basis: 0;
+}
+
+.align-left {
+    flex-grow: 0.9;
+    -unity-text-align: middle-left;
+}
+
+.align-center {
+    flex-grow: 1.6;
+    -unity-text-align: middle-center;
+}
+
+.align-right {
+    flex-grow: 0.9;
+    -unity-text-align: middle-right;
+}
+
+.leaderboard-list {
+    flex-grow: 1;
+    width: 100%;
+    margin-top: 32px;
+}
+
+.leaderboard-list > .unity-scroll-view__content-container {
+    align-items: center;
+    padding: 8px 0 24px;
+}
+
+.leaderboard-list .unity-scroller--vertical {
+    width: 0;
+    opacity: 0;
+}
+
+.leaderboard-row {
+    width: 343px;
+    height: 51px;
+    margin-bottom: 23px;
+    padding: 0 20px;
+    border-radius: 25px;
+    background-color: var(--color-magenta);
+    flex-direction: row;
+    align-items: center;
+    align-self: center;
+}
+
+.leaderboard-rank {
+    font-size: var(--font-size-m);
+    color: var(--color-white);
+    -unity-text-align: middle-center;
+}
+
+.leaderboard-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 21px;
+    margin-left: 14px;
+    background-size: cover;
+    background-position: center center;
+    background-color: rgba(255, 255, 255, 0.6);
+}
+
+.leaderboard-name {
+    flex-grow: 1;
+    margin-left: 14px;
+    font-size: 14px;
+    color: var(--color-white);
+    letter-spacing: 0.5px;
+}
+
+.leaderboard-distance {
+    font-size: var(--font-size-m);
+    color: var(--color-white);
+    -unity-text-align: middle-center;
 }

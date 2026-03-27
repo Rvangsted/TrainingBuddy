@@ -28,15 +28,27 @@ namespace TrainingBuddy.UI.Controls
         private VisualElement _labelsContainer;
         private readonly List<DataPoint> _dataPoints = new();
         private readonly List<Vector2> _pointPositions = new();
-        private readonly Color _fillTopColor = new(0.733f, 0.592f, 0.996f, 0.78f);
-        private readonly Color _fillBottomColor = new(0.733f, 0.592f, 0.996f, 0.0f);
-        private readonly Color _strokeColor = new(0.525f, 0.325f, 0.941f, 1f);
-        private readonly Color _highlightStrokeColor = new(0f, 0f, 0f, 0.35f);
+        private readonly List<Vector2> _renderPoints = new();
+        private Color _fillTopColor = new(0.78f, 0.63f, 1f, 0.38f);
+        private Color _fillBottomColor = new(0.78f, 0.63f, 1f, 0.02f);
+        private Color _strokeColor = new(0.525f, 0.325f, 0.941f, 0.18f);
+        private Color _highlightStrokeColor = new(0.16f, 0.16f, 0.16f, 0.18f);
+        private Color _highlightDotColor = new(0.16f, 0.16f, 0.16f, 1f);
 
-        private const float StrokeWidth = 5f;
         private const int SamplesPerSegment = 12;
+        private const float DefaultLabelOffset = 28f;
+        private const float DefaultDashLength = 14f;
+        private const float DefaultDashGap = 14f;
 
         private readonly List<Vector2> _sampledPoints = new();
+        private float _strokeWidth = 5f;
+        private float _highlightLineWidth = 2f;
+        private float _highlightDotSize = 12f;
+        private float _valueLabelOffset = DefaultLabelOffset;
+        private float _highlightDashLength = DefaultDashLength;
+        private float _highlightDashGap = DefaultDashGap;
+        private float _topPadding = 48f;
+        private float _horizontalPlotPadding = 18f;
 
         private bool _initialized;
         
@@ -44,12 +56,27 @@ namespace TrainingBuddy.UI.Controls
         private float _maxValue = 1f;
         private float _smoothness = 0.6f;
 
+        private static readonly CustomStyleProperty<Color> FillTopColorProperty = new("--activity-graph-fill-top-color");
+        private static readonly CustomStyleProperty<Color> FillBottomColorProperty = new("--activity-graph-fill-bottom-color");
+        private static readonly CustomStyleProperty<Color> StrokeColorProperty = new("--activity-graph-stroke-color");
+        private static readonly CustomStyleProperty<float> StrokeWidthProperty = new("--activity-graph-stroke-width");
+        private static readonly CustomStyleProperty<Color> HighlightLineColorProperty = new("--activity-graph-highlight-line-color");
+        private static readonly CustomStyleProperty<float> HighlightLineWidthProperty = new("--activity-graph-highlight-line-width");
+        private static readonly CustomStyleProperty<float> HighlightDashLengthProperty = new("--activity-graph-highlight-dash-length");
+        private static readonly CustomStyleProperty<float> HighlightDashGapProperty = new("--activity-graph-highlight-dash-gap");
+        private static readonly CustomStyleProperty<Color> HighlightDotColorProperty = new("--activity-graph-highlight-dot-color");
+        private static readonly CustomStyleProperty<float> HighlightDotSizeProperty = new("--activity-graph-highlight-dot-size");
+        private static readonly CustomStyleProperty<float> ValueLabelOffsetProperty = new("--activity-graph-value-label-offset");
+        private static readonly CustomStyleProperty<float> TopPaddingProperty = new("--activity-graph-top-padding");
+        private static readonly CustomStyleProperty<float> HorizontalPlotPaddingProperty = new("--activity-graph-horizontal-plot-padding");
+
         public ActivityGraph()
         {
             AddToClassList("activity-graph");
             style.flexDirection = FlexDirection.Column;
             pickingMode = PickingMode.Ignore;
             RegisterCallback<AttachToPanelEvent>(_ => EnsureInitialized());
+            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
         }
 
         public Func<float, string> ValueFormatter { get; set; } = value => $"{value:0.#} KM";
@@ -148,8 +175,9 @@ namespace TrainingBuddy.UI.Controls
             var point = _pointPositions[_highlightIndex];
 
             _highlightDot.style.display = DisplayStyle.Flex;
-            _highlightDot.style.left = point.x - 6f;
-            _highlightDot.style.top = point.y - 6f;
+            var dotRadius = _highlightDotSize * 0.5f;
+            _highlightDot.style.left = point.x - dotRadius;
+            _highlightDot.style.top = point.y - dotRadius;
 
             if (ValueFormatter != null)
             {
@@ -165,17 +193,20 @@ namespace TrainingBuddy.UI.Controls
             var rectMin = rect.position;
             var rectMax = rectMin + rect.size;
 
-            var labelLeft = point.x + 14f;
-            var labelTop = Mathf.Max(rectMin.y, point.y - 48f);
-
             var expectedWidth = Mathf.Abs(_highlightValueLabel.layout.width) > 0f
                 ? _highlightValueLabel.layout.width
                 : _highlightValueLabel.resolvedStyle.width;
+            var expectedHeight = Mathf.Abs(_highlightValueLabel.layout.height) > 0f
+                ? _highlightValueLabel.layout.height
+                : _highlightValueLabel.resolvedStyle.height;
+            var labelWidth = !float.IsNaN(expectedWidth) && expectedWidth > 0f ? expectedWidth : 0f;
+            var labelHeight = !float.IsNaN(expectedHeight) && expectedHeight > 0f ? expectedHeight : 0f;
 
-            if (!float.IsNaN(expectedWidth) && expectedWidth > 0f && labelLeft + expectedWidth > rectMax.x)
-            {
-                labelLeft = point.x - expectedWidth - 14f;
-            }
+            var labelLeft = point.x - labelWidth * 0.5f;
+            var labelTop = point.y - _valueLabelOffset - labelHeight;
+
+            labelLeft = Mathf.Clamp(labelLeft, rectMin.x, Mathf.Max(rectMin.x, rectMax.x - labelWidth));
+            labelTop = Mathf.Max(rectMin.y, labelTop);
 
             _highlightValueLabel.style.left = labelLeft;
             _highlightValueLabel.style.top = labelTop;
@@ -208,6 +239,9 @@ namespace TrainingBuddy.UI.Controls
 	        _highlightDot.AddToClassList("activity-graph__highlight-dot");
 	        _highlightDot.style.display = DisplayStyle.None;
 	        _highlightDot.style.position = Position.Absolute;
+            _highlightDot.style.width = _highlightDotSize;
+            _highlightDot.style.height = _highlightDotSize;
+            _highlightDot.style.backgroundColor = _highlightDotColor;
 
 	        _highlightValueLabel = new Label { name = "HighlightValueLabel" };
 	        _highlightValueLabel.AddToClassList("activity-graph__value-label");
@@ -234,14 +268,16 @@ namespace TrainingBuddy.UI.Controls
             }
 
             var maxValue = Mathf.Max(_maxValue, Mathf.Epsilon);
+            var drawableHeight = Mathf.Max(0f, rect.height - _topPadding);
+            var plotWidth = Mathf.Max(0f, rect.width - (_horizontalPlotPadding * 2f));
 
             for (var i = 0; i < _dataPoints.Count; i++)
             {
                 var normalizedX = _dataPoints.Count == 1 ? 0.5f : (float)i / (_dataPoints.Count - 1);
                 var normalizedY = Mathf.Clamp01(_dataPoints[i].Value / maxValue);
 
-                var x = rect.xMin + normalizedX * rect.width;
-                var y = rect.yMax - normalizedY * rect.height;
+                var x = rect.xMin + _horizontalPlotPadding + normalizedX * plotWidth;
+                var y = rect.yMax - normalizedY * drawableHeight;
 
                 _pointPositions.Add(new Vector2(x, y));
             }
@@ -275,7 +311,9 @@ namespace TrainingBuddy.UI.Controls
 
         private void DrawFill(MeshGenerationContext context, Rect rect)
         {
-            var sampleCount = _sampledPoints.Count;
+            PrepareRenderPoints(rect);
+
+            var sampleCount = _renderPoints.Count;
             if (sampleCount < 2)
             {
                 return;
@@ -285,7 +323,7 @@ namespace TrainingBuddy.UI.Controls
 
             for (var i = 0; i < sampleCount; i++)
             {
-                var point = _sampledPoints[i];
+                var point = _renderPoints[i];
                 var t = sampleCount > 1 ? i / (float)(sampleCount - 1) : 0f;
 
                 var topVertex = new Vertex
@@ -325,21 +363,56 @@ namespace TrainingBuddy.UI.Controls
 
         private void DrawStroke(MeshGenerationContext context)
         {
+            var sampleCount = _renderPoints.Count;
+            if (sampleCount < 2)
+            {
+                return;
+            }
+
+            if (_strokeWidth <= 0f || _strokeColor.a <= 0f)
+            {
+                return;
+            }
+
             var painter = context.painter2D;
             painter.lineJoin = LineJoin.Round;
             painter.lineCap = LineCap.Round;
-            painter.lineWidth = StrokeWidth;
+            painter.lineWidth = _strokeWidth;
             painter.strokeColor = _strokeColor;
 
             painter.BeginPath();
-            painter.MoveTo(_sampledPoints[0]);
+            painter.MoveTo(_renderPoints[0]);
 
-            for (var i = 1; i < _sampledPoints.Count; i++)
+            for (var i = 1; i < sampleCount; i++)
             {
-                painter.LineTo(_sampledPoints[i]);
+                painter.LineTo(_renderPoints[i]);
             }
 
             painter.Stroke();
+        }
+
+        private void PrepareRenderPoints(Rect rect)
+        {
+            _renderPoints.Clear();
+
+            if (_sampledPoints.Count == 0)
+            {
+                return;
+            }
+
+            var firstPoint = _sampledPoints[0];
+            if (firstPoint.x > rect.xMin)
+            {
+                _renderPoints.Add(new Vector2(rect.xMin, firstPoint.y));
+            }
+
+            _renderPoints.AddRange(_sampledPoints);
+
+            var lastPoint = _sampledPoints[^1];
+            if (lastPoint.x < rect.xMax)
+            {
+                _renderPoints.Add(new Vector2(rect.xMax, lastPoint.y));
+            }
         }
 
         private void DrawHighlightLine(MeshGenerationContext context, Rect rect)
@@ -351,16 +424,47 @@ namespace TrainingBuddy.UI.Controls
 
             var point = _pointPositions[_highlightIndex];
 
+            if (_highlightLineWidth <= 0f || _highlightStrokeColor.a <= 0f)
+            {
+                return;
+            }
+
             var painter = context.painter2D;
             painter.lineJoin = LineJoin.Round;
             painter.lineCap = LineCap.Round;
-            painter.lineWidth = 2f;
+            painter.lineWidth = _highlightLineWidth;
             painter.strokeColor = _highlightStrokeColor;
 
-            painter.BeginPath();
-            painter.MoveTo(new Vector2(point.x, rect.yMax));
-            painter.LineTo(point);
-            painter.Stroke();
+            DrawDashedLine(
+                painter,
+                new Vector2(point.x, rect.yMax),
+                point,
+                Mathf.Max(1f, _highlightDashLength),
+                Mathf.Max(1f, _highlightDashGap));
+        }
+
+        private static void DrawDashedLine(Painter2D painter, Vector2 start, Vector2 end, float dashLength, float gapLength)
+        {
+            var direction = end - start;
+            var length = direction.magnitude;
+            if (length <= Mathf.Epsilon)
+            {
+                return;
+            }
+
+            direction /= length;
+
+            var distance = 0f;
+            while (distance < length)
+            {
+                var dashStart = start + direction * distance;
+                var dashEnd = start + direction * Mathf.Min(length, distance + dashLength);
+                painter.BeginPath();
+                painter.MoveTo(dashStart);
+                painter.LineTo(dashEnd);
+                painter.Stroke();
+                distance += dashLength + gapLength;
+            }
         }
 
         private (Vector2 cp1, Vector2 cp2) GetControlPoints(int segmentIndex)
@@ -418,6 +522,84 @@ namespace TrainingBuddy.UI.Controls
             point += ttt * p3;
 
             return point;
+        }
+
+        private void OnCustomStyleResolved(CustomStyleResolvedEvent evt)
+        {
+            if (evt.customStyle.TryGetValue(FillTopColorProperty, out var fillTopColor))
+            {
+                _fillTopColor = fillTopColor;
+            }
+
+            if (evt.customStyle.TryGetValue(FillBottomColorProperty, out var fillBottomColor))
+            {
+                _fillBottomColor = fillBottomColor;
+            }
+
+            if (evt.customStyle.TryGetValue(StrokeColorProperty, out var strokeColor))
+            {
+                _strokeColor = strokeColor;
+            }
+
+            if (evt.customStyle.TryGetValue(StrokeWidthProperty, out var strokeWidth))
+            {
+                _strokeWidth = Mathf.Max(0f, strokeWidth);
+            }
+
+            if (evt.customStyle.TryGetValue(HighlightLineColorProperty, out var highlightLineColor))
+            {
+                _highlightStrokeColor = highlightLineColor;
+            }
+
+            if (evt.customStyle.TryGetValue(HighlightLineWidthProperty, out var highlightLineWidth))
+            {
+                _highlightLineWidth = Mathf.Max(0f, highlightLineWidth);
+            }
+
+            if (evt.customStyle.TryGetValue(HighlightDashLengthProperty, out var highlightDashLength))
+            {
+                _highlightDashLength = Mathf.Max(1f, highlightDashLength);
+            }
+
+            if (evt.customStyle.TryGetValue(HighlightDashGapProperty, out var highlightDashGap))
+            {
+                _highlightDashGap = Mathf.Max(1f, highlightDashGap);
+            }
+
+            if (evt.customStyle.TryGetValue(HighlightDotColorProperty, out var highlightDotColor))
+            {
+                _highlightDotColor = highlightDotColor;
+            }
+
+            if (evt.customStyle.TryGetValue(HighlightDotSizeProperty, out var highlightDotSize))
+            {
+                _highlightDotSize = Mathf.Max(0f, highlightDotSize);
+            }
+
+            if (evt.customStyle.TryGetValue(ValueLabelOffsetProperty, out var valueLabelOffset))
+            {
+                _valueLabelOffset = Mathf.Max(0f, valueLabelOffset);
+            }
+
+            if (evt.customStyle.TryGetValue(TopPaddingProperty, out var topPadding))
+            {
+                _topPadding = Mathf.Max(0f, topPadding);
+            }
+
+            if (evt.customStyle.TryGetValue(HorizontalPlotPaddingProperty, out var horizontalPlotPadding))
+            {
+                _horizontalPlotPadding = Mathf.Max(0f, horizontalPlotPadding);
+            }
+
+            if (_highlightDot != null)
+            {
+                _highlightDot.style.width = _highlightDotSize;
+                _highlightDot.style.height = _highlightDotSize;
+                _highlightDot.style.backgroundColor = _highlightDotColor;
+            }
+
+            _canvas?.MarkDirtyRepaint();
+            UpdateOverlay();
         }
 
         private class GraphCanvas : VisualElement
