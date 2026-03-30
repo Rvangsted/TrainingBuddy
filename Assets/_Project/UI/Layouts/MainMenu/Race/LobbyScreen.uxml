@@ -1,6 +1,20 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/RaceScreen.uss?fileID=7433441132597879392&amp;guid=162e64af8350c4941acc5432a924576e&amp;type=3#RaceScreen" />
+    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/Race/LobbyScreen.uss?fileID=7433441132597879392&amp;guid=8c76b440ac30481b97a90b168f0487d8&amp;type=3#LobbyScreen"/>
     <ui:VisualElement name="LobbyScreen" class="lobby-screen" style="flex-grow: 1;">
-        <ui:VisualElement name="Container" class="container" style="flex-grow: 1;" />
+        <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
+            <ui:VisualElement name="SearchRow" class="search-row">
+                <ui:VisualElement name="SearchShell" class="search-shell">
+                    <ui:Label text="S&#248;g efter l&#248;b ..." name="SearchPlaceholder" class="search-placeholder font-regular" />
+                </ui:VisualElement>
+                <ui:VisualElement name="FilterButton" class="filter-button">
+                    <ui:VisualElement class="filter-icon">
+                        <ui:VisualElement class="filter-icon__line filter-icon__line--short" />
+                        <ui:VisualElement class="filter-icon__line filter-icon__line--long" />
+                        <ui:VisualElement class="filter-icon__line filter-icon__line--medium" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:ScrollView name="LobbyList" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="lobby-scroll" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

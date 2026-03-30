@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2825395748845398818}
   - component: {fileID: 966107764626015560}
+  - component: {fileID: 4849461661222817778}
   m_Layer: 0
   m_Name: GlobalScope
   m_TagString: Untagged
@@ -51,3 +52,15 @@ MonoBehaviour:
   _uiManager: {fileID: 8047090938252208629, guid: 701bd5e243eaf024789d3b4dc2c2b724,
     type: 3}
   _layoutData: {fileID: 11400000, guid: b7f3f7df4e9b6094290c042ec6ff40b2, type: 2}
+--- !u!114 &4849461661222817778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6031209083724050071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb4c8fe78fbd4bc4e8bcd64aff003521, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GameLogic::TrainingBuddy.AppPauseBridge

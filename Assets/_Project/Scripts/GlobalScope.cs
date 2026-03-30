@@ -34,7 +34,7 @@ namespace TrainingBuddy
 			builder.Register<FirebaseController>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 			builder.Register<DatabaseManager>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 			builder.Register<DatabaseTasks>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
-			builder.Register<GameManager>(Lifetime.Singleton).AsImplementedInterfaces();
+			builder.Register<GameManager>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 
 			builder.RegisterInstance(_layoutData);
 			

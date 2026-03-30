@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using BedtimeCore;
 using Cysharp.Threading.Tasks;
@@ -32,11 +33,21 @@ namespace TrainingBuddy.Managers
 		public Task<bool> HandleJoinRequestAsync(string raceId, string requesterUserId, bool approve);
 		public Task LeaveRaceAsync(string raceId);
 		public Task CancelRaceAsync(string raceId);
+		public void StartStepCounter();
+		public void StopStepCounter();
 	}
 
 	public class DatabaseManager : IDatabaseManager
 	{
-		private int localStepCount;
+		// Step counter — in-memory state
+		private long _baseStepCount;    // StepCount loaded from Firebase at session start
+		private long _deviceAnchor = -1; // Device sensor value at session start (-1 = not yet anchored)
+		private long _currentTotal;     // Running total reported to UI
+		private long _lastSyncedTotal = -1; // Last value written to Firebase
+		private CancellationTokenSource _stepCts;
+
+		private const int SensorPollMs   = 2000;  // How often to read the device sensor
+		private const int FirebaseSyncMs = 60000; // How often to write to Firebase
 
 		public event Action<long> StepCountChanged;
 
@@ -147,7 +158,7 @@ namespace TrainingBuddy.Managers
 			   {
 					snapshot = task.Result;
 			   }
-		
+
 			   return Task.CompletedTask;
 			});
             return snapshot;
@@ -188,6 +199,8 @@ namespace TrainingBuddy.Managers
 
 			await UpdateUser(Auth.CurrentUser, new UserData { Level = userLevel, StepCount = updatedStepCount, ExperiencePoints = experience + (int)investCap, SkillPoints = (int)totalPoints });
 
+			ResetStepCountBase(updatedStepCount);
+
 			await UniTask.SwitchToMainThread();
 			UIManager.UpdateStepCounter(updatedStepCount);
 			StepCountChanged?.Invoke(updatedStepCount);
@@ -216,7 +229,7 @@ namespace TrainingBuddy.Managers
             {
                 throw new InvalidOperationException("Deactivated users cannot host races.");
             }
-            
+
             await EnsureUserCanHostRace(Auth.CurrentUser.UserId);
 
             string raceId = Guid.NewGuid().ToString("N");
@@ -289,7 +302,7 @@ namespace TrainingBuddy.Managers
                 { "status", "pending" },
                 { "displayName", Auth.CurrentUser.DisplayName ?? string.Empty },
             };
-            
+
             await EnsureUserCanJoinRace(Auth.CurrentUser.UserId, raceId);
 
             await DatabaseReference.Child("joinRequests").Child(raceId).Child(Auth.CurrentUser.UserId).SetValueAsync(requestData);
@@ -352,7 +365,7 @@ namespace TrainingBuddy.Managers
             {
                 return false;
             }
-            
+
             await EnsureUserCanJoinRace(requesterUserId, raceId);
 
             long timestamp = GetUnixTimestampMilliseconds();
@@ -397,7 +410,7 @@ namespace TrainingBuddy.Managers
             await DatabaseReference.UpdateChildrenAsync(updates);
             return true;
         }
-        
+
         public async Task LeaveRaceAsync(string raceId)
         {
             if (Auth?.CurrentUser == null)
@@ -520,7 +533,7 @@ namespace TrainingBuddy.Managers
 		// }
 
 		public async Task<List<DataSnapshot>> NearbyRaces(int range)
-		{ 
+		{
 #if !UNITY_EDITOR
 			if (!Input.location.isEnabledByUser)
 			{
@@ -561,7 +574,7 @@ namespace TrainingBuddy.Managers
 			{
 				return snapshot;
 			}
-	
+
 			return null;
         }
 
@@ -576,7 +589,7 @@ namespace TrainingBuddy.Managers
 
             return null;
         }
-        
+
         private async Task<DataSnapshot> GetUserRacesSnapshotAsync(string userId)
         {
             DataSnapshot snapshot = await DatabaseReference.Child("userRaces").Child(userId).GetValueAsync();
@@ -744,141 +757,175 @@ namespace TrainingBuddy.Managers
             return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        public void StartStepCounter()
-        {
-            if (StepCounterRunning)
-            {
-				return;
-			}
+		// -------------------------------------------------------------------------
+		// Step counter
+		// -------------------------------------------------------------------------
 
-			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION"))
+		/// <summary>
+		/// Loads the saved step count from Firebase once, then starts a lightweight
+		/// polling loop that reads the device sensor every 2 s and fires
+		/// StepCountChanged immediately — no Firebase involved per poll.
+		/// A single Firebase write happens every 60 s (and once on stop).
+		/// Call StopStepCounter() on OnApplicationPause/OnDestroy.
+		/// </summary>
+		public async void StartStepCounter()
+		{
+			if (StepCounterRunning) return;
+			if (Auth?.CurrentUser == null) return;
+			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION")) return;
+			if (!EnsureStepCounterDevice()) return;
+
+			// Load the authoritative base from Firebase once
+			DataSnapshot data = await FetchUserData(Auth.CurrentUser);
+			_baseStepCount   = ReadLong(data?.Child("StepCount").Value);
+			_deviceAnchor    = ReadLong(data?.Child("StepCountSnapshot").Value);
+			_currentTotal    = _baseStepCount;
+			_lastSyncedTotal = _baseStepCount;
+
+			// Immediately show the saved count while we wait for the first sensor tick
+			StepCountChanged?.Invoke(_currentTotal);
+
+			_stepCts = new CancellationTokenSource();
+			StepCounterRunning = true;
+			_ = StepCounterLoop(_stepCts.Token);
+		}
+
+		/// <summary>
+		/// Stops the polling loop and performs a final Firebase sync.
+		/// Should be called from OnApplicationPause(true) and OnDestroy.
+		/// </summary>
+		public void StopStepCounter()
+		{
+			_stepCts?.Cancel();
+			_stepCts = null;
+			// StepCounterRunning is set to false at the end of StepCounterLoop
+		}
+
+		private async Task StepCounterLoop(CancellationToken ct)
+		{
+			int timeSinceLastSyncMs = 0;
+
+			try
 			{
-				return;
+				while (!ct.IsCancellationRequested)
+				{
+					await UniTask.Delay(SensorPollMs, cancellationToken: ct);
+
+					if (!EnsureStepCounterDevice()) continue;
+
+					long deviceValue = StepCounter.current.stepCounter.ReadValue();
+					if (deviceValue <= 0) continue;
+
+					// Anchor the device counter on the first valid reading of this session.
+					// If Firebase returned 0 (new user), we anchor here so we don't
+					// miscount steps the user walked before installing the app.
+					if (_deviceAnchor <= 0)
+						_deviceAnchor = deviceValue;
+
+					// If deviceValue < _deviceAnchor the device was rebooted and the
+					// hardware counter reset to 0 — treat deviceValue as the full delta.
+					long delta = deviceValue >= _deviceAnchor
+						? deviceValue - _deviceAnchor
+						: deviceValue;
+
+					long newTotal = _baseStepCount + delta;
+					if (newTotal != _currentTotal)
+					{
+						_currentTotal = newTotal;
+						StepCountChanged?.Invoke(_currentTotal); // instant UI update, no Firebase
+					}
+
+					timeSinceLastSyncMs += SensorPollMs;
+					if (timeSinceLastSyncMs >= FirebaseSyncMs)
+					{
+						timeSinceLastSyncMs = 0;
+						await SyncStepsToFirebase(deviceValue);
+					}
+				}
+			}
+			catch (OperationCanceledException) { }
+
+			// Final sync before fully stopping
+			if (StepCounter.current is { enabled: true })
+			{
+				long finalDevice = StepCounter.current.stepCounter.ReadValue();
+				if (finalDevice > 0)
+					await SyncStepsToFirebase(finalDevice);
 			}
 
+			StepCounterRunning = false;
+		}
+
+		/// <summary>
+		/// Writes only StepCount and StepCountSnapshot — no full object read/write cycle.
+		/// Skips the write if nothing changed since last sync.
+		/// </summary>
+		private async Task SyncStepsToFirebase(long deviceValue)
+		{
+			if (Auth?.CurrentUser == null) return;
+			if (_currentTotal == _lastSyncedTotal) return;
+
+			try
+			{
+				await DatabaseReference
+					.Child("users")
+					.Child(Auth.CurrentUser.UserId)
+					.UpdateChildrenAsync(new Dictionary<string, object>
+					{
+						{ "StepCount",         (int)_currentTotal },
+						{ "StepCountSnapshot", (int)deviceValue   }
+					});
+
+				_lastSyncedTotal = _currentTotal;
+			}
+			catch (Exception ex)
+			{
+				$"SyncStepsToFirebase failed: {ex}".Log();
+			}
+		}
+
+		/// <summary>
+		/// Re-anchors the in-memory tracking after an external change to the stored
+		/// step count (e.g. investing steps reduces it). Without this, the next poll
+		/// cycle would compute an incorrect total from the stale _baseStepCount.
+		/// </summary>
+		private void ResetStepCountBase(long newTotal)
+		{
+			_currentTotal    = newTotal;
+			_lastSyncedTotal = newTotal;
+			_baseStepCount   = newTotal;
+
+			long deviceValue = StepCounter.current?.stepCounter.ReadValue() ?? 0;
+			if (deviceValue > 0)
+				_deviceAnchor = deviceValue;
+		}
+
+		private bool EnsureStepCounterDevice()
+		{
 			if (StepCounter.current == null)
 			{
+				Debug.Log("StepCounter unavailable, attempting to re-register");
 				InputSystem.AddDevice<StepCounter>();
 			}
 
-			if (StepCounter.current == null)
-			{
-				return;
-			}
+			if (StepCounter.current == null) return false;
 
 			if (!StepCounter.current.enabled)
 			{
+				Debug.Log("StepCounter disabled, enabling");
 				InputSystem.EnableDevice(StepCounter.current);
-				if (StepCounter.current.enabled)
-				{
-					Debug.Log("StepCounter is enabled");
-				}
 			}
 
-			if (!StepCounter.current.enabled)
-			{
-				return;
-			}
-
-			StepCounterRunning = true;
-			_ = StepCounterHandler();
+			return StepCounter.current.enabled;
 		}
 
-		private async Task StepCounterHandler(float delay = 2f)
+		private static long ReadLong(object value) => value switch
 		{
-			while (StepCounterRunning)
-			{
-				if (StepCounter.current == null)
-				{
-					Debug.Log("StepCounter unavailable, attempting to re-register");
-					InputSystem.AddDevice<StepCounter>();
-					await Task.Delay(1000);
-					continue;
-				}
-
-				if (!StepCounter.current.enabled)
-				{
-					Debug.Log("StepCounter disabled, enabling");
-					InputSystem.EnableDevice(StepCounter.current);
-
-					if (!StepCounter.current.enabled)
-					{
-						await Task.Delay(1000);
-						continue;
-					}
-				}
-
-				localStepCount = StepCounter.current.stepCounter.ReadValue();
-
-				if (localStepCount <= 0)
-				{
-					await Task.Delay(1000);
-					continue;
-				}
-
-				await UpdateStepCount();
-
-				await Task.Delay((int)delay * 1000);
-			}
-		}
-
-		private async Task UpdateStepCount()
-        {
-            DataSnapshot data = await FetchUserData(Auth.CurrentUser);
-
-            object stepSnapshotValue = data.Child("StepCountSnapshot").Value;
-            object savedStepCountValue = data.Child("StepCount").Value;
-
-            long savedStepCount = savedStepCountValue switch
-            {
-                long l => l,
-                int i => i,
-                double d => (long)d,
-                null => 0,
-                _ => Convert.ToInt64(savedStepCountValue)
-            };
-
-            long? stepSnapshot = stepSnapshotValue switch
-            {
-                long l => l,
-                int i => i,
-                double d => (long)d,
-                null => (long?)null,
-                _ => Convert.ToInt64(stepSnapshotValue)
-            };
-
-            if (stepSnapshot is null or 0)
-            {
-                await UpdateUser(Auth.CurrentUser, new UserData { StepCountSnapshot = localStepCount });
-                return;
-            }
-
-            long? updatedStepCount = null;
-
-            if (localStepCount > stepSnapshot)
-            {
-                updatedStepCount = savedStepCount + (localStepCount - stepSnapshot.Value);
-            }
-            else if (localStepCount < stepSnapshot)
-            {
-                updatedStepCount = savedStepCount + localStepCount;
-            }
-
-            if (updatedStepCount.HasValue)
-            {
-                await UpdateUser(Auth.CurrentUser, new UserData
-                {
-                    StepCount = (int)updatedStepCount.Value,
-                    StepCountSnapshot = localStepCount
-                });
-
-                await UniTask.SwitchToMainThread();
-                StepCountChanged?.Invoke(updatedStepCount.Value);
-                Debug.Log(updatedStepCount.Value);
-                return;
-            }
-
-            await UpdateUser(Auth.CurrentUser, new UserData { StepCountSnapshot = localStepCount });
-        }
+			long   l => l,
+			int    i => i,
+			double d => (long)d,
+			null     => 0,
+			_        => Convert.ToInt64(value)
+		};
 	}
 }

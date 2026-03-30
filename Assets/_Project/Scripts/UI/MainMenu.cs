@@ -44,6 +44,7 @@ namespace TrainingBuddy.UI
 			// Layout.Q<VisualElement>("MainMenu").Add(participateRaceButton);
 			// Layout.Q<VisualElement>("MainMenu").Add(profileButton);
 
+			_startRaceButton.RegisterCallback<ClickEvent>(OnCreateLobby);
 			_joinRaceButton.RegisterCallback<ClickEvent>(OnFindLobby);
 			_profileButton.RegisterCallback<ClickEvent>(OnProfile);
 			_highscoreButton.RegisterCallback<ClickEvent>(OnHighScore);
@@ -75,19 +76,19 @@ namespace TrainingBuddy.UI
 			// _profileButton.clicked += OpenProfile;
 		}
 		
-		private async void OnCreateLobby()
+		private async void OnCreateLobby(ClickEvent evt)
 		{
-			var _userDataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
-			var longitude = Convert.ToInt32(_userDataSnapshot.Child("Longitude").Value);
-			var latitude = Convert.ToInt32(_userDataSnapshot.Child("Latitude").Value);
-			await _databaseManager.CreateLobby(new RaceData
-			{
-				RaceName = $"{_databaseManager.Auth.CurrentUser.DisplayName}'s Race",
-				HostName = _databaseManager.Auth.CurrentUser.DisplayName,
-				Longitude = longitude,
-				Latitude = latitude,
-				Status = 0,
-			});
+			// var _userDataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
+			// var longitude = Convert.ToInt32(_userDataSnapshot.Child("Longitude").Value);
+			// var latitude = Convert.ToInt32(_userDataSnapshot.Child("Latitude").Value);
+			// await _databaseManager.CreateLobby(new RaceData
+			// {
+			// 	RaceName = $"{_databaseManager.Auth.CurrentUser.DisplayName}'s Race",
+			// 	HostName = _databaseManager.Auth.CurrentUser.DisplayName,
+			// 	Longitude = longitude,
+			// 	Latitude = latitude,
+			// 	Status = 0,
+			// });
 			
 			_uiManager.ChangePage(_layoutData.LobbyScreen);
 		}
