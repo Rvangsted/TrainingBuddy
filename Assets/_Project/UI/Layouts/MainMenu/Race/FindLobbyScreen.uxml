@@ -3,16 +3,8 @@
     <ui:VisualElement name="FindLobbyScreen" class="find-lobby-screen" style="flex-grow: 1;">
         <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
             <ui:VisualElement name="SearchRow" class="search-row">
-                <ui:VisualElement name="SearchShell" class="search-shell">
-                    <ui:Label text="S&#248;g efter l&#248;b ..." name="SearchPlaceholder" class="search-placeholder font-regular" />
-                </ui:VisualElement>
-                <ui:VisualElement name="FilterButton" class="filter-button">
-                    <ui:VisualElement class="filter-icon">
-                        <ui:VisualElement class="filter-icon__line filter-icon__line--short" />
-                        <ui:VisualElement class="filter-icon__line filter-icon__line--long" />
-                        <ui:VisualElement class="filter-icon__line filter-icon__line--medium" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
+                <TrainingBuddy.UI.Controls.LocalizedTextInput name="SearchField" key="text_searchfield" hide-placeholder-on-focus="true" class="field-searchfield"/>
+                <ui:Button text="" name="FilterButton" class="filter-button"/>
             </ui:VisualElement>
             <ui:ScrollView name="LobbyList" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="find-lobby-scroll" />
         </ui:VisualElement>

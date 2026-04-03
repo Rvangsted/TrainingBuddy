@@ -180,6 +180,10 @@ MonoBehaviour:
     m_Localized: Indstillinger
     m_Metadata:
       m_Items: []
+  - m_Id: 213696763510382592
+    m_Localized: "S\xF8g efter l\xF8b..."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

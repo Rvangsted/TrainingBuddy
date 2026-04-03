@@ -90,7 +90,7 @@ namespace TrainingBuddy.UI
 			// 	Status = 0,
 			// });
 			
-			_uiManager.ChangePage(_layoutData.LobbyScreen);
+			_uiManager.ChangePage(_layoutData.RaceScreen);
 		}
 		
 		private void OnFindLobby(ClickEvent evt)

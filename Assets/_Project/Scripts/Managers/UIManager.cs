@@ -171,6 +171,7 @@ namespace TrainingBuddy.UI
 				FindLobbyScreen => () => ChangePage(_layoutData.MainMenu),
 				HighScoreScreen => () => ChangePage(_layoutData.MainMenu),
 				LobbyScreen => () => ChangePage(_layoutData.MainMenu),
+				RaceScreen => () => ChangePage(_layoutData.MainMenu),
 				_ => null,
 			};
 		}
@@ -226,6 +227,9 @@ namespace TrainingBuddy.UI
 				case HighScoreScreen:
 					_uiDocument.rootVisualElement.AddToClassList("show-small-bottom-container");
 					break;
+				case RaceScreen:
+					_uiDocument.rootVisualElement.AddToClassList("show-race-background");
+					break;
 			}
 		}
 
@@ -237,6 +241,7 @@ namespace TrainingBuddy.UI
 			_uiDocument.rootVisualElement.RemoveFromClassList("show-splash-background");
 			_uiDocument.rootVisualElement.RemoveFromClassList("show-bottom-container");
 			_uiDocument.rootVisualElement.RemoveFromClassList("show-small-bottom-container");
+			_uiDocument.rootVisualElement.RemoveFromClassList("show-race-background");
 		}
 
 		private void SetupSafeAreaContainer()

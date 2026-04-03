@@ -45,6 +45,10 @@
     background-image: url('project://database/Assets/_Project/Art/TrainingBuddyBG.png');
 }
 
+.unity-ui-document__root.show-race-background {
+    background-image: url('project://database/Assets/_Project/Art/Loebebanen.png');
+}
+
 .unity-ui-document__root.show-emma-background {
     background-color: var(--color-mid);
     background-image: url('project://database/Assets/_Project/Art/TrainingBuddyAltBG.png');

@@ -175,6 +175,10 @@ MonoBehaviour:
     m_Key: button_settings
     m_Metadata:
       m_Items: []
+  - m_Id: 213696763510382592
+    m_Key: text_searchfield
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

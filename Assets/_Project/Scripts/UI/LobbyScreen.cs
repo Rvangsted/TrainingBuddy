@@ -24,7 +24,7 @@ namespace TrainingBuddy.UI
 		{
 			base.DrawLayout();
 			PopulateLobbyCards(_testEntries);
-			_uiManager.Header.Q<Label>("SiteTitle").text = "T\u00E6tteste Race";
+			_uiManager.Header.Q<Label>("SiteTitle").text = "Start løb";
 		}
 
 		private void PopulateLobbyCards(IEnumerable<LobbyEntryData> entries)
@@ -63,18 +63,18 @@ namespace TrainingBuddy.UI
 			card.AddToClassList("lobby-card");
 
 			var content = new VisualElement();
-			content.AddToClassList("lobby-card__content");
+			content.AddToClassList("lobby-card-content");
 
 			var titleLabel = new Label(entry.Title.ToUpperInvariant());
-			titleLabel.AddToClassList("lobby-card__title");
+			titleLabel.AddToClassList("lobby-card-title");
 			titleLabel.AddToClassList("font-title");
 
 			var hostLabel = new Label($"Host: {entry.Host}");
-			hostLabel.AddToClassList("lobby-card__host");
+			hostLabel.AddToClassList("lobby-card-host");
 			hostLabel.AddToClassList("font-regular");
 
 			var startLabel = new Label($"Starter: {entry.StartText}");
-			startLabel.AddToClassList("lobby-card__start");
+			startLabel.AddToClassList("lobby-card-start");
 			startLabel.AddToClassList("font-regular");
 
 			content.Add(titleLabel);
@@ -83,18 +83,14 @@ namespace TrainingBuddy.UI
 			card.Add(content);
 
 			var avatar = new VisualElement();
-			avatar.AddToClassList("lobby-card__avatar");
+			avatar.AddToClassList("lobby-card-avatar");
 			avatar.AddToClassList(entry.AvatarClass);
 
 			var joinButton = new Button(() => JoinLobby(index))
 			{
 				name = $"JoinLobbyButton{index + 1:00}"
 			};
-			joinButton.AddToClassList("lobby-card__action");
-
-			var actionIcon = new Label(">");
-			actionIcon.AddToClassList("lobby-card__action-icon");
-			joinButton.Add(actionIcon);
+			joinButton.AddToClassList("lobby-card-button");
 
 			_lobbyButtons.Add(joinButton);
 
@@ -114,14 +110,14 @@ namespace TrainingBuddy.UI
 		{
 			return new[]
 			{
-				new LobbyEntryData("L\u00F8beklubben", "Peter Mikkelsen", "Om 10 minutter", "lobby-card__avatar--emil"),
-				new LobbyEntryData("Sprinterne", "Marie", "Er igang", "lobby-card__avatar--emma"),
-				new LobbyEntryData("Morgenholdet", "Sofie", "Om 5 minutter", "lobby-card__avatar--emil"),
-				new LobbyEntryData("Byparken 5K", "Jonas", "Om 18 minutter", "lobby-card__avatar--emma"),
-				new LobbyEntryData("Intervalholdet", "Nanna", "Er igang", "lobby-card__avatar--emil"),
-				new LobbyEntryData("Aftenl\u00F8berne", "Kasper", "Om 25 minutter", "lobby-card__avatar--emma"),
-				new LobbyEntryData("Tempo Team", "Mikkel", "Om 8 minutter", "lobby-card__avatar--emil"),
-				new LobbyEntryData("Weekendracet", "Camilla", "Om 12 minutter", "lobby-card__avatar--emma")
+				new LobbyEntryData("L\u00F8beklubben", "Peter Mikkelsen", "Om 10 minutter", "avatar_male"),
+				new LobbyEntryData("Sprinterne", "Marie", "Er igang", "avatar_female"),
+				new LobbyEntryData("Morgenholdet", "Sofie", "Om 5 minutter", "avatar_male"),
+				new LobbyEntryData("Byparken 5K", "Jonas", "Om 18 minutter", "avatar_female"),
+				new LobbyEntryData("Intervalholdet", "Nanna", "Er igang", "avatar_male"),
+				new LobbyEntryData("Aftenl\u00F8berne", "Kasper", "Om 25 minutter", "avatar_female"),
+				new LobbyEntryData("Tempo Team", "Mikkel", "Om 8 minutter", "avatar_male"),
+				new LobbyEntryData("Weekendracet", "Camilla", "Om 12 minutter", "avatar_female")
 			};
 		}
 
