@@ -2,6 +2,7 @@
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/MainMenu.uss?fileID=7433441132597879392&amp;guid=7fd040a38d96d5942946b2e6a20b6219&amp;type=3#MainMenu"/>
     <ui:VisualElement name="MainMenu" class="main-menu">
         <TrainingBuddy.UI.Controls.LocalizedButton name="StartRaceButton" class="button-large button-start-race" key="button_start_race" />
+        <TrainingBuddy.UI.Controls.LocalizedButton name="ResumeRaceButton" class="button-large button-resume-race" key="button_resume_race" />
         <TrainingBuddy.UI.Controls.LocalizedButton name="JoinRaceButton" class="button-large button-join-race" key="button_participate_race" />
         <TrainingBuddy.UI.Controls.LocalizedButton name="ProfileButton" class="button-large button-profile" key="button_profile" />
         <TrainingBuddy.UI.Controls.LocalizedButton name="HighScoreButton" class="button-large button-highscore" key="button_highscore" />

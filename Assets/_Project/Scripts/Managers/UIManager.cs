@@ -145,6 +145,7 @@ namespace TrainingBuddy.UI
 				CurrentLayout = _layoutData.WelcomeScreen;
 				ApplyDefaultBackAction(CurrentLayout);
 				AddConditionalClasses(CurrentLayout);
+				CurrentLayout.DrawLayout();
 				return;
 			}
 
@@ -171,6 +172,7 @@ namespace TrainingBuddy.UI
 				FindLobbyScreen => () => ChangePage(_layoutData.MainMenu),
 				HighScoreScreen => () => ChangePage(_layoutData.MainMenu),
 				LobbyScreen => () => ChangePage(_layoutData.MainMenu),
+				HostScreen => () => ChangePage(_layoutData.MainMenu),
 				RaceScreen => () => ChangePage(_layoutData.MainMenu),
 				_ => null,
 			};

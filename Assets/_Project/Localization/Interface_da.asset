@@ -184,6 +184,26 @@ MonoBehaviour:
     m_Localized: "S\xF8g efter l\xF8b..."
     m_Metadata:
       m_Items: []
+  - m_Id: 215298219459993600
+    m_Localized: "Fors\xE6t l\xF8b"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000001
+    m_Localized: "K\xF8n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000002
+    m_Localized: "F\xF8dselsdato"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000003
+    m_Localized: Mand
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000004
+    m_Localized: Kvinde
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

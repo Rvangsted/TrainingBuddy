@@ -10,7 +10,8 @@
     justify-content: flex-end;
     height: 100%;
     width: 100%;
-    max-width: 320px;
+    max-width: 333px;
+    margin-top: 45px;
 }
 
 .main-container {
@@ -45,6 +46,78 @@
 .field-password {
     width: 325px;
     height: 52px;
+}
+
+.field-password-confirm {
+    width: 325px;
+    height: 52px;
+    margin-top: 21px;
+}
+
+/* Section (gender / date of birth) */
+.section-container {
+    width: 325px;
+    margin-top: 21px;
+}
+
+.section-label {
+    font-size: var(--font-size-m);
+    margin: 0 0 8px 5px;
+    color: var(--color-font);
+}
+
+/* Gender radio group */
+.gender-group {
+    flex-direction: row;
+    width: 100%;
+}
+
+.gender-group .unity-radio-button-group__container {
+    flex-direction: row;
+}
+
+.gender-group .unity-base-field__input {
+    border-width: 0;
+}
+
+.gender-group .unity-radio-button {
+    flex-grow: 1;
+    border-width: 0;
+}
+
+.gender-group .unity-radio-button .unity-radio-button__text {
+    font-size: var(--font-size-xl);
+    color: var(--color-separator);
+    -unity-text-align: middle-center;
+    padding: 4px 0 0 5px;
+}
+
+/* Date of birth row */
+.dob-row {
+    flex-direction: row;
+    width: 100%;
+}
+
+.dob-field {
+    flex: 1;
+    height: 52px;
+    margin-right: 10px;
+}
+
+.dob-field:last-child {
+    margin-right: 0;
+}
+
+.dob-field-year {
+    flex: 2;
+}
+
+.dob-field .unity-base-field__input {
+    height: 100%;
+    border-radius: 10px;
+    border-color: var(--color-input-field);
+    font-size: var(--font-size-m);
+    -unity-text-align: middle-center;
 }
 
 .forgot-password {

@@ -11,5 +11,19 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <TrainingBuddy.UI.Controls.LocalizedButton key="button_privacy" name="PrivacyButton" start-tag="&lt;u&gt;" end-tag="&lt;/u&gt;" class="text-button privacy-button"/>
+        <ui:Button text="TestUser1" name="Test1Button" class="text-button privacy-button"/>
+        <ui:Button text="TestUser2" name="Test2Button" class="text-button privacy-button"/>
+        <ui:Button text="TestUser3" name="Test3Button" class="text-button privacy-button"/>
+        <ui:Button text="TestUser4" name="Test4Button" class="text-button privacy-button"/>
+        <ui:Button text="TestUser5" name="Test5Button" class="text-button privacy-button"/>
+        <ui:Button text="TestUser6" name="Test6Button" class="text-button privacy-button"/>
+        <ui:Button text="TestUser7" name="Test7Button" class="text-button privacy-button"/>
+        <ui:VisualElement name="PermissionOverlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.85); align-items: center; justify-content: center; display: none;">
+            <ui:VisualElement style="background-color: rgb(255,255,255); border-radius: 16px; padding: 32px; max-width: 320px; align-items: center;">
+                <ui:Label name="PermissionTitle" text="Tilladelser påkrævet" style="-unity-font-style: bold; font-size: 20px; white-space: normal; -unity-text-align: upper-center; margin-bottom: 12px;"/>
+                <ui:Label name="PermissionMessage" text="Appen skal bruge adgang til din aktivitet og placering for at tælle skridt og finde løb i nærheden." style="font-size: 14px; white-space: normal; -unity-text-align: upper-center; margin-bottom: 24px; color: rgb(80,80,80);"/>
+                <ui:Button name="GrantPermissionButton" text="Giv tilladelser" style="padding: 12px 24px; background-color: rgb(150,210,0); border-radius: 8px; font-size: 16px; border-width: 0;"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

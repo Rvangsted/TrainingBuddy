@@ -21,7 +21,7 @@
                     <ui:VisualElement name="LevelingTopRightContainer" class="leveling-top-right-container">
                         <ui:Button name="LevelingPointsContainer" class="leveling-points-container">
                             <ui:Label name="LevelingPointsLabelValue" class="leveling-points-label font-title"/>
-                            <ui:Label text="point" name="LevelingPointsLabel" class="leveling-points-label font-regular"/>
+                            <ui:Label text="Point" name="LevelingPointsLabel" class="leveling-points-label font-regular"/>
                         </ui:Button>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -70,7 +70,7 @@
                     <ui:VisualElement name="AccelerationStatUpper" class="acceleration-stat-upper">
                         <ui:VisualElement name="AccelerationStatUpperLeft" class="acceleration-stat-left"/>
                         <ui:VisualElement name="AccelerationStatUpperMiddle" class="acceleration-stat-middle">
-                            <TrainingBuddy.UI.Controls.LinearProgressBar name="SpeedProgressBar" inner-knob-color="rgb(224, 224, 224)" line-thickness="20" knob-size="14" inner-knob-size="3" class="linear-progress-bar"/>
+                            <TrainingBuddy.UI.Controls.LinearProgressBar name="AccelerationProgressBar" inner-knob-color="rgb(224, 224, 224)" line-thickness="20" knob-size="14" inner-knob-size="3" class="linear-progress-bar"/>
                         </ui:VisualElement>
                         <ui:VisualElement name="AccelerationStatUpperRight" class="acceleration-stat-right"/>
                     </ui:VisualElement>

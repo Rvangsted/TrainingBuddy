@@ -80,7 +80,7 @@
     background-image: url('project://database/Assets/_Project/Art/Icons/edit.png');
     background-size: 40px;
     -unity-background-image-tint-color: var(--color-dark);
-    margin-right: -25px;
+    margin-right: -5px;
 }
 
 /*Stats Container*/
@@ -180,15 +180,14 @@
 }
 
 .stats-container .leveling-container .leveling-middle-container .leveling-progress-wrapper .leveling-progress-content .leveling-progress-value-label {
-    font-size: 40px;
+    font-size: 26px;
     color: var(--color-dark);
     -unity-text-align: middle-center;
 }
 
 .stats-container .leveling-container .leveling-middle-container .leveling-progress-wrapper .leveling-progress-content .leveling-progress-subtitle-label {
-    font-size: var(--font-size-l);
-    color: var(--color-dark);
-    opacity: 0.7;
+    font-size: var(--font-size-xs);
+    color: var(--color-font);
 }
 
 .stats-container .leveling-container .leveling-bottom-container {
@@ -218,6 +217,7 @@
 }
 
 .stats-container .leveling-container .leveling-bottom-container .leveling-bottom-right-container {
+    display: none;
     flex-grow: 1;
     align-items: flex-end;
     justify-content: flex-end;

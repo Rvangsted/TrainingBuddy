@@ -106,6 +106,26 @@ MonoBehaviour:
     m_Localized: Leaderboard
     m_Metadata:
       m_Items: []
+  - m_Id: 215298219459993600
+    m_Localized: Resume race
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000001
+    m_Localized: Gender
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000002
+    m_Localized: Date of Birth
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000003
+    m_Localized: Male
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000004
+    m_Localized: Female
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

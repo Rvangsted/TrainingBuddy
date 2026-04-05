@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using BedtimeCore;
 using Firebase.Database;
 using TrainingBuddy.FireBase;
@@ -27,7 +28,6 @@ namespace TrainingBuddy.UI
 
 		private CircularProgressBar _levelingProgressBar;
 		private Label _levelingProgressValueLabel;
-		private float _stepsRequiredForNextLevel;
 		private long _currentStepCount;
 		
 		protected ProfileScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
@@ -42,6 +42,9 @@ namespace TrainingBuddy.UI
 			base.Initialize();
 			_databaseManager.StepCountChanged -= OnStepCountChanged;
 			_databaseManager.StepCountChanged += OnStepCountChanged;
+			
+			_logoutButton = Layout.Q<Button>("LogoutButton");
+			_logoutButton.RegisterCallback<ClickEvent>(OnLogout);
 		}
 
 		public override async void DrawLayout()
@@ -56,34 +59,48 @@ namespace TrainingBuddy.UI
 			// 	return;
 			// }
 			
-			_levelingProgressBar = Layout.Q<CircularProgressBar>("LevelingProgressBar");
-				
+			_levelingProgressBar       = Layout.Q<CircularProgressBar>("LevelingProgressBar");
+			_levelingProgressValueLabel = Layout.Q<Label>("LevelingProgressValueLabel");
+			_currentStepCount = Convert.ToInt64(_dataSnapshot.Child("StepCount").Value ?? 0L);
+			UpdateLevelingProgress();
+
 			Layout.Q<Label>("Name").text = _dataSnapshot.Child("UserName").Value.ToString();
-			Layout.Q<Label>("DateOfBirth").text = _dataSnapshot.Child("Email").Value.ToString();
-			Layout.Q<Label>("UserID").text = _dataSnapshot.Child("UserID").Value.ToString();
+			int dobMonth = Convert.ToInt32(_dataSnapshot.Child("DateOfBirthMonth").Value);
+			string monthAbbr = new DateTime(2000, dobMonth, 1).ToString("MMM");
+			Layout.Q<Label>("DateOfBirth").text = $"{_dataSnapshot.Child("DateOfBirthDay").Value} {monthAbbr} {_dataSnapshot.Child("DateOfBirthYear").Value}";
+			Layout.Q<Label>("UserID").text = $"ID {_dataSnapshot.Child("FriendCode").Value}";
 			Layout.Q<VisualElement>("ProfilePicture").AddToClassList("Kvinde"); 
 			// Layout.Q<VisualElement>("ProfilePicture").AddToClassList(_dataSnapshot.Child("Sex").Value.ToString()); 
 
 			_activityGraph = Layout.Q<ActivityGraph>("WeeklyDistanceGraph");
-			_activityGraph.ValueFormatter = value => $"{value:0.#} KM";
-			
-			// {
-				// name = "WeeklyDistanceGraph", 
-				// ValueFormatter = value => $"{value:0.#} KM",
-			// };
+			_activityGraph.ValueFormatter = value => value >= 1000
+				? $"{value / 1000f:0.#}k skridt"
+				: $"{(int)value} skridt";
 
+			await LoadActivityGraph();
 
-			var sampleData = new List<ActivityGraph.DataPoint>
-			{
-				new ActivityGraph.DataPoint("28. april", 2.8f),
-				new ActivityGraph.DataPoint("29. april", 3.6f),
-				new ActivityGraph.DataPoint("30. april", 2.9f),
-				new ActivityGraph.DataPoint("I dag", 5.0f),
-				new ActivityGraph.DataPoint("1. maj", 2.4f),
-			};
+			// Skill points available (total earned minus points spent on speed/acceleration)
+			int totalEarned = (int)(_currentStepCount / DatabaseManager.StepsPerPoint);
+			int spent = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) +
+			            Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value);
+			Layout.Q<Label>("LevelingPointsLabelValue").text = Mathf.Max(0, totalEarned - spent).ToString();
 
-			_activityGraph.SetData(sampleData, 3);
-			
+			int speedPoints = Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value);
+			int accelPoints = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value);
+			float barMax = totalEarned > 0 ? totalEarned : 1f;
+
+			// Speed stat
+			Layout.Q<Label>("SpeedStatValue").text = $"{speedPoints} point";
+			Layout.Q<LinearProgressBar>("SpeedProgressBar").Value = Mathf.Clamp01(speedPoints / barMax);
+			Layout.Q<Button>("SpeedStatLowerLeft").RegisterCallback<ClickEvent>(SpeedMinus);
+			Layout.Q<Button>("SpeedStatLowerRight").RegisterCallback<ClickEvent>(SpeedPlus);
+
+			// Acceleration stat
+			Layout.Q<Label>("AccelerationStatValue").text = $"{accelPoints} point";
+			Layout.Q<LinearProgressBar>("AccelerationProgressBar").Value = Mathf.Clamp01(accelPoints / barMax);
+			Layout.Q<Button>("AccelerationStatLowerLeft").RegisterCallback<ClickEvent>(AccelerationMinus);
+			Layout.Q<Button>("AccelerationStatLowerRight").RegisterCallback<ClickEvent>(AccelerationPlus);
+
 			// DrawStatsSection();
 			// DrawActivitySection();
 			DrawFriendsSection();
@@ -213,24 +230,13 @@ namespace TrainingBuddy.UI
 		private void UpdateLevelingProgress()
 		{
 			if (_levelingProgressBar == null || _levelingProgressValueLabel == null)
-			{
 				return;
-			}
 
-			float progress = 1f;
-			if (_stepsRequiredForNextLevel > 0f)
-			{
-				progress = Mathf.Clamp01((float)_currentStepCount / _stepsRequiredForNextLevel);
-			}
-			_levelingProgressBar.Value = progress;
+			long stepsIntoBlock = _currentStepCount % DatabaseManager.StepsPerPoint;
+			long stepsRemaining = DatabaseManager.StepsPerPoint - stepsIntoBlock;
 
-			var stepsToGo = 0;
-			if (_stepsRequiredForNextLevel > 0f)
-			{
-				stepsToGo = Mathf.Max(0, Mathf.CeilToInt(_stepsRequiredForNextLevel - _currentStepCount));
-			}
-
-			_levelingProgressValueLabel.text = $"{stepsToGo}\n skridt";
+			_levelingProgressBar.Value      = (float)stepsIntoBlock / DatabaseManager.StepsPerPoint;
+			_levelingProgressValueLabel.text = $"{stepsRemaining}\n skridt";
 		}
 
 		private void DrawFriendsSection()
@@ -312,75 +318,82 @@ namespace TrainingBuddy.UI
             _activityGraph?.SetData(dataPoints);
         }
 
+		private async Task LoadActivityGraph()
+		{
+			var dailySteps = await _databaseManager.FetchDailyStepsAsync(5);
+			string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+
+			var dataPoints = new List<ActivityGraph.DataPoint>();
+			foreach (var (dateKey, steps) in dailySteps)
+			{
+				if (dateKey == today) continue; // Added live below
+				var date = DateTime.ParseExact(dateKey, "yyyy-MM-dd", null);
+				dataPoints.Add(new ActivityGraph.DataPoint(FormatDanishDate(date), steps));
+			}
+
+			long todaySteps = Math.Max(0, _currentStepCount - _databaseManager.DailyStepBase);
+			dataPoints.Add(new ActivityGraph.DataPoint("I dag", todaySteps));
+
+			_activityGraph.SetData(dataPoints, dataPoints.Count - 1);
+		}
+
+		private static string FormatDanishDate(DateTime date)
+		{
+			string[] months = { "jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec" };
+			return $"{date.Day}. {months[date.Month - 1]}";
+		}
+
 		private void OnLogout(ClickEvent evt)
 		{
 			_firebaseController.FirebaseLogout();
-			_uiManager.ChangePage(_layoutData.LoginScreen);
+			_uiManager.ChangePage(_layoutData.WelcomeScreen);
 		}
 		
+		private int AvailableSkillPoints()
+		{
+			int totalEarned = (int)(_currentStepCount / DatabaseManager.StepsPerPoint);
+			int spent = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) +
+			            Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value);
+			return Mathf.Max(0, totalEarned - spent);
+		}
+
 		private async void AccelerationPlus(ClickEvent evt)
 		{
-			if (Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) <= 0)
-			{
+			if (AvailableSkillPoints() <= 0)
 				return;
-			}
-			
-			await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
-			{
-				SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) - 1,
-				AccelerationPoints = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) + 1
-			});
+
+			int newValue = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) + 1;
+			await _databaseManager.PatchUserFields(new Dictionary<string, object> { { "AccelerationPoints", newValue } });
 			ReDrawLayout();
 		}
-		
+
 		private async void AccelerationMinus(ClickEvent evt)
 		{
 			if (Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) <= 0)
-			{
-				return; 
-			}
-			
-			await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
-			{
-				SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) + 1,
-				AccelerationPoints = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) - 1
-			});
+				return;
+
+			int newValue = Convert.ToInt32(_dataSnapshot.Child("AccelerationPoints").Value) - 1;
+			await _databaseManager.PatchUserFields(new Dictionary<string, object> { { "AccelerationPoints", newValue } });
 			ReDrawLayout();
 		}
-		
+
 		private async void SpeedPlus(ClickEvent evt)
 		{
-			if (Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) <= 0)
-			{
+			if (AvailableSkillPoints() <= 0)
 				return;
-			}
-			
-			await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
-			{
-				SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) - 1,
-				SpeedPoints = Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) + 1,
-			});
+
+			int newValue = Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) + 1;
+			await _databaseManager.PatchUserFields(new Dictionary<string, object> { { "SpeedPoints", newValue } });
 			ReDrawLayout();
 		}
-		
+
 		private async void SpeedMinus(ClickEvent evt)
 		{
 			if (Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) <= 0)
-			{
 				return;
-			}
-			
-			await _databaseManager.UpdateUser(_databaseManager.Auth.CurrentUser, new UserData
-			{
-				SkillPoints = Convert.ToInt32(_dataSnapshot.Child("SkillPoints").Value) + 1,
-				SpeedPoints = Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) - 1,
-			});
-			ReDrawLayout();
-		}
-		
-		private async void OnTraining(ClickEvent evt)
-		{
-			await _databaseManager.InvestInTraining(_layoutData);
+
+			int newValue = Convert.ToInt32(_dataSnapshot.Child("SpeedPoints").Value) - 1;
+			await _databaseManager.PatchUserFields(new Dictionary<string, object> { { "SpeedPoints", newValue } });
 			ReDrawLayout();
 		}
 		

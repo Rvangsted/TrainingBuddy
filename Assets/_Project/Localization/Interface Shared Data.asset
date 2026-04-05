@@ -179,6 +179,26 @@ MonoBehaviour:
     m_Key: text_searchfield
     m_Metadata:
       m_Items: []
+  - m_Id: 215298219459993600
+    m_Key: button_resume_race
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000001
+    m_Key: text_gender
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000002
+    m_Key: text_date_of_birth
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000003
+    m_Key: text_male
+    m_Metadata:
+      m_Items: []
+  - m_Id: 216000000000000004
+    m_Key: text_female
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

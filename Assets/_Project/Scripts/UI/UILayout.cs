@@ -1,5 +1,6 @@
 using Firebase.Database;
 using TrainingBuddy.Managers;
+using UnityEngine.Android;
 using UnityEngine.UIElements;
 using VContainer.Unity;
 
@@ -67,6 +68,12 @@ namespace TrainingBuddy.UI
 			}
 		}
 		
+		protected bool CheckPermission()
+		{
+			return Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION")
+			    && Permission.HasUserAuthorizedPermission("android.permission.ACCESS_FINE_LOCATION");
+		}
+
 		protected virtual void ReDrawLayout()
 		{
 			_layoutDrawn = false;
@@ -76,25 +83,11 @@ namespace TrainingBuddy.UI
 		public virtual async void DrawLayout()
 		{
 			var levelLabel = _uiManager.Header?.Q<Label>("HeaderLevelLabel");
+			levelLabel?.AddToClassList("hidden");
 
-			if (_databaseManager.Auth != null)
+			if (_databaseManager.Auth?.CurrentUser != null)
 			{
 				_dataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
-
-				if (levelLabel != null)
-				{
-					var levelValue = _dataSnapshot?.Child("Level")?.Value?.ToString();
-
-					if (string.IsNullOrEmpty(levelValue))
-					{
-						levelLabel.AddToClassList("hidden");
-					}
-					else
-					{
-						levelLabel.RemoveFromClassList("hidden");
-						levelLabel.text = levelValue;
-					}
-				}
 			}
 			else if (levelLabel != null)
 			{

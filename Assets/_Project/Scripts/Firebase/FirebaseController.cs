@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using BedtimeCore;
 using Cysharp.Threading.Tasks;
@@ -15,9 +16,9 @@ namespace TrainingBuddy.FireBase
 		public Task<bool> CheckDependencies();
 		public Task<bool> FirebaseLogin(string email, string password);
 		public void FirebaseLogout();
-		public Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm);
+		public Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm, int dobDay, int dobMonth, int dobYear);
 	}
-	
+
 	public class FirebaseController : IFirebaseController
 	{
 		private readonly DatabaseManager _databaseManager;
@@ -27,24 +28,27 @@ namespace TrainingBuddy.FireBase
 			_databaseManager = databaseManager;
 			_databaseTasks = databaseTasks;
 		}
-		
+
 		private DependencyStatus _dependencyStatus;
-		
+
 		public async Task InitializeFirebase()
 		{
 			if (await CheckDependencies())
 			{
 				Debug.Log("Setting up Firebase Auth");
+				Debug.Log($"Persistent data path: {UnityEngine.Application.persistentDataPath}");
 				//Set the authentication Instance object
 				_databaseManager.Auth = FirebaseAuth.DefaultInstance;
-				_databaseManager.DatabaseReference = FirebaseDatabase.GetInstance("https://trainingbuddy-81bca-default-rtdb.europe-west1.firebasedatabase.app/").RootReference;
+				var db = FirebaseDatabase.GetInstance("https://trainingbuddy-81bca-default-rtdb.europe-west1.firebasedatabase.app/");
+				db.SetPersistenceEnabled(false);
+				_databaseManager.DatabaseReference = db.RootReference;
 			}
 			else
 			{
 				Debug.LogError("Something went wrong with Firebase Dependency Check");
 			}
 		}
-		
+
 		public async Task<bool> CheckDependencies()
 		{
 			//Check that all the necessary dependencies for Firebase are present on the system
@@ -52,17 +56,17 @@ namespace TrainingBuddy.FireBase
 			{
 				_dependencyStatus = task.Result;
 			});
-			
+
 			return _dependencyStatus == DependencyStatus.Available;
 		}
-		
+
 		public async Task<bool> FirebaseLogin(string email, string password)
 		{
 			//Call the Firebase auth signin function passing the email and password
 			Task<AuthResult> LoginTask = _databaseManager.Auth.SignInWithEmailAndPasswordAsync(email, password);
 			//Wait until the task completes
 			await new WaitUntil(predicate: () => LoginTask.IsCompleted);
-	    
+
 			if (LoginTask.Exception != null)
 			{
 				//If there are errors handle them
@@ -71,113 +75,166 @@ namespace TrainingBuddy.FireBase
 
 				string message = errorCode switch
 				{
-					AuthError.MissingEmail => "Missing Email", 
-					AuthError.MissingPassword => "Missing Password", 
-					AuthError.WrongPassword => "Wrong Password", 
-					AuthError.InvalidEmail => "Invalid Email", 
-					AuthError.UserNotFound => "Account does not exist", 
+					AuthError.MissingEmail => "Missing Email",
+					AuthError.MissingPassword => "Missing Password",
+					AuthError.WrongPassword => "Wrong Password",
+					AuthError.InvalidEmail => "Invalid Email",
+					AuthError.UserNotFound => "Account does not exist",
 					_ => "Login Failed!",
 				};
-				
+
 				$"Error message: {message}".LogError();
 				return false;
 			}
 
 			$"Logged in".Log();
+#if !UNITY_EDITOR
+			_databaseManager.StartStepCounter();
+#endif
 			return true;
 		}
-		
+
 		public void FirebaseLogout()
 		{
 			_databaseManager.Auth.SignOut();
 		}
-		
-		public async Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm)
+
+		public async Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm, int dobDay, int dobMonth, int dobYear)
 	    {
 		    if (username == "")
 		    {
 			    $"Username is empty".Log();
 			    return false;
 		    }
-		    
+
 		    if (sex == "")
 		    {
 			    $"Sex is empty".Log();
 			    return false;
 		    }
-	        
+
 		    if (email == "")
 	        {
 	            $"Email is empty".Log();
 	            return false;
 	        }
-	        
+
 		    if (password == "")
 	        {
 		        $"Password is empty".Log();
 		        return false;
 	        }
-		    
+
 		    if (passwordConfirm == "")
 		    {
 			    $"Password confirm is empty".Log();
 			    return false;
 		    }
-		    
+
 		    if (password != passwordConfirm)
 		    {
 			    $"Passwords doesn't match".Log();
 			    return false;
 		    }
 
-		    Task<AuthResult> RegisterTask = _databaseManager.Auth.CreateUserWithEmailAndPasswordAsync(email, password);
+		    if (dobDay <= 0 || dobMonth <= 0 || dobYear <= 0)
+		    {
+			    $"Date of birth is incomplete".Log();
+			    return false;
+		    }
 
-	        await RegisterTask;
+		    Task<AuthResult> RegisterTask = _databaseManager.Auth.CreateUserWithEmailAndPasswordAsync(email, password);
+	        await new WaitUntil(() => RegisterTask.IsCompleted);
+
 	        if (RegisterTask.IsFaulted)
 	        {
 		        $"RegisterTask failed with {RegisterTask.Exception}".Log();
 		        return false;
 	        }
-	        
+
 	        $"RegisterTask completed".Log();
 
 	        if (_databaseManager.Auth.CurrentUser == null)
 	        {
 		        return false;
 	        }
-	        
-	        var profile = new UserProfile{DisplayName = username};
-			        
+
+	        var profile = new UserProfile { DisplayName = username };
 	        Task ProfileTask = _databaseManager.Auth.CurrentUser.UpdateUserProfileAsync(profile);
-		        
-	        await ProfileTask;
+	        await new WaitUntil(() => ProfileTask.IsCompleted);
+
 	        if (ProfileTask.IsFaulted)
 	        {
-		        $"ProfileTask failed with {ProfileTask.Exception}".Log(); 
+		        $"ProfileTask failed with {ProfileTask.Exception}".Log();
 		        return false;
 	        }
-	        
+
+	        var userId = _databaseManager.Auth.CurrentUser.UserId;
 	        var user = new UserData
 	        {
 		        UserName = username,
 		        Sex = sex,
-		        UserID = _databaseManager.Auth.CurrentUser.UserId,
+		        UserID = userId,
+		        FriendCode = GenerateFriendCode(userId),
 		        Email = email,
-		        Longitude = 0,
-		        Latitude = 0,
-		        Level = 1,
-		        ExperiencePoints = 0,
-		        SkillPoints = 0,
+		        DateOfBirthDay = dobDay,
+		        DateOfBirthMonth = dobMonth,
+		        DateOfBirthYear = dobYear,
 		        AccelerationPoints = 0,
 		        SpeedPoints = 0,
 		        StepCount = 0,
 		        StepCountSnapshot = 0,
 		        UserLevel = 1,
 	        };
-			        
-	        _databaseManager.CreateUser(user);
 
+	        if (!await _databaseManager.CreateUser(user))
+	        {
+		        var currentUser = _databaseManager.Auth.CurrentUser;
+		        if (currentUser != null)
+		        {
+			        try
+			        {
+				        Task deleteTask = currentUser.DeleteAsync();
+				        await new WaitUntil(() => deleteTask.IsCompleted);
+				        if (deleteTask.IsFaulted)
+					        $"Failed to delete auth user: {deleteTask.Exception?.GetBaseException().Message}".LogError();
+				        else
+					        $"Auth user deleted after failed CreateUser".Log();
+			        }
+			        catch (Exception e)
+			        {
+				        $"Failed to delete auth user after CreateUser failure: {e.Message}".LogError();
+			        }
+		        }
+		        return false;
+	        }
+
+#if !UNITY_EDITOR
+	        _databaseManager.StartStepCounter();
+#endif
 	        return true;
+	    }
+
+	    // Generates a 7-character friend code from a Firebase UID using FNV-1a hashing.
+	    // Uses an unambiguous alphabet (no 0, 1, I, O) to avoid visual confusion.
+	    // Example output: "K7MXQP3"
+	    private static string GenerateFriendCode(string userId)
+	    {
+		    const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 32 chars
+		    ulong hash = 14695981039346656037UL; // FNV-1a offset basis
+		    foreach (char c in userId)
+		    {
+			    hash ^= c;
+			    hash *= 1099511628211UL; // FNV-1a prime
+		    }
+
+		    var code = new char[7];
+		    for (int i = 0; i < 7; i++)
+		    {
+			    code[i] = alphabet[(int)(hash & 31)];
+			    hash >>= 5;
+		    }
+		    return new string(code);
 	    }
 	}
 }

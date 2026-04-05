@@ -1,14 +1,15 @@
 using System.Collections.Generic;
 using BedtimeCore;
 using TrainingBuddy.Managers;
+using TrainingBuddy.UI.Controls;
 using UnityEngine.UIElements;
 
 namespace TrainingBuddy.UI
 {
 	public class LobbyScreen : UILayout
 	{
-		private readonly LobbyEntryData[] _testEntries = CreateTestEntries();
 		private readonly List<Button> _lobbyButtons = new();
+		private string _activeRaceId;
 
 		protected LobbyScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
@@ -20,14 +21,25 @@ namespace TrainingBuddy.UI
 		{
 		}
 
-		public override void DrawLayout()
+		public override async void DrawLayout()
 		{
 			base.DrawLayout();
-			PopulateLobbyCards(_testEntries);
 			_uiManager.Header.Q<Label>("SiteTitle").text = "Start løb";
+
+			_activeRaceId = await _databaseManager.GetActiveRaceIdAsync();
+			var currentUserId = _databaseManager.Auth.CurrentUser?.UserId;
+			var participants = await _databaseManager.FetchCurrentRaceParticipantsAsync();
+			var entries = participants.ConvertAll(p => new LobbyEntryData(
+				p.displayName,
+				p.isHost ? "Host" : "Deltager",
+				string.Empty,
+				string.Equals(p.sex, "Female", System.StringComparison.OrdinalIgnoreCase) ? "avatar_female" : "avatar_male",
+				p.userId == currentUserId
+			));
+			PopulateLobbyCards(entries);
 		}
 
-		private void PopulateLobbyCards(IEnumerable<LobbyEntryData> entries)
+		private void PopulateLobbyCards(List<LobbyEntryData> entries)
 		{
 			if (Layout == null)
 			{
@@ -86,55 +98,65 @@ namespace TrainingBuddy.UI
 			avatar.AddToClassList("lobby-card-avatar");
 			avatar.AddToClassList(entry.AvatarClass);
 
-			var joinButton = new Button(() => JoinLobby(index))
-			{
-				name = $"JoinLobbyButton{index + 1:00}"
-			};
-			joinButton.AddToClassList("lobby-card-button");
-
-			_lobbyButtons.Add(joinButton);
-
 			row.Add(card);
 			row.Add(avatar);
-			row.Add(joinButton);
+
+			if (entry.IsCurrentUser)
+			{
+				var joinButton = new Button(() => LeaveLobby(index))
+				{
+					name = $"JoinLobbyButton{index + 1:00}"
+				};
+				joinButton.AddToClassList("lobby-card-button");
+				_lobbyButtons.Add(joinButton);
+				row.Add(joinButton);
+			}
 
 			return row;
 		}
 
-		private void JoinLobby(int btnNum)
+		private void LeaveLobby(int btnNum)
 		{
-			$"BUTTON NR: {btnNum}".Log();
-		}
-
-		private static LobbyEntryData[] CreateTestEntries()
-		{
-			return new[]
-			{
-				new LobbyEntryData("L\u00F8beklubben", "Peter Mikkelsen", "Om 10 minutter", "avatar_male"),
-				new LobbyEntryData("Sprinterne", "Marie", "Er igang", "avatar_female"),
-				new LobbyEntryData("Morgenholdet", "Sofie", "Om 5 minutter", "avatar_male"),
-				new LobbyEntryData("Byparken 5K", "Jonas", "Om 18 minutter", "avatar_female"),
-				new LobbyEntryData("Intervalholdet", "Nanna", "Er igang", "avatar_male"),
-				new LobbyEntryData("Aftenl\u00F8berne", "Kasper", "Om 25 minutter", "avatar_female"),
-				new LobbyEntryData("Tempo Team", "Mikkel", "Om 8 minutter", "avatar_male"),
-				new LobbyEntryData("Weekendracet", "Camilla", "Om 12 minutter", "avatar_female")
-			};
+			_uiManager.ShowOverlay(
+				"Forlad løb",
+				"Er du sikker på, at du vil forlade løbet?",
+				"Fortryd",
+				() => { },
+				"Forlad løb",
+				async () =>
+				{
+					try
+					{
+						await _databaseManager.LeaveRaceAsync(_activeRaceId);
+						_uiManager.HideOverlay();
+						_uiManager.ChangePage(_layoutData.MainMenu);
+					}
+					catch (System.Exception ex)
+					{
+						$"Failed to leave race: {ex.Message}".LogError();
+					}
+				},
+				UniversalOverlay.PopupImage.None,
+				false
+			);
 		}
 
 		private sealed class LobbyEntryData
 		{
-			public LobbyEntryData(string title, string host, string startText, string avatarClass)
+			public LobbyEntryData(string title, string host, string startText, string avatarClass, bool isCurrentUser)
 			{
 				Title = title;
 				Host = host;
 				StartText = startText;
 				AvatarClass = avatarClass;
+				IsCurrentUser = isCurrentUser;
 			}
 
 			public string Title { get; }
 			public string Host { get; }
 			public string StartText { get; }
 			public string AvatarClass { get; }
+			public bool IsCurrentUser { get; }
 		}
 	}
 }

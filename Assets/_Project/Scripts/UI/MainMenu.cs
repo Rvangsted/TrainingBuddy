@@ -9,6 +9,7 @@ namespace TrainingBuddy.UI
 	public class MainMenu : UILayout
 	{
 		private Button _startRaceButton;
+		private Button _resumeRaceButton;
 		private Button _joinRaceButton;
 		private Button _profileButton;
 		private Button _highscoreButton;
@@ -22,44 +23,49 @@ namespace TrainingBuddy.UI
 		
 		public override void Initialize()
 		{
-			_privacyButton = Layout.Q<Button>("PrivacyButton");
 			_startRaceButton = Layout.Q<Button>("StartRaceButton");
+			_resumeRaceButton = Layout.Q<Button>("ResumeRaceButton");
 			_joinRaceButton = Layout.Q<Button>("JoinRaceButton");
 			_profileButton = Layout.Q<Button>("ProfileButton");
 			_highscoreButton = Layout.Q<Button>("HighScoreButton");
-			
-			// var shadowSettings = new ShadowSettings
-			// {
-			// 	CornerRadius = 54,
-			// 	ShadowScale = .9f,
-			// 	ShadowOffsetX = 0,
-			// 	ShadowOffsetY = 10,
-			// };
-			//
-			// var startRaceButton = ShadowButton("StartRaceButton", "button_start_race", shadowSettings);
-			// var participateRaceButton = ShadowButton("ParticipateRaceButton", "button_participate_race", shadowSettings);
-			// var profileButton = ShadowButton("ProfileButton", "button_profile", shadowSettings);
-			//
-			// Layout.Q<VisualElement>("MainMenu").Add(startRaceButton);
-			// Layout.Q<VisualElement>("MainMenu").Add(participateRaceButton);
-			// Layout.Q<VisualElement>("MainMenu").Add(profileButton);
+			_privacyButton = Layout.Q<Button>("PrivacyButton");
 
 			_startRaceButton.RegisterCallback<ClickEvent>(OnCreateLobby);
 			_joinRaceButton.RegisterCallback<ClickEvent>(OnFindLobby);
+			_resumeRaceButton.RegisterCallback<ClickEvent>(OnResumeLobby);
 			_profileButton.RegisterCallback<ClickEvent>(OnProfile);
 			_highscoreButton.RegisterCallback<ClickEvent>(OnHighScore);
 			_privacyButton.RegisterCallback<ClickEvent>(_ => Debug.Log("Privacy Button clicked"));
 		}
 
-		public override void DrawLayout()
+		public override async void DrawLayout()
 		{
 			base.DrawLayout();
-			_uiManager.Header.Q<Label>("SiteTitle").text = "Leaderboard";
-			
+
+			_resumeRaceButton.style.display = DisplayStyle.None;
+			_startRaceButton.style.display  = DisplayStyle.None;
+			_joinRaceButton.style.display   = DisplayStyle.None;
+
+			bool inRace = false;
+			try
+			{
+				inRace = await _databaseManager.IsUserInActiveRaceAsync(_databaseManager.Auth.CurrentUser.UserId);
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"IsUserInActiveRaceAsync failed: {ex.Message}");
+			}
+
+			_resumeRaceButton.style.display = inRace ? DisplayStyle.Flex : DisplayStyle.None;
+			_startRaceButton.style.display  = inRace ? DisplayStyle.None : DisplayStyle.Flex;
+			_joinRaceButton.style.display   = inRace ? DisplayStyle.None : DisplayStyle.Flex;
+
 			if (!_databaseManager.StepCounterRunning)
 			{
 				_databaseManager.StartStepCounter();
 			}
+
+			
 			
 			
 			// _startRaceButton = Layout.Q<Button>("StartRaceButton");
@@ -78,24 +84,27 @@ namespace TrainingBuddy.UI
 		
 		private async void OnCreateLobby(ClickEvent evt)
 		{
-			// var _userDataSnapshot = await _databaseManager.FetchUserData(_databaseManager.Auth.CurrentUser);
-			// var longitude = Convert.ToInt32(_userDataSnapshot.Child("Longitude").Value);
-			// var latitude = Convert.ToInt32(_userDataSnapshot.Child("Latitude").Value);
-			// await _databaseManager.CreateLobby(new RaceData
-			// {
-			// 	RaceName = $"{_databaseManager.Auth.CurrentUser.DisplayName}'s Race",
-			// 	HostName = _databaseManager.Auth.CurrentUser.DisplayName,
-			// 	Longitude = longitude,
-			// 	Latitude = latitude,
-			// 	Status = 0,
-			// });
+			await _databaseManager.CreateLobby(new RaceData
+			{
+				RaceName = $"{_databaseManager.Auth.CurrentUser.DisplayName}'s Race",
+				HostName = _databaseManager.Auth.CurrentUser.DisplayName,
+				Longitude = 0,
+				Latitude = 0,
+				Status = 0,
+			});
 			
-			_uiManager.ChangePage(_layoutData.RaceScreen);
+			_uiManager.ChangePage(_layoutData.HostScreen);
 		}
 		
 		private void OnFindLobby(ClickEvent evt)
 		{
 			_uiManager.ChangePage(_layoutData.FindLobbyScreen);
+		}
+		
+		private async void OnResumeLobby(ClickEvent evt)
+		{
+			bool isHost = await _databaseManager.IsUserHostingActiveRaceAsync(_databaseManager.Auth.CurrentUser.UserId);
+			_uiManager.ChangePage(isHost ? _layoutData.HostScreen : _layoutData.LobbyScreen);
 		}
 
 		private async void OnProfile(ClickEvent evt)

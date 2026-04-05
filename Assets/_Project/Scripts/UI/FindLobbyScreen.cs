@@ -1,14 +1,21 @@
 using System.Collections.Generic;
+using System.Linq;
 using BedtimeCore;
+using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
+using TrainingBuddy.UI.Controls;
 using UnityEngine.UIElements;
 
 namespace TrainingBuddy.UI
 {
 	public class FindLobbyScreen : UILayout
 	{
-		private readonly LobbyEntryData[] _testEntries = CreateTestEntries();
-		private readonly List<Button> _lobbyButtons = new();
+		private enum StatusFilter { All, Open, InProgress }
+
+		private List<RaceListEntry> _allRaces = new();
+		private StatusFilter _statusFilter = StatusFilter.All;
+		private string _searchText = string.Empty;
+		private bool _eventsWired;
 
 		protected FindLobbyScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
@@ -20,14 +27,85 @@ namespace TrainingBuddy.UI
 		{
 		}
 
-		public override void DrawLayout()
+		public override async void DrawLayout()
 		{
 			base.DrawLayout();
-			PopulateLobbyCards(_testEntries);
 			_uiManager.Header.Q<Label>("SiteTitle").text = "Deltag i løb";
+
+			WireEvents();
+
+			_allRaces = await _databaseManager.FetchRaceListAsync();
+			ApplyFilter();
 		}
 
-		private void PopulateLobbyCards(IEnumerable<LobbyEntryData> entries)
+		private void WireEvents()
+		{
+			if (_eventsWired || Layout == null)
+			{
+				return;
+			}
+
+			_eventsWired = true;
+
+			var searchField = Layout.Q<LocalizedTextInput>("SearchField");
+			if (searchField != null)
+			{
+				searchField.RegisterValueChangedCallback(evt =>
+				{
+					_searchText = evt.newValue ?? string.Empty;
+					ApplyFilter();
+				});
+			}
+
+			var filterButton = Layout.Q<Button>("FilterButton");
+			if (filterButton != null)
+			{
+				UpdateFilterButtonLabel(filterButton);
+				filterButton.clicked += () =>
+				{
+					_statusFilter = _statusFilter switch
+					{
+						StatusFilter.All => StatusFilter.Open,
+						StatusFilter.Open => StatusFilter.InProgress,
+						_ => StatusFilter.All,
+					};
+					UpdateFilterButtonLabel(filterButton);
+					ApplyFilter();
+				};
+			}
+		}
+
+		private void UpdateFilterButtonLabel(Button filterButton)
+		{
+			filterButton.text = _statusFilter switch
+			{
+				StatusFilter.Open => "Åbne",
+				StatusFilter.InProgress => "I gang",
+				_ => "Alle",
+			};
+		}
+
+		private void ApplyFilter()
+		{
+			IEnumerable<RaceListEntry> filtered = _allRaces
+				.Where(r => r.Status == "open" && r.ParticipantCount < r.Capacity);
+
+			filtered = _statusFilter switch
+			{
+				StatusFilter.Open => filtered.Where(r => r.Status == "open"),
+				StatusFilter.InProgress => filtered.Where(r => r.Status == "in_progress"),
+				_ => filtered,
+			};
+
+			if (!string.IsNullOrWhiteSpace(_searchText))
+			{
+				filtered = filtered.Where(r => r.Title.Contains(_searchText, System.StringComparison.OrdinalIgnoreCase));
+			}
+
+			PopulateLobbyCards(filtered.ToList());
+		}
+
+		private void PopulateLobbyCards(IReadOnlyList<RaceListEntry> entries)
 		{
 			if (Layout == null)
 			{
@@ -41,17 +119,23 @@ namespace TrainingBuddy.UI
 			}
 
 			lobbyList.contentContainer.Clear();
-			_lobbyButtons.Clear();
 
-			var index = 0;
-			foreach (var entry in entries)
+			if (entries.Count == 0)
 			{
-				lobbyList.contentContainer.Add(CreateLobbyCard(entry, index));
-				index++;
+				var emptyLabel = new Label("Ingen løb fundet");
+				emptyLabel.AddToClassList("lobby-empty-label");
+				emptyLabel.AddToClassList("font-regular");
+				lobbyList.contentContainer.Add(emptyLabel);
+				return;
+			}
+
+			for (var i = 0; i < entries.Count; i++)
+			{
+				lobbyList.contentContainer.Add(CreateLobbyCard(entries[i], i));
 			}
 		}
 
-		private VisualElement CreateLobbyCard(LobbyEntryData entry, int index)
+		private VisualElement CreateLobbyCard(RaceListEntry entry, int index)
 		{
 			var row = new VisualElement
 			{
@@ -69,30 +153,40 @@ namespace TrainingBuddy.UI
 			titleLabel.AddToClassList("lobby-card-title");
 			titleLabel.AddToClassList("font-title");
 
-			var hostLabel = new Label($"Host: {entry.Host}");
+			var hostLabel = new Label($"Host: {entry.HostName}");
 			hostLabel.AddToClassList("lobby-card-host");
 			hostLabel.AddToClassList("font-regular");
 
-			var startLabel = new Label($"Starter: {entry.StartText}");
-			startLabel.AddToClassList("lobby-card-start");
-			startLabel.AddToClassList("font-regular");
+			string statusText = entry.Status switch
+			{
+				"open" => "Åben",
+				"in_progress" => "I gang",
+				"completed" => "Afsluttet",
+				"cancelled" => "Aflyst",
+				_ => entry.Status,
+			};
+			var statusLabel = new Label(statusText);
+			statusLabel.AddToClassList("lobby-card-start");
+			statusLabel.AddToClassList("font-regular");
 
 			content.Add(titleLabel);
 			content.Add(hostLabel);
-			content.Add(startLabel);
+			content.Add(statusLabel);
 			card.Add(content);
 
 			var avatar = new VisualElement();
 			avatar.AddToClassList("lobby-card-avatar");
-			avatar.AddToClassList(entry.AvatarClass);
+			string avatarClass = string.Equals(entry.HostSex, "Female", System.StringComparison.OrdinalIgnoreCase)
+				? "avatar_female"
+				: "avatar_male";
+			avatar.AddToClassList(avatarClass);
 
-			var joinButton = new Button(() => JoinLobby(index))
+			string raceId = entry.RaceId;
+			var joinButton = new Button(() => JoinLobby(raceId))
 			{
 				name = $"JoinLobbyButton{index + 1:00}"
 			};
 			joinButton.AddToClassList("lobby-card-button");
-
-			_lobbyButtons.Add(joinButton);
 
 			row.Add(card);
 			row.Add(avatar);
@@ -101,40 +195,18 @@ namespace TrainingBuddy.UI
 			return row;
 		}
 
-		private void JoinLobby(int btnNum)
+		private async void JoinLobby(string raceId)
 		{
-			$"BUTTON NR: {btnNum}".Log();
-		}
-
-		private static LobbyEntryData[] CreateTestEntries()
-		{
-			return new[]
+			try
 			{
-				new LobbyEntryData("L\u00F8beklubben", "Peter Mikkelsen", "Om 10 minutter", "avatar_male"),
-				new LobbyEntryData("Sprinterne", "Marie", "Er igang", "avatar_female"),
-				new LobbyEntryData("Morgenholdet", "Sofie", "Om 5 minutter", "avatar_male"),
-				new LobbyEntryData("Byparken 5K", "Jonas", "Om 18 minutter", "avatar_female"),
-				new LobbyEntryData("Intervalholdet", "Nanna", "Er igang", "avatar_male"),
-				new LobbyEntryData("Aftenl\u00F8berne", "Kasper", "Om 25 minutter", "avatar_female"),
-				new LobbyEntryData("Tempo Team", "Mikkel", "Om 8 minutter", "avatar_male"),
-				new LobbyEntryData("Weekendracet", "Camilla", "Om 12 minutter", "avatar_female")
-			};
-		}
-
-		private sealed class LobbyEntryData
-		{
-			public LobbyEntryData(string title, string host, string startText, string avatarClass)
-			{
-				Title = title;
-				Host = host;
-				StartText = startText;
-				AvatarClass = avatarClass;
+				await _databaseManager.JoinRaceDirectlyAsync(raceId);
+				$"Joined race: {raceId}".Log();
+				_uiManager.ChangePage(_layoutData.LobbyScreen);
 			}
-
-			public string Title { get; }
-			public string Host { get; }
-			public string StartText { get; }
-			public string AvatarClass { get; }
+			catch (System.Exception ex)
+			{
+				$"Failed to join race {raceId}: {ex.Message}".LogError();
+			}
 		}
 	}
 }

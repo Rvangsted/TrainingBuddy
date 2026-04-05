@@ -28,30 +28,41 @@ namespace TrainingBuddy.Managers
 		public JsonSerializerSettings JsonSettings { get; set; }
 
 		public Task<string> HostRaceAsync(RaceData race, int capacity, string description = null);
+		public Task<string> GetActiveRaceIdAsync();
+		public Task<UserData?> GetUserByFriendCodeAsync(string friendCode);
+		public Task JoinRaceDirectlyAsync(string raceId);
+		public Task KickParticipantAsync(string raceId, string participantUserId);
 		public Task SubmitJoinRequestAsync(string raceId);
 		public Task RetractJoinRequestAsync(string raceId);
 		public Task<bool> HandleJoinRequestAsync(string raceId, string requesterUserId, bool approve);
 		public Task LeaveRaceAsync(string raceId);
 		public Task CancelRaceAsync(string raceId);
+		public Task PatchUserFields(Dictionary<string, object> fields);
 		public void StartStepCounter();
 		public void StopStepCounter();
+		public long DailyStepBase { get; }
+		public Task<List<(string dateKey, long steps)>> FetchDailyStepsAsync(int days = 5);
 	}
 
 	public class DatabaseManager : IDatabaseManager
 	{
 		// Step counter — in-memory state
-		private long _baseStepCount;    // StepCount loaded from Firebase at session start
-		private long _deviceAnchor = -1; // Device sensor value at session start (-1 = not yet anchored)
-		private long _currentTotal;     // Running total reported to UI
-		private long _lastSyncedTotal = -1; // Last value written to Firebase
+		private long _baseStepCount;       // StepCount loaded from Firebase at session start
+		private long _deviceAnchor = -1;   // Device sensor value at session start (-1 = not yet anchored)
+		private long _currentTotal;        // Running total reported to UI
+		private long _lastSyncedTotal = -1;// Last value written to Firebase
+		private long _dailyStepBase;       // Value of _currentTotal at start of today
+		private string _dailyStepDate;     // The date string (yyyy-MM-dd) for _dailyStepBase
 		private CancellationTokenSource _stepCts;
 
-		private const int SensorPollMs   = 2000;  // How often to read the device sensor
-		private const int FirebaseSyncMs = 60000; // How often to write to Firebase
+		public const int StepsPerPoint   = 2000;  // Steps required to earn 1 skill point (used for progress bar)
+		private const int SensorPollMs   = 2000;  // How often to read the device sensor (ms)
+		private const int FirebaseSyncMs = 60000; // How often to write to Firebase (ms)
 
 		public event Action<long> StepCountChanged;
 
 		public bool StepCounterRunning { get; private set; }
+		public long DailyStepBase => _dailyStepBase;
 		public bool isLocationUpdaterRunning { get; private set; }
 
 		public UIManager UIManager { private get; set; }
@@ -59,21 +70,59 @@ namespace TrainingBuddy.Managers
 		public DatabaseReference DatabaseReference { get; set; }
 		public JsonSerializerSettings JsonSettings { get; set; }
 
-		public async void CreateUser(UserData user)
+		public async Task<bool> CreateUser(UserData user)
 		{
 			string json = JsonConvert.SerializeObject(user, JsonSettings);
+			var userDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, JsonSettings);
 
-			Task task = DatabaseReference.Child("users").Child(user.UserID).SetRawJsonValueAsync(json);
+			$"CreateUser → path: users/{user.UserID}".Log();
+			$"CreateUser → auth.uid: {Auth?.CurrentUser?.UserId ?? "NULL"}".Log();
+			$"CreateUser → json: {json}".Log();
 
-			await Task.WhenAll(task);
+			var updates = new Dictionary<string, object>
+			{
+				[$"users/{user.UserID}"] = userDict,
+				[$"friendCodes/{user.FriendCode}"] = user.UserID,
+				[$"usernames/{user.UserName}"] = user.UserID,
+			};
+
+			Task task = DatabaseReference.UpdateChildrenAsync(updates);
+			await task;
 
 			if (task.IsFaulted)
 			{
 				$"CreateUser operation failed with {task.Exception}".Log();
+				return false;
 			}
-			else if (task.IsCompleted)
+
+			return true;
+		}
+
+		public async Task PatchUserFields(Dictionary<string, object> fields)
+		{
+			if (Auth?.CurrentUser == null) return;
+			await DatabaseReference.Child("users").Child(Auth.CurrentUser.UserId).UpdateChildrenAsync(fields);
+		}
+
+		public async Task<UserData?> GetUserByFriendCodeAsync(string friendCode)
+		{
+			try
 			{
-				//TODO: Handle the success???
+				DataSnapshot codeSnapshot = await DatabaseReference.Child("friendCodes").Child(friendCode).GetValueAsync();
+				if (!codeSnapshot.Exists)
+					return null;
+
+				string userId = codeSnapshot.Value.ToString();
+				DataSnapshot userSnapshot = await DatabaseReference.Child("users").Child(userId).GetValueAsync();
+				if (!userSnapshot.Exists)
+					return null;
+
+				return JsonConvert.DeserializeObject<UserData>(userSnapshot.GetRawJsonValue(), JsonSettings);
+			}
+			catch (Exception exception)
+			{
+				$"GetUserByFriendCodeAsync failed with {exception}".Log();
+				return null;
 			}
 		}
 
@@ -83,7 +132,7 @@ namespace TrainingBuddy.Managers
 			string userID = user.UserId;
 			UserData currentUserdata;
 
-			await DatabaseReference.Child("Users").Child(userName + "_" + userID).GetValueAsync().ContinueWithOnMainThread(async task =>
+			await DatabaseReference.Child("users").Child(userID).GetValueAsync().ContinueWithOnMainThread(async task =>
 			{
 			   if (task.IsFaulted)
 			   {
@@ -98,12 +147,11 @@ namespace TrainingBuddy.Managers
 			       userData.UserName ??= currentUserdata.UserName;
 			       userData.Sex ??= currentUserdata.Sex;
 			       userData.UserID ??= currentUserdata.UserID;
+			       userData.FriendCode ??= currentUserdata.FriendCode;
 			       userData.Email ??= currentUserdata.Email;
-			       userData.Longitude ??= currentUserdata.Longitude;
-			       userData.Latitude ??= currentUserdata.Latitude;
-			       userData.Level ??= currentUserdata.Level;
-			       userData.ExperiencePoints ??= currentUserdata.ExperiencePoints;
-			       userData.SkillPoints ??= currentUserdata.SkillPoints;
+			       userData.DateOfBirthDay ??= currentUserdata.DateOfBirthDay;
+			       userData.DateOfBirthMonth ??= currentUserdata.DateOfBirthMonth;
+			       userData.DateOfBirthYear ??= currentUserdata.DateOfBirthYear;
 			       userData.AccelerationPoints ??= currentUserdata.AccelerationPoints;
 			       userData.SpeedPoints ??= currentUserdata.SpeedPoints;
 			       userData.StepCount ??= currentUserdata.StepCount;
@@ -130,85 +178,22 @@ namespace TrainingBuddy.Managers
 
 		public async Task<DataSnapshot> FetchUserData(FirebaseUser user)
 		{
-			string userName = user.DisplayName;
 			string userID = user.UserId;
-			DataSnapshot snapshot = null;
 
-            try
-            {
-                DataSnapshot newStructureSnapshot = await DatabaseReference.Child("users").Child(userID).GetValueAsync();
-
-                if (newStructureSnapshot.Exists)
-                {
-                    return newStructureSnapshot;
-                }
-            }
-            catch (Exception exception)
-            {
-                $"FetchUserData Read operation failed with {exception}".Log();
-            }
-
-            await DatabaseReference.Child("Users").Child(userName + "_" + userID).GetValueAsync().ContinueWithOnMainThread(task =>
+			try
 			{
-			   if (task.IsFaulted)
-			   {
-					$"FetchUserData Read operation failed with {task.Exception}".Log();
-			   }
-			   else if (task.IsCompleted)
-			   {
-					snapshot = task.Result;
-			   }
-
-			   return Task.CompletedTask;
-			});
-            return snapshot;
-    }
-
-		public async Task InvestInTraining(LayoutData _layoutData)
-		{
-			DataSnapshot dataSnapshot = await FetchUserData(Auth.CurrentUser);
-
-			var steps = (long)dataSnapshot.Child("StepCount")
-			                              .Value;
-			var experience = Convert.ToInt32(dataSnapshot.Child("ExperiencePoints")
-			                                             .Value);
-			var spdPoints = (long)dataSnapshot.Child("SpeedPoints")
-			                                  .Value;
-			var accPoints = (long)dataSnapshot.Child("AccelerationPoints")
-			                                  .Value;
-
-			// TODO: Settings
-			float investCap = 10000;
-			if (steps < investCap)
-			{
-				UIManager.ChangePage(_layoutData.ProfileScreen);
-				return;
+				return await DatabaseReference.Child("users").Child(userID).GetValueAsync();
 			}
-
-			// TODO: Settings
-			float expIncrease = 10000;
-			int userLevel = Mathf.FloorToInt((1 + Mathf.Sqrt(1 + 8 * (experience + investCap) / expIncrease)) / 2);
-
-			// TODO: Settings
-			int skillPointsPerLevel = 5;
-			var totalPoints = (userLevel * skillPointsPerLevel);
-			totalPoints -= (int)spdPoints;
-			totalPoints -= (int)accPoints;
-
-			var updatedStepCount = (int)steps - (int)investCap;
-
-			await UpdateUser(Auth.CurrentUser, new UserData { Level = userLevel, StepCount = updatedStepCount, ExperiencePoints = experience + (int)investCap, SkillPoints = (int)totalPoints });
-
-			ResetStepCountBase(updatedStepCount);
-
-			await UniTask.SwitchToMainThread();
-			UIManager.UpdateStepCounter(updatedStepCount);
-			StepCountChanged?.Invoke(updatedStepCount);
+			catch (Exception exception)
+			{
+				$"FetchUserData Read operation failed with {exception}".Log();
+				return null;
+			}
 		}
 
 		public async Task CreateLobby(RaceData race)
 		{
-			await HostRaceAsync(race, 3);
+			await HostRaceAsync(race, 5);
 		}
 
 		public async Task<string> HostRaceAsync(RaceData race, int capacity, string description = null)
@@ -237,6 +222,9 @@ namespace TrainingBuddy.Managers
             string hostDisplayName = race.HostName ?? Auth.CurrentUser.DisplayName ?? string.Empty;
             string raceStatus = MapRaceStatus(race.Status);
 
+            DataSnapshot hostSnapshot = await FetchUserDataById(Auth.CurrentUser.UserId);
+            string hostSex = hostSnapshot?.Child("Sex").Value?.ToString() ?? string.Empty;
+
             Dictionary<string, object> updates = new Dictionary<string, object>
             {
                 [$"races/{raceId}/hostId"] = Auth.CurrentUser.UserId,
@@ -250,6 +238,7 @@ namespace TrainingBuddy.Managers
                 [$"races/{raceId}/participants/{Auth.CurrentUser.UserId}/joinedAt"] = timestamp,
                 [$"races/{raceId}/participants/{Auth.CurrentUser.UserId}/displayName"] = hostDisplayName,
                 [$"races/{raceId}/participants/{Auth.CurrentUser.UserId}/isHost"] = true,
+                [$"races/{raceId}/participants/{Auth.CurrentUser.UserId}/sex"] = hostSex,
                 [$"userRaces/{Auth.CurrentUser.UserId}/{raceId}/role"] = "host",
                 [$"userRaces/{Auth.CurrentUser.UserId}/{raceId}/joinedAt"] = timestamp,
             };
@@ -257,6 +246,65 @@ namespace TrainingBuddy.Managers
             await DatabaseReference.UpdateChildrenAsync(updates);
 
             return raceId;
+        }
+
+        public async Task JoinRaceDirectlyAsync(string raceId)
+        {
+            if (Auth?.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Cannot join a race without an authenticated user.");
+            }
+
+            int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
+
+            if (IsDeactivatedLevel(currentUserLevel))
+            {
+                throw new InvalidOperationException("Deactivated users cannot join races.");
+            }
+
+            DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
+
+            if (raceSnapshot is not { Exists: true })
+            {
+                throw new InvalidOperationException("Race not found.");
+            }
+
+            string status = raceSnapshot.Child("status").Value?.ToString();
+            if (!string.IsNullOrEmpty(status) && status != "open")
+            {
+                throw new InvalidOperationException("Race is not open for joining.");
+            }
+
+            int capacity = ConvertToNullableInt(raceSnapshot.Child("capacity").Value) ?? 0;
+            long participantsCount = raceSnapshot.Child("participants").ChildrenCount;
+
+            if (capacity > 0 && participantsCount >= capacity)
+            {
+                throw new InvalidOperationException("Race is already at capacity.");
+            }
+
+            await EnsureUserCanJoinRace(Auth.CurrentUser.UserId, raceId);
+
+            string userId = Auth.CurrentUser.UserId;
+            long timestamp = GetUnixTimestampMilliseconds();
+
+            DataSnapshot userSnapshot = await FetchUserDataById(userId);
+            string displayName = userSnapshot?.Child("UserName").Value?.ToString()
+                ?? Auth.CurrentUser.DisplayName
+                ?? string.Empty;
+            string sex = userSnapshot?.Child("Sex").Value?.ToString() ?? string.Empty;
+
+            var updates = new Dictionary<string, object>
+            {
+                [$"races/{raceId}/participants/{userId}/joinedAt"] = timestamp,
+                [$"races/{raceId}/participants/{userId}/displayName"] = displayName,
+                [$"races/{raceId}/participants/{userId}/isHost"] = false,
+                [$"races/{raceId}/participants/{userId}/sex"] = sex,
+                [$"userRaces/{userId}/{raceId}/role"] = "participant",
+                [$"userRaces/{userId}/{raceId}/joinedAt"] = timestamp,
+            };
+
+            await DatabaseReference.UpdateChildrenAsync(updates);
         }
 
         public async Task SubmitJoinRequestAsync(string raceId)
@@ -390,15 +438,17 @@ namespace TrainingBuddy.Managers
 
                 string displayName = requestSnapshot.Child("displayName").Value?.ToString();
 
+                DataSnapshot userSnapshot = await FetchUserDataById(requesterUserId);
                 if (string.IsNullOrWhiteSpace(displayName))
                 {
-                    DataSnapshot userSnapshot = await FetchUserDataById(requesterUserId);
                     displayName = userSnapshot?.Child("UserName").Value?.ToString() ?? string.Empty;
                 }
+                string sex = userSnapshot?.Child("Sex").Value?.ToString() ?? string.Empty;
 
                 updates[$"races/{raceId}/participants/{requesterUserId}/joinedAt"] = timestamp;
                 updates[$"races/{raceId}/participants/{requesterUserId}/displayName"] = displayName ?? string.Empty;
                 updates[$"races/{raceId}/participants/{requesterUserId}/isHost"] = false;
+                updates[$"races/{raceId}/participants/{requesterUserId}/sex"] = sex;
                 updates[$"userRaces/{requesterUserId}/{raceId}/role"] = "participant";
                 updates[$"userRaces/{requesterUserId}/{raceId}/joinedAt"] = timestamp;
             }
@@ -409,6 +459,43 @@ namespace TrainingBuddy.Managers
 
             await DatabaseReference.UpdateChildrenAsync(updates);
             return true;
+        }
+
+        public async Task KickParticipantAsync(string raceId, string participantUserId)
+        {
+            if (Auth?.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Cannot kick a participant without an authenticated user.");
+            }
+
+            DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
+
+            if (raceSnapshot is not { Exists: true })
+            {
+                throw new InvalidOperationException("Race not found.");
+            }
+
+            string hostId = raceSnapshot.Child("hostId").Value?.ToString();
+            int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
+
+            if (!IsAdminLevel(currentUserLevel) && hostId != Auth.CurrentUser.UserId)
+            {
+                throw new InvalidOperationException("Only the host or an admin can kick participants.");
+            }
+
+            if (participantUserId == hostId)
+            {
+                throw new InvalidOperationException("The host cannot kick themselves.");
+            }
+
+            var updates = new Dictionary<string, object>
+            {
+                [$"races/{raceId}/participants/{participantUserId}"] = null,
+                [$"userRaces/{participantUserId}/{raceId}"] = null,
+                [$"joinRequests/{raceId}/{participantUserId}"] = null,
+            };
+
+            await DatabaseReference.UpdateChildrenAsync(updates);
         }
 
         public async Task LeaveRaceAsync(string raceId)
@@ -502,12 +589,18 @@ namespace TrainingBuddy.Managers
                 return;
             }
 
-            Dictionary<string, object> updates = new Dictionary<string, object>
+            var updates = new Dictionary<string, object>
             {
                 [$"races/{raceId}/status"] = "cancelled",
                 [$"races/{raceId}/cancelledAt"] = GetUnixTimestampMilliseconds(),
+                [$"races/{raceId}/participants"] = null,
                 [$"joinRequests/{raceId}"] = null,
             };
+
+            foreach (DataSnapshot participant in raceSnapshot.Child("participants").Children)
+            {
+                updates[$"userRaces/{participant.Key}/{raceId}"] = null;
+            }
 
             await DatabaseReference.UpdateChildrenAsync(updates);
         }
@@ -556,14 +649,62 @@ namespace TrainingBuddy.Managers
 
 		private async Task<DataSnapshot> GetAllRaces()
 		{
-			DataSnapshot snapshot = await DatabaseReference.Child("races").GetValueAsync();
-
-			if (snapshot.Exists)
+			try
 			{
-				return snapshot;
+				DataSnapshot snapshot = await DatabaseReference.Child("races").GetValueAsync();
+				return snapshot.Exists ? snapshot : null;
+			}
+			catch (Exception ex)
+			{
+				$"GetAllRaces failed: {ex.Message}".LogError();
+				return null;
+			}
+		}
+
+		public async Task<List<RaceListEntry>> FetchRaceListAsync()
+		{
+			var result = new List<RaceListEntry>();
+			DataSnapshot snapshot = await GetAllRaces();
+
+			if (snapshot == null)
+			{
+				return result;
 			}
 
-			return null;
+			foreach (DataSnapshot raceSnapshot in snapshot.Children)
+			{
+				string status = raceSnapshot.Child("status").Value?.ToString() ?? string.Empty;
+				string title = raceSnapshot.Child("title").Value?.ToString() ?? string.Empty;
+				long createdAt = ReadLong(raceSnapshot.Child("createdAt").Value);
+				int capacity = ConvertToNullableInt(raceSnapshot.Child("capacity").Value) ?? 0;
+				int participantCount = (int)raceSnapshot.Child("participants").ChildrenCount;
+
+				string hostName = string.Empty;
+				string hostSex = string.Empty;
+				foreach (DataSnapshot participant in raceSnapshot.Child("participants").Children)
+				{
+					if (participant.Child("isHost").Value is true)
+					{
+						hostName = participant.Child("displayName").Value?.ToString() ?? string.Empty;
+						hostSex = participant.Child("sex").Value?.ToString() ?? string.Empty;
+						break;
+					}
+				}
+
+				result.Add(new RaceListEntry
+				{
+					RaceId = raceSnapshot.Key,
+					Title = title,
+					HostName = hostName,
+					HostSex = hostSex,
+					Status = status,
+					CreatedAt = createdAt,
+					ParticipantCount = participantCount,
+					Capacity = capacity,
+				});
+			}
+
+			return result;
 		}
 
 		private async Task<DataSnapshot> GetAllUsers()
@@ -576,6 +717,65 @@ namespace TrainingBuddy.Managers
 			}
 
 			return null;
+        }
+
+        public async Task<string> GetActiveRaceIdAsync()
+        {
+            if (Auth?.CurrentUser == null)
+                return null;
+
+            return await FindActiveRaceIdAsync(Auth.CurrentUser.UserId);
+        }
+
+        public async Task<List<(string displayName, bool isHost, long joinedAt, string sex, string userId)>> FetchCurrentRaceParticipantsAsync()
+        {
+            var empty = new List<(string, bool, long, string, string)>();
+
+            if (Auth?.CurrentUser == null)
+                return empty;
+
+            string activeRaceId = await FindActiveRaceIdAsync(Auth.CurrentUser.UserId);
+
+            if (activeRaceId == null)
+                return empty;
+
+            DataSnapshot activeRace = await GetRaceSnapshotAsync(activeRaceId);
+            var participants = new List<(string displayName, bool isHost, long joinedAt, string sex, string userId)>();
+
+            foreach (DataSnapshot participant in activeRace.Child("participants").Children)
+            {
+                string displayName = participant.Child("displayName").Value?.ToString() ?? string.Empty;
+                bool isHost = participant.Child("isHost").Value is true;
+                long joinedAt = ReadLong(participant.Child("joinedAt").Value);
+                string sex = participant.Child("sex").Value?.ToString() ?? string.Empty;
+                string userId = participant.Key;
+                participants.Add((displayName, isHost, joinedAt, sex, userId));
+            }
+
+            return participants;
+        }
+
+        private async Task<string> FindActiveRaceIdAsync(string userId)
+        {
+            DataSnapshot userRacesSnapshot = await GetUserRacesSnapshotAsync(userId);
+
+            if (userRacesSnapshot is not { Exists: true })
+                return null;
+
+            foreach (DataSnapshot raceEntry in userRacesSnapshot.Children)
+            {
+                DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceEntry.Key);
+                if (raceSnapshot is not { Exists: true })
+                    continue;
+
+                string status = raceSnapshot.Child("status").Value?.ToString();
+                if (!IsActiveRaceStatus(status))
+                    continue;
+
+                return raceEntry.Key;
+            }
+
+            return null;
         }
 
         private async Task<DataSnapshot> GetRaceSnapshotAsync(string raceId)
@@ -600,6 +800,18 @@ namespace TrainingBuddy.Managers
             }
 
             return null;
+        }
+
+        public async Task<bool> IsUserInActiveRaceAsync(string userId)
+        {
+            var (isHostingActive, isParticipatingActive) = await GetActiveRaceParticipationAsync(userId);
+            return isHostingActive || isParticipatingActive;
+        }
+
+        public async Task<bool> IsUserHostingActiveRaceAsync(string userId)
+        {
+            var (isHostingActive, _) = await GetActiveRaceParticipationAsync(userId);
+            return isHostingActive;
         }
 
         private async Task EnsureUserCanHostRace(string userId)
@@ -775,12 +987,49 @@ namespace TrainingBuddy.Managers
 			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION")) return;
 			if (!EnsureStepCounterDevice()) return;
 
-			// Load the authoritative base from Firebase once
+			// Load from Firebase, then compare with local PlayerPrefs backup.
+			// If Firebase is unreachable (offline) it may return 0 — in that case
+			// the locally saved value is more accurate.
 			DataSnapshot data = await FetchUserData(Auth.CurrentUser);
-			_baseStepCount   = ReadLong(data?.Child("StepCount").Value);
-			_deviceAnchor    = ReadLong(data?.Child("StepCountSnapshot").Value);
-			_currentTotal    = _baseStepCount;
-			_lastSyncedTotal = _baseStepCount;
+			long firebaseSteps    = ReadLong(data?.Child("StepCount").Value);
+			long firebaseSnapshot = ReadLong(data?.Child("StepCountSnapshot").Value);
+
+			long localSteps    = PlayerPrefs.GetInt(StepCountKey, 0);
+			long localSnapshot = PlayerPrefs.GetInt(StepSnapshotKey, 0);
+
+			bool useLocal  = localSteps > firebaseSteps;
+			_baseStepCount = useLocal ? localSteps    : firebaseSteps;
+			_deviceAnchor  = useLocal ? localSnapshot : firebaseSnapshot;
+			_currentTotal     = _baseStepCount;
+			_lastSyncedTotal  = _baseStepCount;
+
+			// Load daily step base and handle day rollover
+			long firebaseDailyBase   = ReadLong(data?.Child("DailyStepBase").Value);
+			string firebaseDailyDate = data?.Child("DailyStepDate").Value?.ToString() ?? "";
+			long localDailyBase      = PlayerPrefs.GetInt(DailyStepBaseKey, 0);
+			string localDailyDate    = PlayerPrefs.GetString(DailyStepDateKey, "");
+
+			_dailyStepBase = useLocal ? localDailyBase : firebaseDailyBase;
+			_dailyStepDate = (useLocal ? localDailyDate : firebaseDailyDate) ?? "";
+
+			string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+			if (string.IsNullOrEmpty(_dailyStepDate))
+			{
+				// First session ever — seed today's base from the loaded total
+				_dailyStepBase = _baseStepCount;
+				_dailyStepDate = today;
+				SaveDailyBaseLocally();
+			}
+			else if (_dailyStepDate != today)
+			{
+				// Day rolled over since last session — archive the previous day's steps
+				long prevDaySteps = Math.Max(0, _baseStepCount - _dailyStepBase);
+				string prevDate = _dailyStepDate;
+				_dailyStepBase = _baseStepCount;
+				_dailyStepDate = today;
+				SaveDailyBaseLocally();
+				_ = ArchiveDailyStepsAsync(prevDate, prevDaySteps);
+			}
 
 			// Immediately show the saved count while we wait for the first sensor tick
 			StepCountChanged?.Invoke(_currentTotal);
@@ -816,22 +1065,27 @@ namespace TrainingBuddy.Managers
 					long deviceValue = StepCounter.current.stepCounter.ReadValue();
 					if (deviceValue <= 0) continue;
 
-					// Anchor the device counter on the first valid reading of this session.
-					// If Firebase returned 0 (new user), we anchor here so we don't
-					// miscount steps the user walked before installing the app.
+					// Anchor on the first valid reading of this session (new user, or first
+					// time the counter starts). This prevents counting steps taken before
+					// account creation.
 					if (_deviceAnchor <= 0)
+					{
 						_deviceAnchor = deviceValue;
+					}
+					else if (deviceValue < _deviceAnchor)
+					{
+						// Device step counter was reset (reboot, OS reset, etc.).
+						// Preserve accumulated total and re-anchor from the new device value.
+						_baseStepCount = _currentTotal;
+						_deviceAnchor  = deviceValue;
+						SaveStepsLocally(_currentTotal, deviceValue);
+					}
 
-					// If deviceValue < _deviceAnchor the device was rebooted and the
-					// hardware counter reset to 0 — treat deviceValue as the full delta.
-					long delta = deviceValue >= _deviceAnchor
-						? deviceValue - _deviceAnchor
-						: deviceValue;
-
-					long newTotal = _baseStepCount + delta;
+					long newTotal = _baseStepCount + (deviceValue - _deviceAnchor);
 					if (newTotal != _currentTotal)
 					{
 						_currentTotal = newTotal;
+						SaveStepsLocally(newTotal, deviceValue);
 						StepCountChanged?.Invoke(_currentTotal); // instant UI update, no Firebase
 					}
 
@@ -865,16 +1119,37 @@ namespace TrainingBuddy.Managers
 			if (Auth?.CurrentUser == null) return;
 			if (_currentTotal == _lastSyncedTotal) return;
 
+			// Always persist locally first so data survives even if Firebase is unreachable.
+			SaveStepsLocally(_currentTotal, deviceValue);
+
+			string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+			var updates = new Dictionary<string, object>
+			{
+				{ "StepCount",         (int)_currentTotal },
+				{ "StepCountSnapshot", (int)deviceValue   },
+			};
+
+			// Day rolled over mid-session — archive the previous day then reset base
+			if (_dailyStepDate != today)
+			{
+				long prevDaySteps = Math.Max(0, _lastSyncedTotal - _dailyStepBase);
+				updates[$"dailySteps/{_dailyStepDate}"] = (int)prevDaySteps;
+				_dailyStepBase = _currentTotal;
+				_dailyStepDate = today;
+				updates["DailyStepBase"] = (int)_dailyStepBase;
+				updates["DailyStepDate"] = _dailyStepDate;
+				SaveDailyBaseLocally();
+			}
+
+			// Always write today's live step count so the graph stays current
+			updates[$"dailySteps/{today}"] = (int)(_currentTotal - _dailyStepBase);
+
 			try
 			{
 				await DatabaseReference
 					.Child("users")
 					.Child(Auth.CurrentUser.UserId)
-					.UpdateChildrenAsync(new Dictionary<string, object>
-					{
-						{ "StepCount",         (int)_currentTotal },
-						{ "StepCountSnapshot", (int)deviceValue   }
-					});
+					.UpdateChildrenAsync(updates);
 
 				_lastSyncedTotal = _currentTotal;
 			}
@@ -884,20 +1159,70 @@ namespace TrainingBuddy.Managers
 			}
 		}
 
-		/// <summary>
-		/// Re-anchors the in-memory tracking after an external change to the stored
-		/// step count (e.g. investing steps reduces it). Without this, the next poll
-		/// cycle would compute an incorrect total from the stale _baseStepCount.
-		/// </summary>
-		private void ResetStepCountBase(long newTotal)
+		private async Task ArchiveDailyStepsAsync(string date, long steps)
 		{
-			_currentTotal    = newTotal;
-			_lastSyncedTotal = newTotal;
-			_baseStepCount   = newTotal;
+			if (Auth?.CurrentUser == null) return;
+			try
+			{
+				await DatabaseReference
+					.Child("users")
+					.Child(Auth.CurrentUser.UserId)
+					.UpdateChildrenAsync(new Dictionary<string, object>
+					{
+						{ "DailyStepBase",        (int)_dailyStepBase },
+						{ "DailyStepDate",         _dailyStepDate     },
+						{ $"dailySteps/{date}",    (int)steps          }
+					});
+			}
+			catch (Exception ex)
+			{
+				$"ArchiveDailyStepsAsync failed: {ex}".Log();
+			}
+		}
 
-			long deviceValue = StepCounter.current?.stepCounter.ReadValue() ?? 0;
-			if (deviceValue > 0)
-				_deviceAnchor = deviceValue;
+		public async Task<List<(string dateKey, long steps)>> FetchDailyStepsAsync(int days = 5)
+		{
+			if (Auth?.CurrentUser == null) return new List<(string, long)>();
+			try
+			{
+				DataSnapshot snapshot = await DatabaseReference
+					.Child("users")
+					.Child(Auth.CurrentUser.UserId)
+					.Child("dailySteps")
+					.OrderByKey()
+					.LimitToLast(days)
+					.GetValueAsync();
+
+				var result = new List<(string, long)>();
+				foreach (DataSnapshot child in snapshot.Children)
+					result.Add((child.Key, ReadLong(child.Value)));
+				return result; // Firebase returns children in ascending key order
+			}
+			catch (Exception ex)
+			{
+				$"FetchDailyStepsAsync failed: {ex}".Log();
+				return new List<(string, long)>();
+			}
+		}
+
+		private void SaveStepsLocally(long steps, long deviceSnapshot)
+		{
+			PlayerPrefs.SetInt(StepCountKey, (int)steps);
+			PlayerPrefs.SetInt(StepSnapshotKey, (int)deviceSnapshot);
+			PlayerPrefs.Save();
+		}
+
+		// Scoped per user so multiple accounts on the same device don't share data.
+		private string StepCountKey    => $"StepCount_{Auth?.CurrentUser?.UserId ?? "anon"}";
+		private string StepSnapshotKey => $"StepCountSnapshot_{Auth?.CurrentUser?.UserId ?? "anon"}";
+		private string DailyStepBaseKey => $"DailyStepBase_{Auth?.CurrentUser?.UserId ?? "anon"}";
+		private string DailyStepDateKey => $"DailyStepDate_{Auth?.CurrentUser?.UserId ?? "anon"}";
+
+		private void SaveDailyBaseLocally()
+		{
+			PlayerPrefs.SetInt(DailyStepBaseKey, (int)_dailyStepBase);
+			PlayerPrefs.SetString(DailyStepDateKey, _dailyStepDate);
+			PlayerPrefs.Save();
 		}
 
 		private bool EnsureStepCounterDevice()

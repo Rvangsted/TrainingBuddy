@@ -42,46 +42,16 @@ namespace TrainingBuddy.UI
 
 		private async void OnLogin(ClickEvent evt)
 		{
-#if !UNITY_EDITOR
-			CheckPermission();
-			if (!CheckPermission())
-			{
-				return;
-			}
-#endif
 			if (await _firebaseController.FirebaseLogin(_loginEmailField.value, _loginPasswordField.value))
 			{
 				_uiManager.ChangePage(_layoutData.MainMenu);
 			}
 		}
-		
+
 		private void OnForgotPassword(ClickEvent evt)
 		{
-#if !UNITY_EDITOR
-			CheckPermission();
-			if (!CheckPermission())
-			{
-				return;
-			}
-#endif
-
 			_uiManager.ChangePage(_layoutData.ForgotPasswordScreen);
 		}
 		
-		private async void OnTest(ClickEvent evt)
-		{
-			// $"show overlay".Log();
-			// _uiManager.ShowOverlay("string title", "string message");
-#if !UNITY_EDITOR
-			if (!CheckPermission())
-			{
-				return;
-			}
-#endif
-			if (await _firebaseController.FirebaseLogin("admin@trainingbuddy.dk", "smjo3y2kZRfk7jN^@wGN4z8K^"))
-			{
-				_uiManager.ChangePage(_layoutData.MainMenu);
-			}
-		}
 	}
 }

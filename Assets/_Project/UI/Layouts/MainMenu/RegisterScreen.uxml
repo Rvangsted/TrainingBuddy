@@ -1,12 +1,25 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/RegisterScreen.uss?fileID=7433441132597879392&amp;guid=9032dd0ef1350974ab908536d4e001ad&amp;type=3#RegisterScreen" />
-    <ui:VisualElement name="RegisterScreen" class="register-screen" style="flex-grow: 1;">
+    <ui:ScrollView name="RegisterScreen" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="register-screen" style="flex-grow: 1;">
         <ui:VisualElement name="MainContainer" class="main-container">
             <TrainingBuddy.UI.Controls.LocalizedLabel key="text_register_user" name="Title" class="font-title register-title"/>
             <TrainingBuddy.UI.Controls.LocalizedLabel key="text_register_user_subtitle" name="SubTitle" class="register-sub-title"/>
             <TrainingBuddy.UI.Controls.LocalizedTextInput name="Username" key="text_username" hide-placeholder-on-focus="true" class="field-username"/>
             <TrainingBuddy.UI.Controls.LocalizedTextInput name="Email" key="text_email" hide-placeholder-on-focus="true" class="field-email"/>
             <TrainingBuddy.UI.Controls.LocalizedTextInput name="Password" key="text_password" hide-placeholder-on-focus="true" password="true" class="field-password"/>
+            <TrainingBuddy.UI.Controls.LocalizedTextInput name="PasswordConfirm" key="text_password_confirm" hide-placeholder-on-focus="true" password="true" class="field-password-confirm"/>
+            <ui:VisualElement name="GenderSection" class="section-container">
+                <TrainingBuddy.UI.Controls.LocalizedLabel key="text_gender" name="GenderLabel" class="font-title section-label"/>
+                <TrainingBuddy.UI.Controls.LocalizedRadioButtonGroup name="GenderGroup" value="0" choice-keys="text_male,text_female" class="gender-group"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="DobSection" class="section-container">
+                <TrainingBuddy.UI.Controls.LocalizedLabel key="text_date_of_birth" name="DobLabel" class="font-title section-label"/>
+                <ui:VisualElement name="DobRow" class="dob-row">
+                    <ui:IntegerField name="DobDay" class="dob-field" label="" placeholder-text="DD"/>
+                    <ui:IntegerField name="DobMonth" class="dob-field" label="" placeholder-text="MM"/>
+                    <ui:IntegerField name="DobYear" class="dob-field dob-field-year" label="" placeholder-text="YYYY"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
             <TrainingBuddy.UI.Controls.LocalizedButton key="button_register_user" name="RegisterButton" class="button-large alt-button register-button"/>
         </ui:VisualElement>
         <ui:VisualElement name="Separator" class="separator-container">
@@ -23,5 +36,5 @@
             <TrainingBuddy.UI.Controls.LocalizedLabel name="HaveAccount" key="text_have_account_prompt" class="bottom-link-label"/>
             <TrainingBuddy.UI.Controls.LocalizedButton name="LoginAccount" key="button_login" class="text-button bottom-link-button"/>
         </ui:VisualElement>
-    </ui:VisualElement>
+    </ui:ScrollView>
 </ui:UXML>

@@ -7,7 +7,6 @@ namespace TrainingBuddy.UI
 	[CreateAssetMenu(fileName = "New LayoutData", menuName = "ScriptableObjects/LayoutData")]
 	public class LayoutData : ScriptableObject
 	{
-		[field:SerializeField] public VisualTreeAsset SplashScreenVisualTree { get; set; }
 		[field:SerializeField] public VisualTreeAsset WelcomeScreenVisualTree { get; set; }
 		[field:SerializeField] public VisualTreeAsset LoginScreenVisualTree { get; set; }
 		[field:SerializeField] public VisualTreeAsset RegisterScreenVisualTree { get; set; }
@@ -22,7 +21,6 @@ namespace TrainingBuddy.UI
 		[field:SerializeField] public VisualTreeAsset HostScreenVisualTree { get; set; }
 		[field:SerializeField] public VisualTreeAsset FindLobbyScreenVisualTree { get; set; }
 		
-		public LoginScreen SplashScreen { get; set; }
 		public WelcomeScreen WelcomeScreen { get; set; }
 		public LoginScreen LoginScreen { get; set; }
 		public RegisterScreen RegisterScreen { get; set; }

@@ -7,40 +7,6 @@ namespace TrainingBuddy.Utility
 {
 	public class UtilityMethods
 	{
-		public static List<string> FindUsersInRange(DataSnapshot userList, float latitude, float longitude, float radiusInKilometers)
-		{
-			var basePoint = ConvertLatLon(latitude, longitude);
-			var usersInRange = new List<string>();
-
-			foreach (DataSnapshot userListChild in userList.Children)
-			{
-				var userLatitude = 0f;
-				var userLongitude = 0f;
-				
-				foreach (DataSnapshot dataSnapshot in userListChild.Children)
-				{
-					switch (dataSnapshot.Key)
-					{
-						case "Latitude":
-							userLatitude = float.Parse(dataSnapshot.Value.ToString());
-							break;
-						case "Longitude":
-							userLongitude = float.Parse(dataSnapshot.Value.ToString());
-							break;
-					}
-				}
-
-				var userPoint = ConvertLatLon(userLatitude, userLongitude);
-				var distance = Vector3.Distance(basePoint, userPoint);
-				
-				if (radiusInKilometers >= distance)
-				{
-					usersInRange.Add(userListChild.Key);
-				}
-			}
-
-			return usersInRange;
-		}
 		
 		public static List<DataSnapshot> FindRacesInRange(DataSnapshot raceList, float latitude, float longitude, float radiusInKilometers)
 		{

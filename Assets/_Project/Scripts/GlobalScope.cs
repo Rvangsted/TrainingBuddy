@@ -49,7 +49,6 @@ namespace TrainingBuddy
 				resolver.Resolve<LayoutData>();
 			});
 			
-			builder.Register<SplashScreen>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 			builder.Register<WelcomeScreen>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 			builder.Register<LoginScreen>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 			builder.Register<RegisterScreen>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();

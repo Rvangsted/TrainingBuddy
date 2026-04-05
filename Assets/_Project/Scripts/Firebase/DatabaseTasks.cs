@@ -26,7 +26,7 @@ namespace TrainingBuddy.FireBase
 		{
 			string json = JsonConvert.SerializeObject(user, _databaseManager.JsonSettings);
 			
-			Task DBTask = _databaseManager.DatabaseReference.Child("Users").Child(user.UserName + "_" + user.UserID).SetRawJsonValueAsync(json);
+			Task DBTask = _databaseManager.DatabaseReference.Child("users").Child(user.UserID).SetRawJsonValueAsync(json);
 			await DBTask;
 
 			if (DBTask.IsFaulted)
@@ -56,7 +56,6 @@ namespace TrainingBuddy.FireBase
 	                // Test Data
 	                var user = new UserData
 	                {
-		                ExperiencePoints = 1,
 		                AccelerationPoints = 5,
 		                SpeedPoints = 2,
 		                StepCount = 2,
@@ -65,11 +64,6 @@ namespace TrainingBuddy.FireBase
 	                user.UserName ??= currentUserdata.UserName;
 	                user.UserID ??= currentUserdata.UserID;
 	                user.Email ??= currentUserdata.Email;
-	                user.Longitude ??= currentUserdata.Longitude;
-	                user.Latitude ??= currentUserdata.Latitude;
-	                user.Level ??= currentUserdata.Level;
-	                user.ExperiencePoints ??= currentUserdata.ExperiencePoints;
-	                user.SkillPoints ??= currentUserdata.SkillPoints;
 	                user.AccelerationPoints ??= currentUserdata.AccelerationPoints;
 	                user.SpeedPoints ??= currentUserdata.SpeedPoints;
 	                user.StepCount ??= currentUserdata.StepCount;
