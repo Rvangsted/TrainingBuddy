@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
+using TrainingBuddy.UI.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -7,22 +10,40 @@ namespace TrainingBuddy.UI
 {
 	public class RaceScreen : UILayout
 	{
-		private const int MaxPlayers = 6;
+		private const int MaxPlayers = 5;
 		private const float IconWidth = 44f;
 
 		private VisualElement _playerIconsContainer;
+		private VisualElement _runnersContainer;
 		private readonly List<VisualElement> _playerPins = new();
+		private readonly List<RunnerLaneElement> _runnerLanes = new();
 		private readonly float[] _playerProgresses = new float[MaxPlayers];
 		private int _playerCount;
 
+		// ── Pending data (set before ChangePage) ──────────────────────────────
+		private PlayerRaceData[] _pendingPlayers;
+		private RaceSimulation _pendingSimulation;
+		private string _pendingRaceId;
+
+		// ── Live simulation state ─────────────────────────────────────────────
+		private PlayerRaceData[] _activePlayers;
+		private bool[] _playerFinished;
+		private float _raceTime;
+		private bool _isRaceRunning;
+		private string _activeRaceId;
+
+		// ── TEST LOOP (fallback when no simulation data is provided) ──────────
+		private bool _testLoopActive;
+		private float _testProgress;
+		private const float TestLoopLapDuration = 5f;
+
 		private static readonly PlayerRaceData[] TestPlayers =
 		{
-			new PlayerRaceData("Emil", isMale:true, progress:0.82f),
-			new PlayerRaceData("Marie",  isMale: false, progress: 0.79f),
-			new PlayerRaceData("Jonas",  isMale: true,  progress: 0.61f),
-			new PlayerRaceData("Sofie",  isMale: false, progress: 0.45f),
-			new PlayerRaceData("Kasper", isMale: true,  progress: 0.44f),
-			new PlayerRaceData("Emma",   isMale: false, progress: 0.20f),
+			new("Emil",   isMale: true,  laneIndex: 0, finishTime: 57f, accelerationBias: 0.7f),
+			new("Marie",  isMale: false, laneIndex: 1, finishTime: 60f, accelerationBias: 0.4f),
+			new("Jonas",  isMale: true,  laneIndex: 2, finishTime: 62f, accelerationBias: 0.2f),
+			new("Sofie",  isMale: false, laneIndex: 3, finishTime: 59f, accelerationBias: 0.5f),
+			new("Kasper", isMale: true,  laneIndex: 4, finishTime: 63f, accelerationBias: 0.1f),
 		};
 
 		protected RaceScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
@@ -33,6 +54,23 @@ namespace TrainingBuddy.UI
 
 		public override void Initialize() { }
 
+		/// <summary>Call before ChangePage to supply a live simulation from Firebase.</summary>
+		public void PrepareWithSimulation(RaceSimulation simulation, string raceId)
+		{
+			_pendingSimulation = simulation;
+			_pendingRaceId     = raceId;
+			_pendingPlayers    = null;
+			_layoutDrawn       = false;
+		}
+
+		/// <summary>Legacy: call before ChangePage to supply static player data (used by test/editor flows).</summary>
+		public void PrepareWithPlayers(PlayerRaceData[] players)
+		{
+			_pendingPlayers    = players;
+			_pendingSimulation = null;
+			_layoutDrawn       = false;
+		}
+
 		public override void DrawLayout()
 		{
 			base.DrawLayout();
@@ -40,12 +78,141 @@ namespace TrainingBuddy.UI
 			_playerIconsContainer = Layout.Q<VisualElement>("PlayerIconsContainer");
 			_playerIconsContainer.RegisterCallback<GeometryChangedEvent>(_ => RefreshAllPinPositions());
 
-			SetupPlayers(TestPlayers);
+			_runnersContainer = Layout.Q<VisualElement>("RunnersContainer");
+
+			Layout.RegisterCallback<DetachFromPanelEvent>(_ =>
+			{
+				StopAllRunnerAnimations();
+				_isRaceRunning   = false;
+				_testLoopActive  = false;
+			});
+
+			if (_pendingSimulation != null)
+			{
+				_activeRaceId = _pendingRaceId;
+				StartSimulatedRace(_pendingSimulation);
+				_pendingSimulation = null;
+				_pendingRaceId     = null;
+			}
+			else
+			{
+				var players = _pendingPlayers ?? TestPlayers;
+				SetupPlayers(players);
+				SetupRunnerLanes(players);
+				_pendingPlayers = null;
+				StartProgressTestLoop();
+			}
 		}
 
-		/// <summary>
-		/// Populates the progress bar with up to 6 players.
-		/// </summary>
+		// ── Simulation playback ────────────────────────────────────────────────
+
+		private void StartSimulatedRace(RaceSimulation simulation)
+		{
+			// Sort participants by lane so runner index == lane index == path index
+			var sorted = new List<RaceSimulationParticipant>(simulation.Participants);
+			sorted.Sort((a, b) => a.Lane.CompareTo(b.Lane));
+
+			_activePlayers = new PlayerRaceData[sorted.Count];
+			for (int i = 0; i < sorted.Count; i++)
+			{
+				var p = sorted[i];
+				_activePlayers[i] = new PlayerRaceData(
+					p.DisplayName,
+					!string.Equals(p.Sex, "Female", StringComparison.OrdinalIgnoreCase),
+					laneIndex:        p.Lane,
+					finishTime:       p.FinishTime,
+					accelerationBias: p.AccelerationBias,
+					userId:           p.UserId
+				);
+			}
+
+			SetupPlayers(_activePlayers);
+			SetupRunnerLanes(_activePlayers);
+
+			_playerFinished = new bool[_activePlayers.Length];
+			_raceTime       = 0f;
+			_isRaceRunning  = true;
+		}
+
+		/// <summary>Called from UIManager.Update() every frame while this screen is active.</summary>
+		public void TickRace(float deltaTime)
+		{
+			if (_isRaceRunning && _activePlayers != null)
+			{
+				_raceTime += deltaTime;
+				bool allFinished = true;
+				for (int i = 0; i < _activePlayers.Length; i++)
+				{
+					if (_playerFinished[i]) continue;
+
+					_runnerLanes[i].EnsureAnimating();
+					float progress = GetProgress(_raceTime, _activePlayers[i].FinishTime, _activePlayers[i].AccelerationBias);
+					SetPlayerProgress(i, progress);
+
+					if (progress >= 1f)
+					{
+						_playerFinished[i] = true;
+						_runnerLanes[i].StopAnimation();
+						_runnerLanes[i].style.display = DisplayStyle.None;
+					}
+					else
+					{
+						allFinished = false;
+					}
+				}
+
+				if (allFinished)
+				{
+					_isRaceRunning = false;
+					AnnounceWinner();
+				}
+			}
+			else if (_testLoopActive)
+			{
+				TickTestLoop(deltaTime);
+			}
+		}
+
+		private static float GetProgress(float raceTime, float finishTime, float accelBias)
+		{
+			float t     = Mathf.Clamp01(raceTime / finishTime);
+			// accelBias=1 → convex curve (fast start), accelBias=0 → linear
+			float power = Mathf.Lerp(1f, 0.55f, accelBias);
+			return Mathf.Pow(t, power);
+		}
+
+		private void AnnounceWinner()
+		{
+			// Winner = lowest finish time
+			var winner = _activePlayers[0];
+			for (int i = 1; i < _activePlayers.Length; i++)
+			{
+				if (_activePlayers[i].FinishTime < winner.FinishTime)
+					winner = _activePlayers[i];
+			}
+
+			string currentUserId     = _databaseManager.Auth?.CurrentUser?.UserId;
+			bool isCurrentUserWinner = currentUserId != null && winner.UserId == currentUserId;
+			string message           = isCurrentUserWinner ? "Du vandt løbet!" : $"{winner.Name} vinder løbet!";
+
+			string raceId = _activeRaceId;
+			_uiManager.ShowOverlay(
+				"Løbet er slut!",
+				message,
+				"Tilbage til hovedmenu",
+				async () =>
+				{
+					if (raceId != null)
+						await _databaseManager.MarkRaceWatchedAsync(raceId);
+					_uiManager.ChangePage(_layoutData.MainMenu);
+				},
+				UniversalOverlay.PopupImage.None,
+				false
+			);
+		}
+
+		// ── Player/runner setup ────────────────────────────────────────────────
+
 		public void SetupPlayers(PlayerRaceData[] players)
 		{
 			_playerCount = Mathf.Clamp(players.Length, 0, MaxPlayers);
@@ -55,7 +222,7 @@ namespace TrainingBuddy.UI
 
 			for (var i = 0; i < _playerCount; i++)
 			{
-				_playerProgresses[i] = Mathf.Clamp01(players[i].Progress);
+				_playerProgresses[i] = 0f;
 				var pin = CreatePlayerPin(players[i], i);
 				_playerPins.Add(pin);
 				_playerIconsContainer.Add(pin);
@@ -64,11 +231,6 @@ namespace TrainingBuddy.UI
 			RefreshAllPinPositions();
 		}
 
-		/// <summary>
-		/// Update a single player's progress along the bar.
-		/// </summary>
-		/// <param name="playerIndex">0-based index.</param>
-		/// <param name="progress">0 = start, 1 = finish.</param>
 		public void SetPlayerProgress(int playerIndex, float progress)
 		{
 			if (playerIndex < 0 || playerIndex >= _playerCount)
@@ -76,9 +238,10 @@ namespace TrainingBuddy.UI
 
 			_playerProgresses[playerIndex] = Mathf.Clamp01(progress);
 			PlacePin(playerIndex);
+			SetRunnerProgress(playerIndex, _playerProgresses[playerIndex]);
 		}
 
-		// ── private helpers ────────────────────────────────────────────────────
+		// ── Private helpers ────────────────────────────────────────────────────
 
 		private VisualElement CreatePlayerPin(PlayerRaceData player, int index)
 		{
@@ -100,6 +263,69 @@ namespace TrainingBuddy.UI
 			return pin;
 		}
 
+		public void SetRunnerProgress(int index, float progress)
+		{
+			if (index < 0 || index >= _runnerLanes.Count) return;
+			_runnerLanes[index].SetProgress(progress);
+		}
+
+		private void SetupRunnerLanes(PlayerRaceData[] players)
+		{
+			StopAllRunnerAnimations();
+			_runnersContainer.Clear();
+			_runnerLanes.Clear();
+
+			var count = Mathf.Clamp(players.Length, 0, MaxPlayers);
+			for (var i = 0; i < count; i++)
+			{
+				var player = players[i];
+				var frames = player.IsMale ? _uiManager.MaleRunnerFrames : _uiManager.FemaleRunnerFrames;
+
+				var lane = new RunnerLaneElement { name = $"RunnerLane{i}" };
+				lane.AddToClassList($"runner-lane-{i}");
+				var genderClass = player.IsMale ? "runner-male" : "runner-female";
+				var paths = _uiManager.RunnerPaths;
+				var path = paths != null && i < paths.Length ? paths[i] : null;
+				lane.Configure(path?.X, path?.Y, frames, _uiManager.RunnerFramesPerSecond, genderClass,
+					path?.StartSize, path?.EndSize, path?.SizeCurve);
+				lane.SetName(player.Name);
+				lane.SetProgress(0f);
+
+				_runnerLanes.Add(lane);
+				_runnersContainer.Add(lane);
+			}
+		}
+
+		// ── Test loop (fallback / editor preview) ─────────────────────────────
+
+		public void StartProgressTestLoop()
+		{
+			_testProgress   = 0f;
+			_testLoopActive = true;
+		}
+
+		public void StopProgressTestLoop()
+		{
+			_testLoopActive = false;
+		}
+
+		private void TickTestLoop(float deltaTime)
+		{
+			_testProgress = (_testProgress + deltaTime / TestLoopLapDuration) % 1f;
+			for (var i = 0; i < _runnerLanes.Count; i++)
+			{
+				_runnerLanes[i].EnsureAnimating();
+				var t = (_testProgress + i * 0.15f) % 1f;
+				SetRunnerProgress(i, t);
+			}
+		}
+
+		private void StopAllRunnerAnimations()
+		{
+			foreach (var lane in _runnerLanes)
+				lane.StopAnimation();
+		}
+
 		private void PlacePin(int index)
 		{
 			if (index >= _playerPins.Count)
@@ -109,7 +335,6 @@ namespace TrainingBuddy.UI
 			if (containerWidth <= 0)
 				return;
 
-			// Centre the pin (which has a fixed width matching the icon) over the progress point.
 			var x = _playerProgresses[index] * containerWidth - IconWidth * 0.5f;
 			x = Mathf.Clamp(x, 0f, Mathf.Max(0f, containerWidth - IconWidth));
 			_playerPins[index].style.left = x;
@@ -121,17 +346,25 @@ namespace TrainingBuddy.UI
 				PlacePin(i);
 		}
 
+		// ── Data class ─────────────────────────────────────────────────────────
+
 		public sealed class PlayerRaceData
 		{
-			public string Name { get; }
-			public bool IsMale { get; }
-			public float Progress { get; }
+			public string Name             { get; }
+			public bool   IsMale           { get; }
+			public int    LaneIndex        { get; }
+			public float  FinishTime       { get; }
+			public float  AccelerationBias { get; }
+			public string UserId           { get; }
 
-			public PlayerRaceData(string name, bool isMale, float progress)
+			public PlayerRaceData(string name, bool isMale, int laneIndex = 0, float finishTime = 60f, float accelerationBias = 0f, string userId = null)
 			{
-				Name = name;
-				IsMale = isMale;
-				Progress = progress;
+				Name             = name;
+				IsMale           = isMale;
+				LaneIndex        = laneIndex;
+				FinishTime       = finishTime;
+				AccelerationBias = accelerationBias;
+				UserId           = userId;
 			}
 		}
 	}

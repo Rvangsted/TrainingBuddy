@@ -34,7 +34,7 @@
                 <ui:VisualElement name="LeaderboardHeader" class="leaderboard-header">
                     <ui:Label text="Rank" name="HeaderRank" class="leaderboard-header-label align-left font-regular" />
                     <ui:Label text="Spiller" name="HeaderPlayer" class="leaderboard-header-label align-center font-regular" />
-                    <ui:Label text="Km lobet" name="HeaderDistance" class="leaderboard-header-label align-right font-regular" />
+                    <ui:Label text="Skridt" name="HeaderDistance" class="leaderboard-header-label align-right font-regular" />
                 </ui:VisualElement>
                 <ui:ScrollView name="LeaderboardList" class="leaderboard-list" mode="Vertical" />
             </ui:VisualElement>

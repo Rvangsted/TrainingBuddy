@@ -10,6 +10,7 @@ namespace TrainingBuddy.UI
 	{
 		private readonly List<Button> _hostButtons = new();
 		private string _activeRaceId;
+		private List<(string displayName, bool isHost, long joinedAt, string sex, string userId)> _participants = new();
 
 		protected HostScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
@@ -26,10 +27,21 @@ namespace TrainingBuddy.UI
 			base.DrawLayout();
 			_uiManager.Header.Q<Label>("SiteTitle").text = "Start løb";
 
+			var startButton = Layout.Q<Button>("StartButton");
+			startButton.clicked += async () => await StartRace();
+
 			_activeRaceId = await _databaseManager.GetActiveRaceIdAsync();
 			var currentUserId = _databaseManager.Auth.CurrentUser?.UserId;
-			var participants = await _databaseManager.FetchCurrentRaceParticipantsAsync();
-			var entries = participants.ConvertAll(p => new HostEntryData(
+			_participants = await _databaseManager.FetchCurrentRaceParticipantsAsync();
+
+			var capacity     = await _databaseManager.FetchRaceCapacityAsync(_activeRaceId);
+			var inviteButton = Layout.Q<Button>("InviteButton");
+			if (inviteButton != null)
+				inviteButton.style.display = (capacity > 0 && _participants.Count >= capacity)
+					? DisplayStyle.None
+					: DisplayStyle.Flex;
+
+			var entries = _participants.ConvertAll(p => new HostEntryData(
 				p.displayName,
 				p.isHost ? "Host" : "Deltager",
 				string.Empty,
@@ -38,6 +50,21 @@ namespace TrainingBuddy.UI
 				p.userId
 			));
 			PopulateHostCards(entries);
+		}
+
+		private async System.Threading.Tasks.Task StartRace()
+		{
+			try
+			{
+				var simulation = await _databaseManager.StartRaceAsync(_activeRaceId);
+				_layoutData.RaceScreen.PrepareWithSimulation(simulation, _activeRaceId);
+				_uiManager.ChangePage(_layoutData.RaceScreen);
+			}
+			catch (System.Exception ex)
+			{
+				$"Failed to start race: {ex.Message}".LogError();
+				_uiManager.ShowOverlay("Kan ikke starte", ex.Message, "OK", () => { });
+			}
 		}
 
 		private void PopulateHostCards(IEnumerable<HostEntryData> entries)

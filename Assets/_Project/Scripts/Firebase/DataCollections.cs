@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace TrainingBuddy.FireBase
 {
 	public struct UserData
@@ -19,6 +21,17 @@ namespace TrainingBuddy.FireBase
 		public int? UserLevel;
 	}
 	
+	public struct FriendEntry
+	{
+		public long AddedAt;
+	}
+
+	public struct FriendRequest
+	{
+		public long RequestedAt;
+		public string Status;
+	}
+
 	public struct RaceData
 	{
 		public string RaceName;
@@ -26,6 +39,30 @@ namespace TrainingBuddy.FireBase
 		public float Longitude;
 		public float Latitude;
 		public int Status;
+	}
+
+	public struct LeaderboardEntry
+	{
+		public string UserName;
+		public string Sex;
+		public int StepCount;
+	}
+
+	public struct RaceSimulationParticipant
+	{
+		public string UserId;
+		public string DisplayName;
+		public string Sex;
+		public int    Lane;
+		public float  FinishTime;
+		public float  AccelerationBias;
+	}
+
+	public class RaceSimulation
+	{
+		public long   Seed;
+		public float  BaseDuration;
+		public List<RaceSimulationParticipant> Participants;
 	}
 
 	public struct RaceListEntry

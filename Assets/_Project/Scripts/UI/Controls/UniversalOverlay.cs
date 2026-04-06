@@ -14,11 +14,12 @@ namespace TrainingBuddy.UI.Controls
         private VisualElement _overlayBackground;
         private VisualElement _overlaySafeContent;
         private VisualElement _overlayCard;
-        private VisualElement _overlayContent;
         private VisualElement _overlaySingleRow;
         private VisualElement _overlayTwoButtonRow;
+        private VisualElement _buttonSpace;
         private Label _titleLabel;
         private Label _messageLabel;
+        private TextField _inputField;
         private Button _primaryButton;
         private Button _secondaryButton;
 
@@ -90,6 +91,18 @@ namespace TrainingBuddy.UI.Controls
             }
         }
 
+        public void ShowWithInput(string title, string message, string placeholder, string primaryButtonText, Action<string> primaryAction, string secondaryButtonText = null, Action secondaryAction = null, PopupImage image = PopupImage.None, bool allowBackgroundDismiss = true)
+        {
+            Show(title, message, primaryButtonText, () => primaryAction?.Invoke(_inputField?.value ?? string.Empty), secondaryButtonText, secondaryAction, image, allowBackgroundDismiss);
+
+            if (_inputField != null)
+            {
+                _inputField.value = string.Empty;
+                _inputField.textEdition.placeholder = placeholder ?? string.Empty;
+                _inputField.style.display = DisplayStyle.Flex;
+            }
+        }
+
         public void Show(string title, string message, string primaryButtonText = null, Action primaryAction = null, string secondaryButtonText = null, Action secondaryAction = null, PopupImage image = PopupImage.None , bool allowBackgroundDismiss = true)
         {
             if (_overlayAsset == null)
@@ -119,22 +132,27 @@ namespace TrainingBuddy.UI.Controls
                 _messageLabel.text = message;
             }
 
-            if (primaryButtonText != null && secondaryButtonText != null)
+            // Hide input field — only ShowWithInput makes it visible
+            if (_inputField != null)
             {
-	            // Show two button row
-	            _overlaySingleRow.AddToClassList("hide-row");
+                _inputField.value = string.Empty;
+                _inputField.style.display = DisplayStyle.None;
             }
 
-            if (primaryButtonText != null && secondaryButtonText == null)
-            {
-	            // Show One button Row
-	            _overlayTwoButtonRow.AddToClassList("hide-row");
-            }
+            // Reset image classes from any previous call
+            _overlayCard?.RemoveFromClassList("has-background-image");
+            _overlayCard?.RemoveFromClassList("background-worry");
+            _overlayCard?.RemoveFromClassList("background-friends");
+
+            // OverlaySingleRow has no active button in the UXML — always use the two-button row.
+            // The secondary button is hidden below when secondaryButtonText is null/empty.
+            _overlaySingleRow?.AddToClassList("hide-row");
+            _overlayTwoButtonRow?.RemoveFromClassList("hide-row");
 
             if (image != PopupImage.None)
             {
 	            _overlayCard.AddToClassList("has-background-image");
-	            
+
 	            switch (image)
 	            {
 		            case PopupImage.Worry:
@@ -151,17 +169,29 @@ namespace TrainingBuddy.UI.Controls
                 _primaryButton.text = primaryButtonText;
             }
 
+            bool hasSecondary = !string.IsNullOrEmpty(secondaryButtonText);
             if (_secondaryButton != null)
             {
-                if (string.IsNullOrEmpty(secondaryButtonText))
-                {
-                    _secondaryButton.style.display = DisplayStyle.None;
-                }
-                else
+                if (hasSecondary)
                 {
                     _secondaryButton.text = secondaryButtonText;
                     _secondaryButton.style.display = DisplayStyle.Flex;
                 }
+                else
+                {
+                    _secondaryButton.style.display = DisplayStyle.None;
+                }
+            }
+
+            if (_buttonSpace != null)
+                _buttonSpace.style.display = hasSecondary ? DisplayStyle.Flex : DisplayStyle.None;
+
+            if (_primaryButton != null)
+            {
+                if (hasSecondary)
+                    _primaryButton.RemoveFromClassList("overlay-button--full-width");
+                else
+                    _primaryButton.AddToClassList("overlay-button--full-width");
             }
 
             _overlayRoot.style.display = DisplayStyle.Flex;
@@ -203,9 +233,9 @@ namespace TrainingBuddy.UI.Controls
             _overlayBackground = _overlayRoot.Q<VisualElement>("OverlayBackground");
             _overlaySafeContent = _overlayRoot.Q<VisualElement>("OverlaySafeContent");
             _overlayCard = _overlayRoot.Q<VisualElement>("OverlayCard");
-            _overlayContent = _overlayRoot.Q<VisualElement>("OverlayContent");
             _overlaySingleRow = _overlayRoot.Q<VisualElement>("OverlaySingleRow");
             _overlayTwoButtonRow = _overlayRoot.Q<VisualElement>("OverlayTwoButtonRow");
+            _buttonSpace = _overlayRoot.Q<VisualElement>("ButtonSpace");
 
             if (_overlaySafeContent != null)
             {
@@ -219,7 +249,23 @@ namespace TrainingBuddy.UI.Controls
             
             _titleLabel = _overlayRoot.Q<Label>("OverlayTitle");
             _messageLabel = _overlayRoot.Q<Label>("OverlayMessage");
-            
+
+            _inputField = new TextField();
+            _inputField.name = "OverlayInputField";
+            _inputField.AddToClassList("overlay-input-field");
+            _inputField.style.display = DisplayStyle.None;
+
+            // Insert directly before the button rows so it always sits above them
+            if (_overlaySingleRow?.parent != null)
+            {
+                int idx = _overlaySingleRow.parent.IndexOf(_overlaySingleRow);
+                _overlaySingleRow.parent.Insert(idx, _inputField);
+            }
+            else
+            {
+                _overlayCard?.Add(_inputField);
+            }
+
             _primaryButton = _overlayRoot.Q<Button>("OverlayPrimaryButton");
             _secondaryButton = _overlayRoot.Q<Button>("OverlaySecondaryButton");
             

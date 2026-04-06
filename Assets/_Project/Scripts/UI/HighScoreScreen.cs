@@ -1,8 +1,8 @@
-
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
 using UnityEngine.UIElements;
 
@@ -10,27 +10,24 @@ namespace TrainingBuddy.UI
 {
 	public class HighScoreScreen : UILayout
 	{
-		private readonly LeaderboardEntryData[] _testEntries = CreateTestEntries();
-
 		protected HighScoreScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.HighScoreVisualTree, "highscore-wrapper");
 			_layoutData.HighScoreScreen = this;
 		}
-		
+
 		public override void Initialize()
 		{
-			
-			// throw new System.NotImplementedException();
 		}
 
-		public override void DrawLayout()
+		public override async void DrawLayout()
 		{
 			base.DrawLayout();
-			PopulateLeaderboard(_testEntries);
+			List<LeaderboardEntry> entries = await _databaseManager.FetchLeaderboardAsync();
+			PopulateLeaderboard(entries);
 		}
 
-		private void PopulateLeaderboard(IEnumerable<LeaderboardEntryData> entries)
+		private void PopulateLeaderboard(IEnumerable<LeaderboardEntry> entries)
 		{
 			if (Layout == null)
 			{
@@ -38,8 +35,9 @@ namespace TrainingBuddy.UI
 			}
 
 			var sortedEntries = entries
-				.OrderByDescending(entry => entry.DistanceKm)
-				.ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+				.Select(e => new LeaderboardEntryData(e.UserName, e.StepCount, SexToAvatarClass(e.Sex)))
+				.OrderByDescending(e => e.Steps)
+				.ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
 				.ToList();
 
 			if (sortedEntries.Count == 0)
@@ -93,7 +91,7 @@ namespace TrainingBuddy.UI
 			var distanceLabel = Layout.Q<Label>($"{prefix}Distance");
 			if (distanceLabel != null)
 			{
-				distanceLabel.text = FormatDistance(entry.DistanceKm);
+				distanceLabel.text = entry.Steps.ToString("N0", new CultureInfo("da-DK"));
 			}
 		}
 
@@ -114,7 +112,7 @@ namespace TrainingBuddy.UI
 			nameLabel.AddToClassList("leaderboard-name");
 			nameLabel.AddToClassList("font-title");
 
-			var distanceLabel = new Label(FormatDistance(entry.DistanceKm));
+			var distanceLabel = new Label(entry.Steps.ToString("N0", new CultureInfo("da-DK")));
 			distanceLabel.AddToClassList("leaderboard-distance");
 			distanceLabel.AddToClassList("font-regular");
 
@@ -126,56 +124,27 @@ namespace TrainingBuddy.UI
 			return row;
 		}
 
-		private string FormatDistance(float distanceKm)
+		private static string SexToAvatarClass(string sex)
 		{
-			return $"{distanceKm:0.#} km";
-		}
-
-		private static LeaderboardEntryData[] CreateTestEntries()
-		{
-			var firstNames = new[]
+			return sex?.ToLowerInvariant() switch
 			{
-				"Emma", "Lucas", "Freja", "Noah", "Sofie", "Oscar", "Clara", "Elias", "Anna", "Malthe",
-				"Ida", "Oliver", "Nora", "William", "Alma", "Theo", "Liva", "Felix", "Josefine", "Aksel"
+				"male" => "avatar-man",
+				"female" => "avatar-woman",
+				_ => "avatar-runner"
 			};
-
-			var lastNames = new[]
-			{
-				"Nielsen", "Jensen", "Hansen", "Pedersen", "Andersen", "Christensen", "Larsen", "Sorensen",
-				"Rasmussen", "Jorgensen", "Madsen", "Kristensen", "Olsen", "Thomsen", "Poulsen"
-			};
-
-			var avatarClasses = new[] { "avatar-man", "avatar-woman", "avatar-runner" };
-			var random = new Random(20260323);
-			var entries = new LeaderboardEntryData[50];
-
-			for (var index = 0; index < entries.Length; index++)
-			{
-				var firstName = firstNames[random.Next(firstNames.Length)];
-				var lastNameInitial = lastNames[random.Next(lastNames.Length)][0];
-				var distance = (float)Math.Round(20 + (random.NextDouble() * 180), 1);
-				var avatarClass = avatarClasses[random.Next(avatarClasses.Length)];
-
-				entries[index] = new LeaderboardEntryData(
-					$"{firstName} {lastNameInitial}.",
-					distance,
-					avatarClass);
-			}
-
-			return entries;
 		}
 
 		private sealed class LeaderboardEntryData
 		{
-			public LeaderboardEntryData(string name, float distanceKm, string avatarClass)
+			public LeaderboardEntryData(string name, int steps, string avatarClass)
 			{
-				Name = name;
-				DistanceKm = distanceKm;
+				Name = name ?? string.Empty;
+				Steps = steps;
 				AvatarClass = avatarClass;
 			}
 
 			public string Name { get; }
-			public float DistanceKm { get; }
+			public int Steps { get; }
 			public string AvatarClass { get; }
 		}
 	}

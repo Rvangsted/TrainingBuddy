@@ -4,7 +4,7 @@
         <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
             <ui:VisualElement name="SearchRow" class="search-row">
                 <TrainingBuddy.UI.Controls.LocalizedTextInput name="SearchField" key="text_searchfield" hide-placeholder-on-focus="true" class="field-searchfield"/>
-                <ui:Button text="" name="FilterButton" class="filter-button"/>
+                <ui:Button text="" name="StartButton" class="start-button"/>
             </ui:VisualElement>
             <ui:ScrollView name="HostScroller" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="host-scroll">
                 <ui:VisualElement name="HostList" class="host-list" />

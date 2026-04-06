@@ -204,6 +204,10 @@ MonoBehaviour:
     m_Localized: Kvinde
     m_Metadata:
       m_Items: []
+  - m_Id: 216028187408195584
+    m_Localized: "Se L\xF8b"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

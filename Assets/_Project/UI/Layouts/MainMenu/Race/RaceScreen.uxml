@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/Race/RaceScreen.uss?fileID=7433441132597879392&amp;guid=162e64af8350c4941acc5432a924576e&amp;type=3#RaceScreen" />
     <ui:VisualElement name="RaceScreen" class="race-screen" style="flex-grow: 1;">
+        <ui:VisualElement name="RunnersContainer" class="runners-container" />
         <ui:VisualElement name="RaceProgressBar" class="race-progress-bar">
             <ui:VisualElement name="ProgressTrack" class="progress-track">
                 <ui:VisualElement name="PlayerIconsContainer" class="player-icons-container" />

@@ -13,13 +13,11 @@ namespace TrainingBuddy.UI
 		[SerializeField] private UIDocument _uiDocument;
 		[SerializeField] private VisualTreeAsset _header;
 		[SerializeField] private VisualTreeAsset _content;
-		[SerializeField] private VisualTreeAsset _footer;
 		[SerializeField] private VisualTreeAsset _overlayAsset;
 		private UniversalOverlay _universalOverlay;
 
 		public VisualElement Header { get; private set; }
 		public VisualElement Content { get; private set; }
-		public VisualElement Footer { get; private set; }
 
 		public UILayout CurrentLayout { get; private set; }
 		public UniversalOverlay Overlay => _universalOverlay;
@@ -33,6 +31,24 @@ namespace TrainingBuddy.UI
 		private ScreenOrientation _lastOrientation;
 		private bool _safeAreaRegistered;
 		private bool _hasStarted;
+
+		[SerializeField] private Texture2D[] _raceBackgroundFrames;
+		[SerializeField] private int _raceFramesPerSecond = 10;
+		[SerializeField] private Texture2D[] _maleRunnerFrames;
+		[SerializeField] private Texture2D[] _femaleRunnerFrames;
+		[SerializeField] private int _runnerFramesPerSecond = 10;
+		[SerializeField] private RunnerPath[] _runnerPaths = new RunnerPath[5];
+		[SerializeField] private float _raceBaseDuration = 60f;
+
+		public Texture2D[] MaleRunnerFrames => _maleRunnerFrames;
+		public Texture2D[] FemaleRunnerFrames => _femaleRunnerFrames;
+		public int RunnerFramesPerSecond => _runnerFramesPerSecond;
+		public RunnerPath[] RunnerPaths => _runnerPaths;
+		public float RaceBaseDuration => _raceBaseDuration;
+
+		private VisualElement _raceAnimBackground;
+		private IVisualElementScheduledItem _raceAnimSchedule;
+		private int _raceFrameIndex;
 
 		private System.Action _backAction;
 
@@ -64,16 +80,13 @@ namespace TrainingBuddy.UI
 		{
 			_databaseManager.UIManager = this;
 			
-			//Instantiate Containers
 			Header = _header.Instantiate();
 			Content = _content.Instantiate();
-			// Footer = _footer.Instantiate();
 
 			InitializeBackButton();
 
 			Header.AddToClassList("layout-header");
 			Content.AddToClassList("layout-content");
-			// Footer.AddToClassList("layout-footer");
 
 			SetupSafeAreaContainer();
 
@@ -101,6 +114,8 @@ namespace TrainingBuddy.UI
 		private void Update()
 		{
 			ApplySafeAreaInsets();
+			if (CurrentLayout is RaceScreen raceScreen)
+				raceScreen.TickRace(Time.deltaTime);
 		}
 		
 		public void ShowOverlay(string title, string message, string primaryButtonText, System.Action primaryAction, UniversalOverlay.PopupImage image = UniversalOverlay.PopupImage.None, bool allowBackgroundDismiss = true)
@@ -113,6 +128,11 @@ namespace TrainingBuddy.UI
 			_universalOverlay?.Show(title, message, primaryButtonText, primaryAction, secondaryButtonText, secondaryAction, image, allowBackgroundDismiss);
 		}
 		
+		public void ShowOverlayWithInput(string title, string message, string placeholder, string primaryButtonText, System.Action<string> primaryAction, string secondaryButtonText = null, System.Action secondaryAction = null, UniversalOverlay.PopupImage image = UniversalOverlay.PopupImage.None, bool allowBackgroundDismiss = true)
+		{
+			_universalOverlay?.ShowWithInput(title, message, placeholder, primaryButtonText, primaryAction, secondaryButtonText, secondaryAction, image, allowBackgroundDismiss);
+		}
+
 		public void HideOverlay()
 		{
 			_universalOverlay?.Hide();
@@ -230,7 +250,8 @@ namespace TrainingBuddy.UI
 					_uiDocument.rootVisualElement.AddToClassList("show-small-bottom-container");
 					break;
 				case RaceScreen:
-					_uiDocument.rootVisualElement.AddToClassList("show-race-background");
+					Header.AddToClassList("simple");
+					StartRaceBackgroundAnimation();
 					break;
 			}
 		}
@@ -243,7 +264,52 @@ namespace TrainingBuddy.UI
 			_uiDocument.rootVisualElement.RemoveFromClassList("show-splash-background");
 			_uiDocument.rootVisualElement.RemoveFromClassList("show-bottom-container");
 			_uiDocument.rootVisualElement.RemoveFromClassList("show-small-bottom-container");
-			_uiDocument.rootVisualElement.RemoveFromClassList("show-race-background");
+			StopRaceBackgroundAnimation();
+		}
+
+		private void StartRaceBackgroundAnimation()
+		{
+			if (_raceBackgroundFrames == null || _raceBackgroundFrames.Length == 0)
+				return;
+
+			_raceAnimBackground = new VisualElement { name = "RaceAnimBackground" };
+			_raceAnimBackground.style.position = Position.Absolute;
+			_raceAnimBackground.style.top = 0;
+			_raceAnimBackground.style.left = 0;
+			_raceAnimBackground.style.right = 0;
+			_raceAnimBackground.style.bottom = 0;
+			_raceAnimBackground.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
+
+			// Insert at index 0 so it sits behind the safe-area container
+			_uiDocument.rootVisualElement.Insert(0, _raceAnimBackground);
+
+			_raceFrameIndex = 0;
+			var intervalMs = Mathf.RoundToInt(1000f / Mathf.Max(1, _raceFramesPerSecond));
+
+			UpdateRaceFrame();
+			_raceAnimSchedule = _raceAnimBackground.schedule
+				.Execute(UpdateRaceFrame)
+				.Every(intervalMs);
+		}
+
+		private void UpdateRaceFrame()
+		{
+			if (_raceAnimBackground == null || _raceBackgroundFrames == null || _raceBackgroundFrames.Length == 0)
+				return;
+
+			var tex = _raceBackgroundFrames[_raceFrameIndex % _raceBackgroundFrames.Length];
+			if (tex != null)
+				_raceAnimBackground.style.backgroundImage = new StyleBackground(tex);
+
+			_raceFrameIndex = (_raceFrameIndex + 1) % _raceBackgroundFrames.Length;
+		}
+
+		private void StopRaceBackgroundAnimation()
+		{
+			_raceAnimSchedule?.Pause();
+			_raceAnimSchedule = null;
+			_raceAnimBackground?.RemoveFromHierarchy();
+			_raceAnimBackground = null;
 		}
 
 		private void SetupSafeAreaContainer()
@@ -278,9 +344,7 @@ namespace TrainingBuddy.UI
 			RegisterSafeAreaCallbacks();
 			ApplySafeAreaInsets(force: true);
 
-            // _safeAreaContainer.Add(Header);
             _safeAreaContainer.Add(Content);
-            // _safeAreaContainer.Add(Footer);
         }
 
 		private void RegisterSafeAreaCallbacks()

@@ -199,6 +199,10 @@ MonoBehaviour:
     m_Key: text_female
     m_Metadata:
       m_Items: []
+  - m_Id: 216028187408195584
+    m_Key: watch_race
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

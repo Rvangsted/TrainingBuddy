@@ -35,9 +35,6 @@ namespace TrainingBuddy.FireBase
 		{
 			if (await CheckDependencies())
 			{
-				Debug.Log("Setting up Firebase Auth");
-				Debug.Log($"Persistent data path: {UnityEngine.Application.persistentDataPath}");
-				//Set the authentication Instance object
 				_databaseManager.Auth = FirebaseAuth.DefaultInstance;
 				var db = FirebaseDatabase.GetInstance("https://trainingbuddy-81bca-default-rtdb.europe-west1.firebasedatabase.app/");
 				db.SetPersistenceEnabled(false);
@@ -51,7 +48,6 @@ namespace TrainingBuddy.FireBase
 
 		public async Task<bool> CheckDependencies()
 		{
-			//Check that all the necessary dependencies for Firebase are present on the system
 			await FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
 			{
 				_dependencyStatus = task.Result;
@@ -62,9 +58,7 @@ namespace TrainingBuddy.FireBase
 
 		public async Task<bool> FirebaseLogin(string email, string password)
 		{
-			//Call the Firebase auth signin function passing the email and password
 			Task<AuthResult> LoginTask = _databaseManager.Auth.SignInWithEmailAndPasswordAsync(email, password);
-			//Wait until the task completes
 			await new WaitUntil(predicate: () => LoginTask.IsCompleted);
 
 			if (LoginTask.Exception != null)
@@ -101,31 +95,31 @@ namespace TrainingBuddy.FireBase
 
 		public async Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm, int dobDay, int dobMonth, int dobYear)
 	    {
-		    if (username == "")
+		    if (string.IsNullOrEmpty(username))
 		    {
 			    $"Username is empty".Log();
 			    return false;
 		    }
 
-		    if (sex == "")
+		    if (string.IsNullOrEmpty(sex))
 		    {
 			    $"Sex is empty".Log();
 			    return false;
 		    }
 
-		    if (email == "")
+		    if (string.IsNullOrEmpty(email))
 	        {
 	            $"Email is empty".Log();
 	            return false;
 	        }
 
-		    if (password == "")
+		    if (string.IsNullOrEmpty(password))
 	        {
 		        $"Password is empty".Log();
 		        return false;
 	        }
 
-		    if (passwordConfirm == "")
+		    if (string.IsNullOrEmpty(passwordConfirm))
 		    {
 			    $"Password confirm is empty".Log();
 			    return false;

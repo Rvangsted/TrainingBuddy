@@ -27,8 +27,15 @@ namespace TrainingBuddy.UI
 			_uiManager.Header.Q<Label>("SiteTitle").text = "Start løb";
 
 			_activeRaceId = await _databaseManager.GetActiveRaceIdAsync();
+
+			if (_activeRaceId != null)
+			{
+				_databaseManager.ListenForRaceStart(_activeRaceId, OnRaceStarted);
+				Layout.RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
+			}
+
 			var currentUserId = _databaseManager.Auth.CurrentUser?.UserId;
-			var participants = await _databaseManager.FetchCurrentRaceParticipantsAsync();
+			var participants  = await _databaseManager.FetchCurrentRaceParticipantsAsync();
 			var entries = participants.ConvertAll(p => new LobbyEntryData(
 				p.displayName,
 				p.isHost ? "Host" : "Deltager",
@@ -37,6 +44,23 @@ namespace TrainingBuddy.UI
 				p.userId == currentUserId
 			));
 			PopulateLobbyCards(entries);
+		}
+
+		private void OnDetachFromPanel(DetachFromPanelEvent _)
+		{
+			Layout.UnregisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
+			_databaseManager.StopRaceStartListener();
+		}
+
+		private async void OnRaceStarted()
+		{
+			_databaseManager.StopRaceStartListener();
+
+			var simulation = await _databaseManager.FetchRaceSimulationAsync(_activeRaceId);
+			if (simulation == null) return;
+
+			_layoutData.RaceScreen.PrepareWithSimulation(simulation, _activeRaceId);
+			_uiManager.ChangePage(_layoutData.RaceScreen);
 		}
 
 		private void PopulateLobbyCards(List<LobbyEntryData> entries)
@@ -145,18 +169,18 @@ namespace TrainingBuddy.UI
 		{
 			public LobbyEntryData(string title, string host, string startText, string avatarClass, bool isCurrentUser)
 			{
-				Title = title;
-				Host = host;
-				StartText = startText;
-				AvatarClass = avatarClass;
+				Title         = title;
+				Host          = host;
+				StartText     = startText;
+				AvatarClass   = avatarClass;
 				IsCurrentUser = isCurrentUser;
 			}
 
-			public string Title { get; }
-			public string Host { get; }
-			public string StartText { get; }
-			public string AvatarClass { get; }
-			public bool IsCurrentUser { get; }
+			public string Title         { get; }
+			public string Host          { get; }
+			public string StartText     { get; }
+			public string AvatarClass   { get; }
+			public bool   IsCurrentUser { get; }
 		}
 	}
 }

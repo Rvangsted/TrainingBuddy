@@ -66,6 +66,10 @@
     -unity-text-align: upper-center;
 }
 
+.overlay-input-field {
+    
+}
+
 .overlay-single-row {
     /*    flex-direction: row;*/
     /*    justify-content: flex-end;*/
@@ -85,6 +89,10 @@
     -unity-font-definition: url("project://database/Assets/_Project/Fonts/Avenir-Next/Avenir Next LT Pro Regular SDF.asset");
     font-size: var(--font-size-m);
     padding-top: 3px;
+}
+
+.overlay-button--full-width {
+    width: 100%;
 }
 
 .overlay-button.primary {

@@ -1,5 +1,3 @@
-#region
-
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,14 +8,13 @@ using Firebase.Auth;
 using Firebase.Database;
 using Firebase.Extensions;
 using Newtonsoft.Json;
+using TrainingBuddy;
 using TrainingBuddy.FireBase;
 using TrainingBuddy.UI;
 using TrainingBuddy.Utility;
 using UnityEngine;
 using UnityEngine.Android;
 using UnityEngine.InputSystem;
-
-#endregion
 
 namespace TrainingBuddy.Managers
 {
@@ -32,20 +29,37 @@ namespace TrainingBuddy.Managers
 		public Task<UserData?> GetUserByFriendCodeAsync(string friendCode);
 		public Task JoinRaceDirectlyAsync(string raceId);
 		public Task KickParticipantAsync(string raceId, string participantUserId);
+		public Task<int> FetchRaceCapacityAsync(string raceId);
+		public Task<string> GetRaceStatusAsync(string raceId);
 		public Task SubmitJoinRequestAsync(string raceId);
 		public Task RetractJoinRequestAsync(string raceId);
 		public Task<bool> HandleJoinRequestAsync(string raceId, string requesterUserId, bool approve);
 		public Task LeaveRaceAsync(string raceId);
+		public Task<RaceSimulation> StartRaceAsync(string raceId);
+		public Task<RaceSimulation> FetchRaceSimulationAsync(string raceId);
+		public void ListenForRaceStart(string raceId, Action onStarted);
+		public void StopRaceStartListener();
+		public Task MarkRaceWatchedAsync(string raceId);
 		public Task CancelRaceAsync(string raceId);
 		public Task PatchUserFields(Dictionary<string, object> fields);
 		public void StartStepCounter();
 		public void StopStepCounter();
 		public long DailyStepBase { get; }
 		public Task<List<(string dateKey, long steps)>> FetchDailyStepsAsync(int days = 5);
+
+		public Task SendFriendRequestAsync(string targetUserId);
+		public Task RevokeFriendRequestAsync(string targetUserId);
+		public Task<List<(UserData user, string fromUserId)>> FetchIncomingRequestsAsync();
+		public Task HandleFriendRequestAsync(string requesterUserId, bool accept);
+		public Task<List<UserData>> FetchFriendsAsync();
+		public Task RemoveFriendAsync(string friendUserId);
+		public Task<List<LeaderboardEntry>> FetchLeaderboardAsync();
 	}
 
 	public class DatabaseManager : IDatabaseManager
 	{
+		#region Fields & Constants
+
 		// Step counter — in-memory state
 		private long _baseStepCount;       // StepCount loaded from Firebase at session start
 		private long _deviceAnchor = -1;   // Device sensor value at session start (-1 = not yet anchored)
@@ -54,10 +68,15 @@ namespace TrainingBuddy.Managers
 		private long _dailyStepBase;       // Value of _currentTotal at start of today
 		private string _dailyStepDate;     // The date string (yyyy-MM-dd) for _dailyStepBase
 		private CancellationTokenSource _stepCts;
+		private string _cachedUserName;
+		private string _cachedSex;
 
 		public const int StepsPerPoint   = 2000;  // Steps required to earn 1 skill point (used for progress bar)
 		private const int SensorPollMs   = 2000;  // How often to read the device sensor (ms)
 		private const int FirebaseSyncMs = 60000; // How often to write to Firebase (ms)
+
+		public const string AiPlayerName    = "Buddy"; // Display name for AI fill-in players — change here
+		private const int   MinRaceParticipants = 3;   // Minimum real players required to start
 
 		public event Action<long> StepCountChanged;
 
@@ -69,6 +88,10 @@ namespace TrainingBuddy.Managers
 		public FirebaseAuth Auth { get; set; }
 		public DatabaseReference DatabaseReference { get; set; }
 		public JsonSerializerSettings JsonSettings { get; set; }
+
+		#endregion
+
+		#region User Data
 
 		public async Task<bool> CreateUser(UserData user)
 		{
@@ -84,6 +107,9 @@ namespace TrainingBuddy.Managers
 				[$"users/{user.UserID}"] = userDict,
 				[$"friendCodes/{user.FriendCode}"] = user.UserID,
 				[$"usernames/{user.UserName}"] = user.UserID,
+				[$"leaderboard/{user.UserID}/UserName"]  = user.UserName,
+				[$"leaderboard/{user.UserID}/Sex"]       = user.Sex ?? "",
+				[$"leaderboard/{user.UserID}/StepCount"] = 0,
 			};
 
 			Task task = DatabaseReference.UpdateChildrenAsync(updates);
@@ -168,10 +194,6 @@ namespace TrainingBuddy.Managers
 			       {
 				       $"UpdateUser Write operation failed with {updateTask.Exception}".Log();
 			       }
-			       else if (updateTask.IsCompleted)
-			       {
-				       //TODO: Handle the success???
-			       }
 			   }
 			});
 		}
@@ -190,6 +212,10 @@ namespace TrainingBuddy.Managers
 				return null;
 			}
 		}
+
+		#endregion
+
+		#region Race Management
 
 		public async Task CreateLobby(RaceData race)
 		{
@@ -305,6 +331,7 @@ namespace TrainingBuddy.Managers
             };
 
             await DatabaseReference.UpdateChildrenAsync(updates);
+            await SyncRaceOpenClosedStatusAsync(raceId);
         }
 
         public async Task SubmitJoinRequestAsync(string raceId)
@@ -458,6 +485,7 @@ namespace TrainingBuddy.Managers
             }
 
             await DatabaseReference.UpdateChildrenAsync(updates);
+            if (approve) await SyncRaceOpenClosedStatusAsync(raceId);
             return true;
         }
 
@@ -496,6 +524,7 @@ namespace TrainingBuddy.Managers
             };
 
             await DatabaseReference.UpdateChildrenAsync(updates);
+            await SyncRaceOpenClosedStatusAsync(raceId);
         }
 
         public async Task LeaveRaceAsync(string raceId)
@@ -547,6 +576,242 @@ namespace TrainingBuddy.Managers
             updates[$"joinRequests/{raceId}/{Auth.CurrentUser.UserId}"] = null;
 
             await DatabaseReference.UpdateChildrenAsync(updates);
+            await SyncRaceOpenClosedStatusAsync(raceId);
+        }
+
+        public async Task<RaceSimulation> StartRaceAsync(string raceId)
+        {
+            if (Auth?.CurrentUser == null)
+                throw new InvalidOperationException("Cannot start a race without an authenticated user.");
+
+            DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
+
+            if (raceSnapshot is not { Exists: true })
+                throw new InvalidOperationException("Race not found.");
+
+            string hostId = raceSnapshot.Child("hostId").Value?.ToString();
+            int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
+
+            if (!IsAdminLevel(currentUserLevel) && hostId != Auth.CurrentUser.UserId)
+                throw new InvalidOperationException("Only the host or an admin can start this race.");
+
+            long realParticipantCount = raceSnapshot.Child("participants").ChildrenCount;
+            if (realParticipantCount < MinRaceParticipants)
+                throw new InvalidOperationException($"Løbet kræver mindst {MinRaceParticipants} spillere for at starte.");
+
+            // Fetch each participant's stats to drive the simulation
+            var participantInputs = new List<(string userId, string displayName, string sex, int speedPoints, int accelPoints)>();
+            foreach (DataSnapshot participant in raceSnapshot.Child("participants").Children)
+            {
+                string userId      = participant.Key;
+                string displayName = participant.Child("displayName").Value?.ToString() ?? string.Empty;
+                string sex         = participant.Child("sex").Value?.ToString() ?? string.Empty;
+
+                DataSnapshot userSnap  = await FetchUserDataById(userId);
+                int speedPoints = ConvertToNullableInt(userSnap?.Child("SpeedPoints").Value) ?? 0;
+                int accelPoints = ConvertToNullableInt(userSnap?.Child("AccelerationPoints").Value) ?? 0;
+
+                participantInputs.Add((userId, displayName, sex, speedPoints, accelPoints));
+            }
+
+            // Fill empty slots with AI players using the lowest real-player stats
+            int capacity = ConvertToNullableInt(raceSnapshot.Child("capacity").Value) ?? 5;
+            int aiCount  = capacity - participantInputs.Count;
+            if (aiCount > 0)
+            {
+                int minSpeed = participantInputs[0].speedPoints;
+                int minAccel = participantInputs[0].accelPoints;
+                foreach (var p in participantInputs)
+                {
+                    if (p.speedPoints < minSpeed) minSpeed = p.speedPoints;
+                    if (p.accelPoints < minAccel) minAccel = p.accelPoints;
+                }
+
+                var rng       = new System.Random();
+                long timestamp = GetUnixTimestampMilliseconds();
+                var aiUpdates = new Dictionary<string, object>();
+
+                for (int i = 0; i < aiCount; i++)
+                {
+                    string aiId  = $"ai_{Guid.NewGuid():N}";
+                    string aiSex = rng.Next(2) == 0 ? "Male" : "Female";
+
+                    aiUpdates[$"races/{raceId}/participants/{aiId}/displayName"] = AiPlayerName;
+                    aiUpdates[$"races/{raceId}/participants/{aiId}/sex"]         = aiSex;
+                    aiUpdates[$"races/{raceId}/participants/{aiId}/isHost"]      = false;
+                    aiUpdates[$"races/{raceId}/participants/{aiId}/isAI"]        = true;
+                    aiUpdates[$"races/{raceId}/participants/{aiId}/joinedAt"]    = timestamp;
+                    // Pre-mark as watched so AI never blocks race completion
+                    aiUpdates[$"races/{raceId}/participants/{aiId}/watchedAt"]   = timestamp;
+
+                    participantInputs.Add((aiId, AiPlayerName, aiSex, minSpeed, minAccel));
+                }
+
+                await DatabaseReference.UpdateChildrenAsync(aiUpdates);
+            }
+
+            float baseDuration = UIManager?.RaceBaseDuration ?? 60f;
+            RaceSimulation simulation = RaceSimulator.Generate(participantInputs, baseDuration);
+            await StoreRaceSimulationAsync(raceId, simulation);
+
+            var updates = new Dictionary<string, object>
+            {
+                [$"races/{raceId}/status"]    = "in_progress",
+                [$"races/{raceId}/startedAt"] = GetUnixTimestampMilliseconds(),
+            };
+
+            await DatabaseReference.UpdateChildrenAsync(updates);
+            return simulation;
+        }
+
+        public async Task<int> FetchRaceCapacityAsync(string raceId)
+        {
+            DataSnapshot snapshot = await GetRaceSnapshotAsync(raceId);
+            return ConvertToNullableInt(snapshot?.Child("capacity").Value) ?? 0;
+        }
+
+        public async Task<string> GetRaceStatusAsync(string raceId)
+        {
+            DataSnapshot snapshot = await GetRaceSnapshotAsync(raceId);
+            return snapshot?.Child("status").Value?.ToString() ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Keeps race status in sync with capacity after participants join or leave.
+        /// Transitions between "open" ↔ "closed" only; never touches in_progress/completed/cancelled.
+        /// </summary>
+        private async Task SyncRaceOpenClosedStatusAsync(string raceId)
+        {
+            DataSnapshot snapshot = await GetRaceSnapshotAsync(raceId);
+            if (snapshot is not { Exists: true }) return;
+
+            string status = snapshot.Child("status").Value?.ToString() ?? string.Empty;
+            if (!string.Equals(status, "open",   StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(status, "closed", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            int  capacity         = ConvertToNullableInt(snapshot.Child("capacity").Value) ?? 0;
+            long participantCount = snapshot.Child("participants").ChildrenCount;
+            bool atCapacity       = capacity > 0 && participantCount >= capacity;
+            string newStatus      = atCapacity ? "closed" : "open";
+
+            if (!string.Equals(status, newStatus, StringComparison.OrdinalIgnoreCase))
+                await DatabaseReference.Child("races").Child(raceId).Child("status").SetValueAsync(newStatus);
+        }
+
+        private async Task StoreRaceSimulationAsync(string raceId, RaceSimulation simulation)
+        {
+            var updates = new Dictionary<string, object>
+            {
+                [$"races/{raceId}/simulation/seed"]         = simulation.Seed,
+                [$"races/{raceId}/simulation/baseDuration"] = (double)simulation.BaseDuration,
+            };
+
+            foreach (var p in simulation.Participants)
+            {
+                string prefix = $"races/{raceId}/simulation/participants/{p.UserId}";
+                updates[$"{prefix}/displayName"]      = p.DisplayName;
+                updates[$"{prefix}/sex"]              = p.Sex;
+                updates[$"{prefix}/lane"]             = p.Lane;
+                updates[$"{prefix}/finishTime"]       = (double)p.FinishTime;
+                updates[$"{prefix}/accelerationBias"] = (double)p.AccelerationBias;
+            }
+
+            await DatabaseReference.UpdateChildrenAsync(updates);
+        }
+
+        public async Task<RaceSimulation> FetchRaceSimulationAsync(string raceId)
+        {
+            DataSnapshot snapshot = await DatabaseReference
+                .Child("races").Child(raceId).Child("simulation").GetValueAsync();
+
+            if (snapshot is not { Exists: true })
+                return null;
+
+            var simulation = new RaceSimulation
+            {
+                Seed         = ReadLong(snapshot.Child("seed").Value),
+                BaseDuration = ReadFloat(snapshot.Child("baseDuration").Value),
+                Participants = new List<RaceSimulationParticipant>(),
+            };
+
+            foreach (DataSnapshot p in snapshot.Child("participants").Children)
+            {
+                simulation.Participants.Add(new RaceSimulationParticipant
+                {
+                    UserId           = p.Key,
+                    DisplayName      = p.Child("displayName").Value?.ToString() ?? string.Empty,
+                    Sex              = p.Child("sex").Value?.ToString() ?? string.Empty,
+                    Lane             = ConvertToNullableInt(p.Child("lane").Value) ?? 0,
+                    FinishTime       = ReadFloat(p.Child("finishTime").Value),
+                    AccelerationBias = ReadFloat(p.Child("accelerationBias").Value),
+                });
+            }
+
+            return simulation;
+        }
+
+        private EventHandler<ValueChangedEventArgs> _raceStartListener;
+        private DatabaseReference _raceStartRef;
+
+        public void ListenForRaceStart(string raceId, Action onStarted)
+        {
+            StopRaceStartListener();
+            _raceStartRef = DatabaseReference.Child("races").Child(raceId).Child("status");
+            _raceStartListener = (_, args) =>
+            {
+                if (args.DatabaseError != null) return;
+                string status = args.Snapshot.Value?.ToString();
+                if (string.Equals(status, "in_progress", StringComparison.OrdinalIgnoreCase))
+                    onStarted?.Invoke();
+            };
+            _raceStartRef.ValueChanged += _raceStartListener;
+        }
+
+        public void StopRaceStartListener()
+        {
+            if (_raceStartRef == null || _raceStartListener == null) return;
+            _raceStartRef.ValueChanged -= _raceStartListener;
+            _raceStartListener = null;
+            _raceStartRef      = null;
+        }
+
+        /// <summary>
+        /// Records that the current user has finished watching the race, frees them to join
+        /// a new race, and sets the race to "completed" once every participant has watched.
+        /// The participants list and all race data are preserved for historical lookup.
+        /// </summary>
+        public async Task MarkRaceWatchedAsync(string raceId)
+        {
+            if (Auth?.CurrentUser == null) return;
+
+            string userId    = Auth.CurrentUser.UserId;
+            long   timestamp = GetUnixTimestampMilliseconds();
+
+            // Mark this player as having watched, and free them to join new races
+            var updates = new Dictionary<string, object>
+            {
+                [$"races/{raceId}/participants/{userId}/watchedAt"] = timestamp,
+                [$"userRaces/{userId}/{raceId}"]                    = null,
+            };
+            await DatabaseReference.UpdateChildrenAsync(updates);
+
+            // If every participant has now watched, mark the race as completed
+            DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
+            if (raceSnapshot is not { Exists: true }) return;
+
+            bool allWatched = true;
+            foreach (DataSnapshot participant in raceSnapshot.Child("participants").Children)
+            {
+                if (participant.Child("watchedAt").Value == null)
+                {
+                    allWatched = false;
+                    break;
+                }
+            }
+
+            if (allWatched)
+                await DatabaseReference.Child("races").Child(raceId).Child("status").SetValueAsync("completed");
         }
 
         public async Task CancelRaceAsync(string raceId)
@@ -605,25 +870,9 @@ namespace TrainingBuddy.Managers
             await DatabaseReference.UpdateChildrenAsync(updates);
         }
 
-  //       public async Task<List<string>> FindNearbyLobbies()
-		// {
-		// 	// var nearbyLobbies = new List<string>();
-		// 	var raceList = await NearbyRaces(10);
-		// 	// var raceList = await GetAllRaces();
-  //
-		// 	// foreach (DataSnapshot raceListChild in raceList.Children)
-		// 	// {
-		// 	// 	foreach (string user in userList)
-		// 	// 	{
-		// 	// 		if (raceListChild.Key == user)
-		// 	// 		{
-		// 	// 			nearbyLobbies.Add(raceListChild.Key);
-		// 	// 		}
-		// 	// 	}
-		// 	// }
-  //
-		// 	return raceList;
-		// }
+		#endregion
+
+		#region Race Queries
 
 		public async Task<List<DataSnapshot>> NearbyRaces(int range)
 		{
@@ -718,6 +967,10 @@ namespace TrainingBuddy.Managers
 
 			return null;
         }
+
+		#endregion
+
+		#region Race Helpers (Private)
 
         public async Task<string> GetActiveRaceIdAsync()
         {
@@ -969,9 +1222,9 @@ namespace TrainingBuddy.Managers
             return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-		// -------------------------------------------------------------------------
-		// Step counter
-		// -------------------------------------------------------------------------
+		#endregion
+
+		#region Step Counter
 
 		/// <summary>
 		/// Loads the saved step count from Firebase once, then starts a lightweight
@@ -984,13 +1237,18 @@ namespace TrainingBuddy.Managers
 		{
 			if (StepCounterRunning) return;
 			if (Auth?.CurrentUser == null) return;
-			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION")) return;
-			if (!EnsureStepCounterDevice()) return;
 
 			// Load from Firebase, then compare with local PlayerPrefs backup.
 			// If Firebase is unreachable (offline) it may return 0 — in that case
 			// the locally saved value is more accurate.
 			DataSnapshot data = await FetchUserData(Auth.CurrentUser);
+			_cachedUserName = data?.Child("UserName").Value?.ToString() ?? "";
+			_cachedSex      = data?.Child("Sex").Value?.ToString() ?? "";
+
+#if !UNITY_EDITOR
+			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION")) return;
+			if (!EnsureStepCounterDevice()) return;
+#endif
 			long firebaseSteps    = ReadLong(data?.Child("StepCount").Value);
 			long firebaseSnapshot = ReadLong(data?.Child("StepCountSnapshot").Value);
 
@@ -1033,6 +1291,24 @@ namespace TrainingBuddy.Managers
 
 			// Immediately show the saved count while we wait for the first sensor tick
 			StepCountChanged?.Invoke(_currentTotal);
+
+			// Write leaderboard entry immediately so user appears before first 60s sync
+			if (!string.IsNullOrEmpty(_cachedUserName))
+			{
+				_ = DatabaseReference
+					.Child("leaderboard")
+					.Child(Auth.CurrentUser.UserId)
+					.UpdateChildrenAsync(new Dictionary<string, object>
+					{
+						{ "UserName",  _cachedUserName },
+						{ "Sex",       _cachedSex },
+						{ "StepCount", (int)_currentTotal }
+					});
+			}
+
+#if UNITY_EDITOR
+			return; // No step sensor in the editor — leaderboard entry already written above
+#endif
 
 			_stepCts = new CancellationTokenSource();
 			StepCounterRunning = true;
@@ -1146,10 +1422,24 @@ namespace TrainingBuddy.Managers
 
 			try
 			{
+				string uid = Auth.CurrentUser.UserId;
 				await DatabaseReference
 					.Child("users")
-					.Child(Auth.CurrentUser.UserId)
+					.Child(uid)
 					.UpdateChildrenAsync(updates);
+
+				if (!string.IsNullOrEmpty(_cachedUserName))
+				{
+					await DatabaseReference
+						.Child("leaderboard")
+						.Child(uid)
+						.UpdateChildrenAsync(new Dictionary<string, object>
+						{
+							{ "UserName",  _cachedUserName },
+							{ "Sex",       _cachedSex },
+							{ "StepCount", (int)_currentTotal }
+						});
+				}
 
 				_lastSyncedTotal = _currentTotal;
 			}
@@ -1180,6 +1470,161 @@ namespace TrainingBuddy.Managers
 			}
 		}
 
+		#endregion
+
+		#region Friend System
+
+		public async Task SendFriendRequestAsync(string targetUserId)
+		{
+			if (Auth?.CurrentUser == null)
+				throw new InvalidOperationException("Must be authenticated to send friend requests.");
+
+			string myUid = Auth.CurrentUser.UserId;
+			if (myUid == targetUserId)
+				throw new InvalidOperationException("Cannot send a friend request to yourself.");
+
+			long timestamp = GetUnixTimestampMilliseconds();
+			var requestData = new Dictionary<string, object>
+			{
+				{ "requestedAt", timestamp },
+				{ "status", "pending" },
+			};
+
+			await DatabaseReference.Child("friendRequests").Child(targetUserId).Child(myUid).SetValueAsync(requestData);
+		}
+
+		public async Task RevokeFriendRequestAsync(string targetUserId)
+		{
+			if (Auth?.CurrentUser == null)
+				throw new InvalidOperationException("Must be authenticated to revoke friend requests.");
+
+			await DatabaseReference.Child("friendRequests").Child(targetUserId).Child(Auth.CurrentUser.UserId).RemoveValueAsync();
+		}
+
+		public async Task<List<(UserData user, string fromUserId)>> FetchIncomingRequestsAsync()
+		{
+			var result = new List<(UserData, string)>();
+			if (Auth?.CurrentUser == null) return result;
+
+			try
+			{
+				DataSnapshot snapshot = await DatabaseReference.Child("friendRequests").Child(Auth.CurrentUser.UserId).GetValueAsync();
+				if (!snapshot.Exists) return result;
+
+				foreach (DataSnapshot child in snapshot.Children)
+				{
+					string status = child.Child("status").Value?.ToString();
+					if (!string.Equals(status, "pending", StringComparison.OrdinalIgnoreCase))
+						continue;
+
+					DataSnapshot userSnapshot = await FetchUserDataById(child.Key);
+					if (userSnapshot is not { Exists: true }) continue;
+
+					UserData? userData = JsonConvert.DeserializeObject<UserData>(userSnapshot.GetRawJsonValue(), JsonSettings);
+					if (userData.HasValue)
+						result.Add((userData.Value, child.Key));
+				}
+			}
+			catch (Exception ex)
+			{
+				$"FetchIncomingRequestsAsync failed: {ex}".Log();
+			}
+
+			return result;
+		}
+
+		public async Task HandleFriendRequestAsync(string requesterUserId, bool accept)
+		{
+			if (Auth?.CurrentUser == null)
+				throw new InvalidOperationException("Must be authenticated to handle friend requests.");
+
+			string myUid = Auth.CurrentUser.UserId;
+			long timestamp = GetUnixTimestampMilliseconds();
+
+			var updates = new Dictionary<string, object>
+			{
+				[$"friendRequests/{myUid}/{requesterUserId}"] = null,
+			};
+
+			if (accept)
+			{
+				var friendEntry = new Dictionary<string, object> { { "addedAt", timestamp } };
+				updates[$"friends/{myUid}/{requesterUserId}"] = friendEntry;
+				updates[$"friends/{requesterUserId}/{myUid}"] = friendEntry;
+			}
+
+			await DatabaseReference.UpdateChildrenAsync(updates);
+		}
+
+		public async Task<List<UserData>> FetchFriendsAsync()
+		{
+			var result = new List<UserData>();
+			if (Auth?.CurrentUser == null) return result;
+
+			try
+			{
+				DataSnapshot snapshot = await DatabaseReference.Child("friends").Child(Auth.CurrentUser.UserId).GetValueAsync();
+				if (!snapshot.Exists) return result;
+
+				foreach (DataSnapshot child in snapshot.Children)
+				{
+					DataSnapshot userSnapshot = await FetchUserDataById(child.Key);
+					if (userSnapshot is not { Exists: true }) continue;
+
+					UserData? userData = JsonConvert.DeserializeObject<UserData>(userSnapshot.GetRawJsonValue(), JsonSettings);
+					if (userData.HasValue)
+						result.Add(userData.Value);
+				}
+			}
+			catch (Exception ex)
+			{
+				$"FetchFriendsAsync failed: {ex}".Log();
+			}
+
+			return result;
+		}
+
+		public async Task RemoveFriendAsync(string friendUserId)
+		{
+			if (Auth?.CurrentUser == null)
+				throw new InvalidOperationException("Must be authenticated to remove friends.");
+
+			string myUid = Auth.CurrentUser.UserId;
+			var updates = new Dictionary<string, object>
+			{
+				[$"friends/{myUid}/{friendUserId}"] = null,
+				[$"friends/{friendUserId}/{myUid}"] = null,
+			};
+
+			await DatabaseReference.UpdateChildrenAsync(updates);
+		}
+
+		#endregion
+
+		#region Leaderboard & Daily Steps
+
+		public async Task<List<LeaderboardEntry>> FetchLeaderboardAsync()
+		{
+			var result = new List<LeaderboardEntry>();
+			try
+			{
+				DataSnapshot snapshot = await DatabaseReference.Child("leaderboard").GetValueAsync();
+				if (!snapshot.Exists) return result;
+
+				foreach (DataSnapshot child in snapshot.Children)
+				{
+					LeaderboardEntry? entry = JsonConvert.DeserializeObject<LeaderboardEntry>(child.GetRawJsonValue(), JsonSettings);
+					if (entry.HasValue)
+						result.Add(entry.Value);
+				}
+			}
+			catch (Exception ex)
+			{
+				$"FetchLeaderboardAsync failed: {ex}".Log();
+			}
+			return result;
+		}
+
 		public async Task<List<(string dateKey, long steps)>> FetchDailyStepsAsync(int days = 5)
 		{
 			if (Auth?.CurrentUser == null) return new List<(string, long)>();
@@ -1204,6 +1649,10 @@ namespace TrainingBuddy.Managers
 				return new List<(string, long)>();
 			}
 		}
+
+		#endregion
+
+		#region Private Helpers
 
 		private void SaveStepsLocally(long steps, long deviceSnapshot)
 		{
@@ -1252,5 +1701,17 @@ namespace TrainingBuddy.Managers
 			null     => 0,
 			_        => Convert.ToInt64(value)
 		};
+
+		private static float ReadFloat(object value) => value switch
+		{
+			float  f => f,
+			double d => (float)d,
+			long   l => (float)l,
+			int    i => (float)i,
+			null     => 0f,
+			_        => (float)Convert.ToDouble(value)
+		};
+
+		#endregion
 	}
 }

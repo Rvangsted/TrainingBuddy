@@ -106,11 +106,11 @@
 }
 
 .avatar-man {
-    background-image: url("project://database/Assets/_Project/Art/Frontpage/male.png");
+    background-image: url("project://database/Assets/_Project/Art/Characters/emil_friend.png");
 }
 
 .avatar-woman {
-    background-image: url("project://database/Assets/_Project/Art/Frontpage/female.png");
+    background-image: url("project://database/Assets/_Project/Art/Characters/emma_friend.png");
 }
 
 .avatar-runner {
@@ -211,8 +211,9 @@
     border-radius: 21px;
     margin-left: 14px;
     background-size: cover;
-    background-position: center center;
-    background-color: rgba(255, 255, 255, 0.6);
+    background-position: center;
+    background-color: var(--color-buttons);
+    flex-shrink: 0;
 }
 
 .leaderboard-name {
@@ -220,7 +221,6 @@
     margin-left: 14px;
     font-size: 14px;
     color: var(--color-white);
-    letter-spacing: 0.5px;
 }
 
 .leaderboard-distance {

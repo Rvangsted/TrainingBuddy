@@ -1,45 +1,96 @@
 {
   "rules": {
-    ".read": "false",
-    ".write": "false",
+    ".read": false,
+    ".write": false,
+
     "users": {
       "$uid": {
-        ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() >= 1",
-        ".write": "(auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || (root.child('users').child(auth.uid).child('UserLevel').val() >= 1 && auth.uid == $uid))) || (auth == null && !data.exists())",
-        ".validate": "auth != null || (!data.exists() && newData.child('UserID').val() == $uid && newData.child('UserLevel').val() == 1)"
+        ".read": "auth != null",
+        ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2)",
+        ".validate": "newData.hasChildren(['UserID','UserLevel']) && newData.child('UserID').val() == $uid && ((!data.exists() && newData.child('UserLevel').val() == 1) || (data.exists() && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || newData.child('UserLevel').val() == data.child('UserLevel').val())))"
       }
     },
-    "Users": {
-      "$userKey": {
-        ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() >= 1",
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || (root.child('users').child(auth.uid).child('UserLevel').val() >= 1 && (newData.child('UserID').val() == auth.uid || data.child('UserID').val() == auth.uid)))"
+
+    "friendCodes": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "newData.isString()"
       }
     },
+
+    "usernames": {
+      "$username": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "newData.isString()"
+      }
+    },
+
+    "friendRequests": {
+      "$toUid": {
+        ".read": "auth != null && auth.uid == $toUid",
+        "$fromUid": {
+          ".read": "auth != null && (auth.uid == $toUid || auth.uid == $fromUid)",
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || auth.uid == $fromUid || auth.uid == $toUid)",
+          ".validate": "!newData.exists() || (newData.hasChildren(['requestedAt', 'status']) && newData.child('status').val() == 'pending')"
+        }
+      }
+    },
+
+    "friends": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        "$friendUid": {
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || auth.uid == $uid || (auth.uid == $friendUid && (data.exists() || root.child('friendRequests').child($friendUid).child($uid).child('status').val() == 'pending')))",
+          ".validate": "!newData.exists() || newData.hasChildren(['addedAt'])"
+        }
+      }
+    },
+
     "races": {
+      ".read": "auth != null",
       "$raceId": {
-        ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() >= 1",
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || (root.child('users').child(auth.uid).child('UserLevel').val() >= 1 && ((!data.exists() && newData.child('hostId').val() == auth.uid) || data.child('hostId').val() == auth.uid)))",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || (!data.exists() && newData.child('hostId').val() == auth.uid) || (data.exists() && data.child('hostId').val() == auth.uid))",
+        "status": {
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || data.parent().child('hostId').val() == auth.uid || (newData.val() == 'completed' && data.val() == 'in_progress' && data.parent().child('participants').child(auth.uid).exists()))"
+        },
         "participants": {
           "$participantId": {
-            ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || root.child('races').child($raceId).child('hostId').val() == auth.uid || (root.child('users').child(auth.uid).child('UserLevel').val() >= 1 && auth.uid == $participantId && !newData.exists()))"
+            ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || data.parent().parent().child('hostId').val() == auth.uid || (auth.uid == $participantId && !newData.exists()) || (auth.uid == $participantId && !data.exists() && root.child('races').child($raceId).child('status').val() == 'open'))",
+            "watchedAt": {
+              ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || data.parent().parent().parent().child('hostId').val() == auth.uid || (auth.uid == $participantId && data.parent().parent().parent().child('status').val() == 'in_progress'))"
+            }
           }
         }
       }
     },
+
     "joinRequests": {
       "$raceId": {
+        ".read": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
         "$requesterId": {
-          ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() >= 1 && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || auth.uid == $requesterId || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
-          ".write": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() >= 1 && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || auth.uid == $requesterId || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
-          ".validate": "root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || (auth.uid == $requesterId && (!newData.exists() || newData.child('status').val() == 'pending')) || (root.child('races').child($raceId).child('hostId').val() == auth.uid)"
+          ".read": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || auth.uid == $requesterId || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || auth.uid == $requesterId || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
+          ".validate": "root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || (auth.uid == $requesterId && (!newData.exists() || newData.child('status').val() == 'pending')) || root.child('races').child($raceId).child('hostId').val() == auth.uid"
         }
       }
     },
+
+    "leaderboard": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid",
+        ".validate": "newData.hasChildren(['UserName', 'Sex', 'StepCount'])"
+      }
+    },
+
     "userRaces": {
       "$uid": {
+        ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2)",
         "$raceId": {
-          ".read": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() >= 1 && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2)",
-          ".write": "auth != null && root.child('users').child(auth.uid).child('UserLevel').val() >= 1 && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || auth.uid == $uid || root.child('races').child($raceId).child('hostId').val() == auth.uid)"
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || auth.uid == $uid || root.child('races').child($raceId).child('hostId').val() == auth.uid)"
         }
       }
     }
