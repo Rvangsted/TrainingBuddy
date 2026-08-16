@@ -324,11 +324,12 @@ This fits into the `IStepDataProvider` work above as a schema change
 (`deviceSync/{deviceId}` instead of one timestamp) plus a small addition to
 `StartStepCounter()`'s reconciliation logic — not a separate feature.
 
-## Open questions for you
+## Decisions
 
-- Priority: ship the Android fix alone first, or hold until both platforms
-  are ready together?
-- iOS: go straight to a native HealthKit provider (full fix, more upfront
-  Objective-C/Xcode work) or land CMPedometer first as a stopgap (fixes
-  short gaps only, much smaller change, no HealthKit capability/entitlement
-  needed at all)?
+- **Priority:** hold release until both platforms are ready together —
+  Android Health Connect and iOS HealthKit ship as one combined release, not
+  Android first.
+- **iOS approach:** go straight to the full native HealthKit provider (see
+  "Building the iOS provider natively" above). CMPedometer stopgap rejected —
+  it only fixes short (~7-day) gaps, not the 6-month scenario the migration
+  exists to solve, so it would be throwaway work once HealthKit lands anyway.

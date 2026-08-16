@@ -22,7 +22,8 @@ namespace TrainingBuddy.Managers
 	{
 		Available,
 		PermissionDenied,
-		SensorUnsupported
+		SensorUnsupported,
+		ProviderNotInstalled // Health Connect missing on Android 13 and below; not reachable via the current sensor-based provider.
 	}
 
 	public interface IDatabaseManager
