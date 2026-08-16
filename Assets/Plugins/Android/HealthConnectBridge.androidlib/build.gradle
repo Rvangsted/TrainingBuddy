@@ -7,9 +7,10 @@ apply plugin: 'com.android.library'
 
 android {
     namespace 'dk.trainingbuddy.game.healthconnect'
-    // 34 is required to compile against the Health Connect client APIs used here. If the
-    // installed Android SDK's highest platform is lower than 34, install it via SDK Manager.
-    compileSdk 34
+    // connect-client:1.1.0's AAR metadata requires compileSdk 36+ (checkReleaseAarMetadata
+    // enforces this at build time). If the installed Android SDK's highest platform is lower
+    // than 36, install it via SDK Manager.
+    compileSdk 36
 
     defaultConfig {
         minSdkVersion 30
