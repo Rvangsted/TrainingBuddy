@@ -1,37 +1,19 @@
-// Resolves the Kotlin Gradle plugin through this module's own buildscript rather than the
-// plugins {} DSL — Unity's root Gradle template uses the classic apply-plugin style, and a
-// plugins {} block is only legal as the very first statement in the file, before any apply
-// plugin: line. Scoping it here means the Kotlin plugin classpath doesn't need to be added to
-// Unity's root/settings Gradle templates at all.
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24'
-    }
-}
-
 apply plugin: 'com.android.library'
-apply plugin: 'org.jetbrains.kotlin.android'
+// This project's AGP is 9.0.0 (see the root build.gradle), which has built-in Kotlin support
+// enabled by default — no org.jetbrains.kotlin.android plugin needed. Applying it on top throws
+// ("cannot be cast to BaseExtension"): its AGP integration isn't compatible with AGP 9's new
+// library-extension internals. src/main/kotlin and src/main/AndroidManifest.xml are both already
+// AGP's default source locations, so no explicit sourceSets block is needed either.
 
 android {
     namespace 'dk.trainingbuddy.game.healthconnect'
     // 34 is required to compile against the Health Connect client APIs used here. If the
     // installed Android SDK's highest platform is lower than 34, install it via SDK Manager.
-    compileSdkVersion 34
+    compileSdk 34
 
     defaultConfig {
         minSdkVersion 30
         targetSdkVersion 34
-    }
-
-    sourceSets {
-        main {
-            manifest.srcFile 'src/main/AndroidManifest.xml'
-            kotlin.srcDirs = ['src/main/kotlin']
-        }
     }
 
     compileOptions {
