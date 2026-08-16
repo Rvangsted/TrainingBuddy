@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Android 11+ package-visibility rule: without this, PackageManager queries for the
+         Health Connect provider app always report it as not installed, even when it is. -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+
+    <application>
+        <activity
+            android:name="dk.trainingbuddy.game.healthconnect.HealthConnectPermissionActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+    </application>
+
+</manifest>

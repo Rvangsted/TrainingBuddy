@@ -1,0 +1,38 @@
+apply plugin: 'com.android.library'
+// Declares its own plugin version since this project's Unity-generated root Gradle template
+// doesn't otherwise pull in the Kotlin plugin. If this fails to resolve, add gradlePluginPortal()
+// to pluginManagement.repositories in the Custom Gradle Settings Template (Player Settings > Android
+// > Publishing Settings) — Unity's default settings template may only list google()/mavenCentral().
+plugins {
+    id 'org.jetbrains.kotlin.android' version '1.9.24'
+}
+
+android {
+    namespace 'dk.trainingbuddy.game.healthconnect'
+    // 34 is required to compile against the Health Connect client APIs used here. If the
+    // installed Android SDK's highest platform is lower than 34, install it via SDK Manager.
+    compileSdkVersion 34
+
+    defaultConfig {
+        minSdkVersion 30
+        targetSdkVersion 34
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+            kotlin.srcDirs = ['src/main/kotlin']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'androidx.health.connect:connect-client:1.1.0'
+    implementation 'androidx.activity:activity-ktx:1.9.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+}
