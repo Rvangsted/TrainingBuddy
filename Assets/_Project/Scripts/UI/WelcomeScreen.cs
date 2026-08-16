@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
 using TrainingBuddy.UI.Controls;
@@ -45,11 +46,7 @@ namespace TrainingBuddy.UI
 			                  .RegisterCallback<ClickEvent>(_ => RequestPermission());
 
 #if !UNITY_EDITOR
-			if (!CheckPermission())
-			{
-				ShowPermissionOverlay();
-				RequestPermission();
-			}
+			_ = EnsurePermissionsAsync();
 #endif
 		}
 
@@ -65,7 +62,33 @@ namespace TrainingBuddy.UI
 				_permissionOverlay.style.display = DisplayStyle.None;
 		}
 
-		private async void RequestPermission()
+		// Health Connect's consent status can't be read synchronously the way the classic OS
+		// runtime permissions can, so the initial check (unlike CheckPermission()) has to be async.
+		private async Task EnsurePermissionsAsync()
+		{
+			bool osGranted = CheckPermission();
+			bool stepProviderReady = await IsStepProviderReadyAsync();
+
+			if (osGranted && stepProviderReady)
+			{
+				HidePermissionOverlay();
+			}
+			else
+			{
+				ShowPermissionOverlay();
+				await RequestPermissionAsync();
+			}
+		}
+
+		private async Task<bool> IsStepProviderReadyAsync()
+		{
+			if (!_databaseManager.HasStepDataProvider) return true;
+			return await _databaseManager.CheckStepProviderAvailabilityAsync() == StepCounterAvailability.Available;
+		}
+
+		private async void RequestPermission() => await RequestPermissionAsync();
+
+		private async Task RequestPermissionAsync()
 		{
 			if (_permissionRequestInProgress) return;
 			_permissionRequestInProgress = true;
@@ -75,17 +98,25 @@ namespace TrainingBuddy.UI
 					"android.permission.ACCESS_FINE_LOCATION",
 					"android.permission.ACTIVITY_RECOGNITION");
 
+			bool osGranted =
+				result[0] == AndroidRuntimePermissions.Permission.Granted &&
+				result[1] == AndroidRuntimePermissions.Permission.Granted;
+
+			bool stepProviderReady = true;
+			if (_databaseManager.HasStepDataProvider)
+			{
+				StepCounterAvailability availability = await _databaseManager.CheckStepProviderAvailabilityAsync();
+				if (availability == StepCounterAvailability.PermissionDenied)
+					availability = await _databaseManager.RequestStepProviderPermissionAsync();
+				stepProviderReady = availability == StepCounterAvailability.Available;
+			}
+
 			_permissionRequestInProgress = false;
 
-			if (result[0] == AndroidRuntimePermissions.Permission.Granted &&
-			    result[1] == AndroidRuntimePermissions.Permission.Granted)
-			{
+			if (osGranted && stepProviderReady)
 				HidePermissionOverlay();
-			}
 			else
-			{
 				ShowPermissionOverlay();
-			}
 		}
 
 		private void OnLogin(ClickEvent evt)

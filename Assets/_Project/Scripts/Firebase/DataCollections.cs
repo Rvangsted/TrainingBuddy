@@ -18,6 +18,7 @@ namespace TrainingBuddy.FireBase
 		public int? StepCountSnapshot;
 		public int? DailyStepBase;
 		public string DailyStepDate;
+		public long? LastSyncTimestamp;
 		public int? UserLevel;
 	}
 	

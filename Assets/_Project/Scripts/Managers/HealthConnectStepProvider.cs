@@ -80,12 +80,6 @@ namespace TrainingBuddy.Managers
 #endif
 		}
 
-		/// <summary>
-		/// Shows the Health Connect permission screen. Not part of IStepDataProvider — Health
-		/// Connect's consent flow is its own system UI, distinct from the availability check, and
-		/// callers need to trigger it explicitly (e.g. from onboarding) rather than have it pop up
-		/// as a side effect of checking availability.
-		/// </summary>
 		public Task<StepCounterAvailability> RequestPermissionAsync()
 		{
 #if UNITY_ANDROID && !UNITY_EDITOR

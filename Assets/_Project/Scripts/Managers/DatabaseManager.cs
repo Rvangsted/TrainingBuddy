@@ -52,6 +52,9 @@ namespace TrainingBuddy.Managers
 		public Task PatchUserFields(Dictionary<string, object> fields);
 		public Task<StepCounterAvailability> StartStepCounter();
 		public void StopStepCounter();
+		public bool HasStepDataProvider { get; }
+		public Task<StepCounterAvailability> CheckStepProviderAvailabilityAsync();
+		public Task<StepCounterAvailability> RequestStepProviderPermissionAsync();
 		public long DailyStepBase { get; }
 		public Task<List<(string dateKey, long steps)>> FetchDailyStepsAsync(int days = 5);
 		public Task<bool> DeleteAccountAsync(string password);
@@ -76,9 +79,23 @@ namespace TrainingBuddy.Managers
 		private long _lastSyncedTotal = -1;// Last value written to Firebase
 		private long _dailyStepBase;       // Value of _currentTotal at start of today
 		private string _dailyStepDate;     // The date string (yyyy-MM-dd) for _dailyStepBase
+		private long _lastSyncTimestampMillis = -1; // Provider-backed path only: unix ms anchor paired with _baseStepCount. -1 = not yet anchored.
 		private CancellationTokenSource _stepCts;
 		private string _cachedUserName;
 		private string _cachedSex;
+
+		// Android uses the Health Connect provider; iOS/Editor still use the raw-sensor path
+		// below until a HealthKitStepProvider exists — see StepCounter_HealthPlatform_Migration_Scope.md.
+		private readonly IStepDataProvider _stepDataProvider = CreateStepDataProvider();
+
+		private static IStepDataProvider CreateStepDataProvider()
+		{
+#if UNITY_ANDROID && !UNITY_EDITOR
+			return new HealthConnectStepProvider();
+#else
+			return null;
+#endif
+		}
 
 		public const int StepsPerPoint   = 2000;  // Steps required to earn 1 skill point (used for progress bar)
 		private const int SensorPollMs   = 2000;  // How often to read the device sensor (ms)
@@ -96,6 +113,7 @@ namespace TrainingBuddy.Managers
 		public event Action<long> StepCountChanged;
 
 		public bool StepCounterRunning { get; private set; }
+		public bool HasStepDataProvider => _stepDataProvider != null;
 		public long DailyStepBase => _dailyStepBase;
 		public bool isLocationUpdaterRunning { get; private set; }
 
@@ -197,6 +215,7 @@ namespace TrainingBuddy.Managers
 			       userData.SpeedPoints ??= currentUserdata.SpeedPoints;
 			       userData.StepCount ??= currentUserdata.StepCount;
 			       userData.StepCountSnapshot ??= currentUserdata.StepCountSnapshot;
+			       userData.LastSyncTimestamp ??= currentUserdata.LastSyncTimestamp;
 			       userData.UserLevel ??= currentUserdata.UserLevel;
 
 			       string json = JsonConvert.SerializeObject(userData, JsonSettings);
@@ -1242,10 +1261,10 @@ namespace TrainingBuddy.Managers
 		#region Step Counter
 
 		/// <summary>
-		/// Loads the saved step count from Firebase once, then starts a lightweight
-		/// polling loop that reads the device sensor every 2 s and fires
-		/// StepCountChanged immediately — no Firebase involved per poll.
-		/// A single Firebase write happens every 60 s (and once on stop).
+		/// Loads the saved step count from Firebase once, then starts a background loop.
+		/// On Android (HasStepDataProvider), that loop queries Health Connect and syncs to
+		/// Firebase every 60 s. Elsewhere, it polls the raw device sensor every 2 s for instant
+		/// UI updates and syncs to Firebase every 60 s.
 		/// Call StopStepCounter() on OnApplicationPause/OnDestroy.
 		/// </summary>
 		public async Task<StepCounterAvailability> StartStepCounter()
@@ -1255,7 +1274,9 @@ namespace TrainingBuddy.Managers
 
 			// Fail fast, before touching Firebase, if this device can't actually count steps —
 			// the app is unusable without it.
-			StepCounterAvailability availability = await CheckStepCounterAvailabilityAsync();
+			StepCounterAvailability availability = _stepDataProvider != null
+				? await _stepDataProvider.CheckAvailabilityAsync()
+				: await CheckStepCounterAvailabilityAsync();
 			if (availability != StepCounterAvailability.Available)
 			{
 				HandleStepCounterUnavailable(availability);
@@ -1269,17 +1290,26 @@ namespace TrainingBuddy.Managers
 			_cachedUserName = data?.Child("UserName").Value?.ToString() ?? "";
 			_cachedSex      = data?.Child("Sex").Value?.ToString() ?? "";
 
-			long firebaseSteps    = ReadLong(data?.Child("StepCount").Value);
-			long firebaseSnapshot = ReadLong(data?.Child("StepCountSnapshot").Value);
-
+			long firebaseSteps = ReadLong(data?.Child("StepCount").Value);
 			long localSteps    = PlayerPrefs.GetInt(StepCountKey, 0);
-			long localSnapshot = PlayerPrefs.GetInt(StepSnapshotKey, 0);
 
 			bool useLocal  = localSteps > firebaseSteps;
-			_baseStepCount = useLocal ? localSteps    : firebaseSteps;
-			_deviceAnchor  = useLocal ? localSnapshot : firebaseSnapshot;
+			_baseStepCount = useLocal ? localSteps : firebaseSteps;
 			_currentTotal     = _baseStepCount;
 			_lastSyncedTotal  = _baseStepCount;
+
+			if (_stepDataProvider != null)
+			{
+				long firebaseSyncTimestamp = ReadLong(data?.Child("LastSyncTimestamp").Value);
+				long localSyncTimestamp    = long.TryParse(PlayerPrefs.GetString(LastSyncTimestampKey, "0"), out long parsedSync) ? parsedSync : 0;
+				_lastSyncTimestampMillis    = useLocal ? localSyncTimestamp : firebaseSyncTimestamp;
+			}
+			else
+			{
+				long firebaseSnapshot = ReadLong(data?.Child("StepCountSnapshot").Value);
+				long localSnapshot    = PlayerPrefs.GetInt(StepSnapshotKey, 0);
+				_deviceAnchor          = useLocal ? localSnapshot : firebaseSnapshot;
+			}
 
 			// Load daily step base and handle day rollover
 			long firebaseDailyBase   = ReadLong(data?.Child("DailyStepBase").Value);
@@ -1332,8 +1362,18 @@ namespace TrainingBuddy.Managers
 
 			_stepCts = new CancellationTokenSource();
 			StepCounterRunning = true;
-			_ = StepCounterLoop(_stepCts.Token);
+			_ = _stepDataProvider != null ? ProviderSyncLoop(_stepDataProvider, _stepCts.Token) : StepCounterLoop(_stepCts.Token);
 			return StepCounterAvailability.Available;
+		}
+
+		public Task<StepCounterAvailability> CheckStepProviderAvailabilityAsync()
+		{
+			return _stepDataProvider?.CheckAvailabilityAsync() ?? Task.FromResult(StepCounterAvailability.Available);
+		}
+
+		public Task<StepCounterAvailability> RequestStepProviderPermissionAsync()
+		{
+			return _stepDataProvider?.RequestPermissionAsync() ?? Task.FromResult(StepCounterAvailability.Available);
 		}
 
 		/// <summary>
@@ -1408,22 +1448,18 @@ namespace TrainingBuddy.Managers
 		}
 
 		/// <summary>
-		/// Writes only StepCount and StepCountSnapshot — no full object read/write cycle.
-		/// Skips the write if nothing changed since last sync.
+		/// Writes only StepCount plus whatever provider-specific anchor field is passed in — no
+		/// full object read/write cycle. Skips the write if nothing changed since last sync.
 		/// </summary>
-		private async Task SyncStepsToFirebase(long deviceValue)
+		private async Task<bool> WriteStepsToFirebaseAsync(Dictionary<string, object> extraFields)
 		{
-			if (Auth?.CurrentUser == null) return;
-			if (_currentTotal == _lastSyncedTotal) return;
-
-			// Always persist locally first so data survives even if Firebase is unreachable.
-			SaveStepsLocally(_currentTotal, deviceValue);
+			if (Auth?.CurrentUser == null) return false;
+			if (_currentTotal == _lastSyncedTotal) return false;
 
 			string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
-			var updates = new Dictionary<string, object>
+			var updates = new Dictionary<string, object>(extraFields)
 			{
-				{ "StepCount",         (int)_currentTotal },
-				{ "StepCountSnapshot", (int)deviceValue   },
+				{ "StepCount", (int)_currentTotal },
 			};
 
 			// Day rolled over mid-session — archive the previous day then reset base
@@ -1463,11 +1499,60 @@ namespace TrainingBuddy.Managers
 				}
 
 				_lastSyncedTotal = _currentTotal;
+				return true;
 			}
 			catch (Exception ex)
 			{
-				$"SyncStepsToFirebase failed: {ex}".Log();
+				$"WriteStepsToFirebaseAsync failed: {ex}".Log();
+				return false;
 			}
+		}
+
+		private Task SyncStepsToFirebase(long deviceValue)
+		{
+			// Always persist locally first so data survives even if Firebase is unreachable.
+			SaveStepsLocally(_currentTotal, deviceValue);
+			return WriteStepsToFirebaseAsync(new Dictionary<string, object> { { "StepCountSnapshot", (int)deviceValue } });
+		}
+
+		private async Task ProviderSyncLoop(IStepDataProvider provider, CancellationToken ct)
+		{
+			try
+			{
+				while (!ct.IsCancellationRequested)
+				{
+					await SyncFromProviderAsync(provider);
+					await UniTask.Delay(FirebaseSyncMs, cancellationToken: ct);
+				}
+			}
+			catch (OperationCanceledException) { }
+
+			await SyncFromProviderAsync(provider); // Final sync before fully stopping
+			StepCounterRunning = false;
+		}
+
+		private async Task SyncFromProviderAsync(IStepDataProvider provider)
+		{
+			// Anchor on the first sync of this session (new account, new device, or first time the
+			// provider is available) without backfilling any history — same principle as the
+			// legacy device-anchor: prevents counting steps taken before this sync point existed.
+			if (_lastSyncTimestampMillis <= 0)
+			{
+				_lastSyncTimestampMillis = GetUnixTimestampMilliseconds();
+			}
+			else
+			{
+				long delta = await provider.GetStepsSinceAsync(DateTimeOffset.FromUnixTimeMilliseconds(_lastSyncTimestampMillis));
+				if (delta > 0)
+				{
+					_currentTotal += delta;
+					StepCountChanged?.Invoke(_currentTotal);
+				}
+				_lastSyncTimestampMillis = GetUnixTimestampMilliseconds();
+			}
+
+			SaveProviderSyncLocally(_currentTotal, _lastSyncTimestampMillis);
+			await WriteStepsToFirebaseAsync(new Dictionary<string, object> { { "LastSyncTimestamp", _lastSyncTimestampMillis } });
 		}
 
 		private async Task ArchiveDailyStepsAsync(string date, long steps)
@@ -1682,9 +1767,18 @@ namespace TrainingBuddy.Managers
 			PlayerPrefs.Save();
 		}
 
+		// Long.MaxValue-range unix ms timestamp doesn't fit PlayerPrefs' int storage, hence string.
+		private void SaveProviderSyncLocally(long steps, long syncTimestampMillis)
+		{
+			PlayerPrefs.SetInt(StepCountKey, (int)steps);
+			PlayerPrefs.SetString(LastSyncTimestampKey, syncTimestampMillis.ToString());
+			PlayerPrefs.Save();
+		}
+
 		// Scoped per user so multiple accounts on the same device don't share data.
 		private string StepCountKey    => $"StepCount_{Auth?.CurrentUser?.UserId ?? "anon"}";
 		private string StepSnapshotKey => $"StepCountSnapshot_{Auth?.CurrentUser?.UserId ?? "anon"}";
+		private string LastSyncTimestampKey => $"LastSyncTimestamp_{Auth?.CurrentUser?.UserId ?? "anon"}";
 		private string DailyStepBaseKey => $"DailyStepBase_{Auth?.CurrentUser?.UserId ?? "anon"}";
 		private string DailyStepDateKey => $"DailyStepDate_{Auth?.CurrentUser?.UserId ?? "anon"}";
 
@@ -1903,6 +1997,7 @@ namespace TrainingBuddy.Managers
 
 			PlayerPrefs.DeleteKey(StepCountKey);
 			PlayerPrefs.DeleteKey(StepSnapshotKey);
+			PlayerPrefs.DeleteKey(LastSyncTimestampKey);
 			PlayerPrefs.DeleteKey(DailyStepBaseKey);
 			PlayerPrefs.DeleteKey(DailyStepDateKey);
 			PlayerPrefs.Save();

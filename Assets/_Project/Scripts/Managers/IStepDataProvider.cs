@@ -11,6 +11,13 @@ namespace TrainingBuddy.Managers
 	public interface IStepDataProvider
 	{
 		Task<StepCounterAvailability> CheckAvailabilityAsync();
+
+		/// <summary>
+		/// Shows the platform's consent UI (Health Connect's permission screen, HealthKit's
+		/// authorization sheet). Callers trigger this explicitly rather than have it fire as a
+		/// side effect of CheckAvailabilityAsync.
+		/// </summary>
+		Task<StepCounterAvailability> RequestPermissionAsync();
 		Task<long> GetStepsSinceAsync(DateTimeOffset since);
 	}
 }
