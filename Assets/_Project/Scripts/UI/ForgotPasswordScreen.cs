@@ -35,17 +35,7 @@ namespace TrainingBuddy.UI
 
 		private async void OnRecover(ClickEvent evt)
 		{
-#if !UNITY_EDITOR
-			CheckPermission();
-			if (!CheckPermission())
-			{
-				return;
-			}
-#endif
-			// if (await _firebaseController.FirebaseLogin(_loginEmailField.value, _loginPasswordField.value))
-			// {
-			// 	_uiManager.ChangePage(_layoutData.MainMenu);
-			// }
+			await _firebaseController.SendPasswordResetEmailAsync(_recoverEmailField.value);
 		}
 	}
 }

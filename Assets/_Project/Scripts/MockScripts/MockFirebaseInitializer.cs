@@ -85,5 +85,10 @@ namespace TrainingBuddy.Testing
 		{
 			throw new System.NotImplementedException();
 		}
+
+		public Task<bool> SendPasswordResetEmailAsync(string email)
+		{
+			throw new System.NotImplementedException();
+		}
 	}
 }

@@ -90,7 +90,9 @@ namespace TrainingBuddy.UI
 
 			SetupSafeAreaContainer();
 
-			ChangePage(_layoutData.ProfileScreen);
+			// Don't navigate yet — Firebase hasn't finished initializing at this point (GameManager's
+			// Initialize() is still running), so Auth.CurrentUser isn't known yet. GameManager calls
+			// NavigateToInitialScreen() once that's actually ready.
 		}
 
 		private void Start()
@@ -149,6 +151,21 @@ namespace TrainingBuddy.UI
 			_backAction = action;
 		}
 
+		public void ReturnToWelcomeScreen()
+		{
+			ChangePage(_layoutData.WelcomeScreen);
+		}
+
+		/// <summary>
+		/// Call once Firebase has finished initializing and its auth state is known.
+		/// Firebase Auth persists the signed-in user across launches on its own — this just
+		/// routes to the right first screen instead of always defaulting to the login flow.
+		/// </summary>
+		public void NavigateToInitialScreen()
+		{
+			ChangePage(_databaseManager.Auth?.CurrentUser != null ? _layoutData.MainMenu : _layoutData.WelcomeScreen);
+		}
+
 		public void ChangePage(UILayout layout)
 		{
 			if (!_hasStarted)
@@ -159,7 +176,7 @@ namespace TrainingBuddy.UI
 
 			Content.Clear();
 
-			if (_databaseManager.Auth == null && !IsGuestAllowedLayout(layout))
+			if (_databaseManager.Auth?.CurrentUser == null && !IsGuestAllowedLayout(layout))
 			{
 				Content.Add(_layoutData.WelcomeScreen.Layout);
 				CurrentLayout = _layoutData.WelcomeScreen;

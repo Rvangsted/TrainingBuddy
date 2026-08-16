@@ -78,7 +78,7 @@ namespace TrainingBuddy.UI
 
 			if (!_databaseManager.StepCounterRunning)
 			{
-				_databaseManager.StartStepCounter();
+				await _databaseManager.StartStepCounter();
 			}
 		}
 		

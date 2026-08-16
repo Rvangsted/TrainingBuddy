@@ -1,6 +1,7 @@
 using System;
 using Newtonsoft.Json;
 using TrainingBuddy.FireBase;
+using TrainingBuddy.UI;
 using VContainer.Unity;
 
 namespace TrainingBuddy.Managers
@@ -10,17 +11,24 @@ namespace TrainingBuddy.Managers
 	{
 		private readonly IFirebaseController _firebaseController;
 		private readonly IDatabaseManager _databaseManager;
+		private readonly UIManager _uiManager;
 
-		public GameManager(IFirebaseController firebaseController, IDatabaseManager databaseManager)
+		public GameManager(IFirebaseController firebaseController, IDatabaseManager databaseManager, UIManager uiManager)
 		{
 			_firebaseController = firebaseController;
 			_databaseManager = databaseManager;
+			_uiManager = uiManager;
 		}
 
 		public async void Initialize()
 		{
 			await _firebaseController.InitializeFirebase();
 			_databaseManager.JsonSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+
+			// Firebase Auth persists the signed-in user on its own — now that it's initialized and
+			// Auth.CurrentUser reflects any restored session, route to the right first screen instead
+			// of the login flow UIManager would otherwise show by default before this point.
+			_uiManager.NavigateToInitialScreen();
 		}
 
 		// Called by VContainer on app quit / scene unload — triggers the final Firebase step sync.
@@ -35,7 +43,7 @@ namespace TrainingBuddy.Managers
 			if (paused)
 				_databaseManager.StopStepCounter();
 			else
-				_databaseManager.StartStepCounter();
+				_ = _databaseManager.StartStepCounter();
 		}
 	}
 }

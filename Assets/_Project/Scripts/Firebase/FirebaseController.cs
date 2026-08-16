@@ -17,6 +17,7 @@ namespace TrainingBuddy.FireBase
 		public Task<bool> FirebaseLogin(string email, string password);
 		public void FirebaseLogout();
 		public Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm, int dobDay, int dobMonth, int dobYear);
+		public Task<bool> SendPasswordResetEmailAsync(string email);
 	}
 
 	public class FirebaseController : IFirebaseController
@@ -82,8 +83,13 @@ namespace TrainingBuddy.FireBase
 			}
 
 			$"Logged in".Log();
+
+			if (!await _databaseManager.EnsureEmailVerifiedAsync())
+				return false;
+
 #if !UNITY_EDITOR
-			_databaseManager.StartStepCounter();
+			if (await _databaseManager.StartStepCounter() != StepCounterAvailability.Available)
+				return false;
 #endif
 			return true;
 		}
@@ -91,6 +97,43 @@ namespace TrainingBuddy.FireBase
 		public void FirebaseLogout()
 		{
 			_databaseManager.Auth.SignOut();
+		}
+
+		public async Task<bool> SendPasswordResetEmailAsync(string email)
+		{
+			if (string.IsNullOrEmpty(email))
+			{
+				_databaseManager.ShowMessage("Glemt adgangskode", "Indtast venligst din emailadresse.");
+				return false;
+			}
+
+			Task resetTask = _databaseManager.Auth.SendPasswordResetEmailAsync(email);
+			await new WaitUntil(() => resetTask.IsCompleted);
+
+			if (resetTask.IsFaulted)
+			{
+				var firebaseEx = resetTask.Exception?.GetBaseException() as FirebaseException;
+				string message = "Der opstod en fejl. Prøv venligst igen.";
+
+				if (firebaseEx != null)
+				{
+					message = (AuthError)firebaseEx.ErrorCode switch
+					{
+						AuthError.InvalidEmail => "Emailadressen ser ugyldig ud.",
+						AuthError.UserNotFound => "Der findes ingen konto med denne email.",
+						AuthError.MissingEmail => "Indtast venligst din emailadresse.",
+						_ => message,
+					};
+				}
+
+				$"SendPasswordResetEmailAsync failed: {resetTask.Exception}".LogError();
+				_databaseManager.ShowMessage("Glemt adgangskode", message);
+				return false;
+			}
+
+			$"Password reset email sent to {email}".Log();
+			_databaseManager.ShowMessage("Tjek din email", $"Vi har sendt et link til nulstilling af adgangskode til {email}.");
+			return true;
 		}
 
 		public async Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm, int dobDay, int dobMonth, int dobYear)
@@ -142,7 +185,15 @@ namespace TrainingBuddy.FireBase
 
 	        if (RegisterTask.IsFaulted)
 	        {
+		        var firebaseEx = RegisterTask.Exception?.GetBaseException() as FirebaseException;
+		        bool emailTaken = firebaseEx != null && (AuthError)firebaseEx.ErrorCode == AuthError.EmailAlreadyInUse;
+
 		        $"RegisterTask failed with {RegisterTask.Exception}".Log();
+		        _databaseManager.ShowMessage(
+			        "Registrering fejlede",
+			        emailTaken
+				        ? "En konto med denne email findes allerede. Log ind i stedet."
+				        : "Registrering fejlede. Tjek venligst at oplysningerne er korrekte.");
 		        return false;
 	        }
 
@@ -203,8 +254,21 @@ namespace TrainingBuddy.FireBase
 		        return false;
 	        }
 
+	        try
+	        {
+		        await _databaseManager.Auth.CurrentUser.SendEmailVerificationAsync();
+	        }
+	        catch (Exception ex)
+	        {
+		        $"Failed to send verification email: {ex}".LogError();
+	        }
+
+	        if (!await _databaseManager.EnsureEmailVerifiedAsync())
+		        return false;
+
 #if !UNITY_EDITOR
-	        _databaseManager.StartStepCounter();
+	        if (await _databaseManager.StartStepCounter() != StepCounterAvailability.Available)
+		        return false;
 #endif
 	        return true;
 	    }

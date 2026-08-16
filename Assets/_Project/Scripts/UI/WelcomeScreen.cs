@@ -12,14 +12,6 @@ namespace TrainingBuddy.UI
 		private Button _registerButton;
 		private Button _privacyButton;
 		
-		private Button _test1Button;
-		private Button _test2Button;
-		private Button _test3Button;
-		private Button _test4Button;
-		private Button _test5Button;
-		private Button _test6Button;
-		private Button _test7Button;
-		
 		private readonly FirebaseController _firebaseController;
 		
 		public WelcomeScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
@@ -35,26 +27,10 @@ namespace TrainingBuddy.UI
 			_loginButton = Layout.Q<Button>("LoginButton");
 			_registerButton = Layout.Q<Button>("RegisterButton");
 			_privacyButton = Layout.Q<Button>("PrivacyButton");
-			
-			_test1Button  = Layout.Q<Button>("Test1Button");
-			_test2Button  = Layout.Q<Button>("Test2Button");
-			_test3Button  = Layout.Q<Button>("Test3Button");
-			_test4Button  = Layout.Q<Button>("Test4Button");
-			_test5Button  = Layout.Q<Button>("Test5Button");
-			_test6Button  = Layout.Q<Button>("Test6Button");
-			_test7Button  = Layout.Q<Button>("Test7Button");
 
 			_loginButton.RegisterCallback<ClickEvent>(OnLogin);
 			_registerButton.RegisterCallback<ClickEvent>(OnRegister);
 			_privacyButton.RegisterCallback<ClickEvent>(OnTest);
-			
-			_test1Button.RegisterCallback<ClickEvent>(UserTest1);
-			_test2Button.RegisterCallback<ClickEvent>(UserTest2);
-			_test3Button.RegisterCallback<ClickEvent>(UserTest3);
-			_test4Button.RegisterCallback<ClickEvent>(UserTest4);
-			_test5Button.RegisterCallback<ClickEvent>(UserTest5);
-			_test6Button.RegisterCallback<ClickEvent>(UserTest6);
-			_test7Button.RegisterCallback<ClickEvent>(UserTest7);
 		}
 
 		private VisualElement _permissionOverlay;
@@ -150,62 +126,5 @@ namespace TrainingBuddy.UI
 				_uiManager.ChangePage(_layoutData.MainMenu);
 			}
 		}
-
-		private async void UserTest1(ClickEvent evt)
-		{
-			if (await _firebaseController.FirebaseLogin("testuser1@example.com", "TestPass123!"))
-			{
-				_uiManager.ChangePage(_layoutData.MainMenu);
-			}
-		}
-		
-		private async void UserTest2(ClickEvent evt)
-		{
-			if (await _firebaseController.FirebaseLogin("testuser2@example.com", "TestPass123!"))
-			{
-				_uiManager.ChangePage(_layoutData.MainMenu);
-			}
-		}
-		
-		private async void UserTest3(ClickEvent evt)
-		{
-			if (await _firebaseController.FirebaseLogin("testuser3@example.com", "TestPass123!"))
-			{
-				_uiManager.ChangePage(_layoutData.MainMenu);
-			}
-		}
-		
-		private async void UserTest4(ClickEvent evt)
-		{
-			if (await _firebaseController.FirebaseLogin("testuser4@example.com", "TestPass123!"))
-			{
-				_uiManager.ChangePage(_layoutData.MainMenu);
-			}
-		}
-		
-		private async void UserTest5(ClickEvent evt)
-		{
-			if (await _firebaseController.FirebaseLogin("testuser5@example.com", "TestPass123!"))
-			{
-				_uiManager.ChangePage(_layoutData.MainMenu);
-			}
-		}
-		
-		private async void UserTest6(ClickEvent evt)
-		{
-			if (await _firebaseController.FirebaseLogin("testuser6@example.com", "TestPass123!"))
-			{
-				_uiManager.ChangePage(_layoutData.MainMenu);
-			}
-		}
-		
-		private async void UserTest7(ClickEvent evt)
-		{
-			if (await _firebaseController.FirebaseLogin("testuser7@example.com", "TestPass123!"))
-			{
-				_uiManager.ChangePage(_layoutData.MainMenu);
-			}
-		}
-
 	}
 }

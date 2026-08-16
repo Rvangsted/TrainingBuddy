@@ -18,6 +18,13 @@ using UnityEngine.InputSystem;
 
 namespace TrainingBuddy.Managers
 {
+	public enum StepCounterAvailability
+	{
+		Available,
+		PermissionDenied,
+		SensorUnsupported
+	}
+
 	public interface IDatabaseManager
 	{
 		public FirebaseAuth Auth { get; set; }
@@ -42,10 +49,11 @@ namespace TrainingBuddy.Managers
 		public Task MarkRaceWatchedAsync(string raceId);
 		public Task CancelRaceAsync(string raceId);
 		public Task PatchUserFields(Dictionary<string, object> fields);
-		public void StartStepCounter();
+		public Task<StepCounterAvailability> StartStepCounter();
 		public void StopStepCounter();
 		public long DailyStepBase { get; }
 		public Task<List<(string dateKey, long steps)>> FetchDailyStepsAsync(int days = 5);
+		public Task<bool> DeleteAccountAsync(string password);
 
 		public Task SendFriendRequestAsync(string targetUserId);
 		public Task RevokeFriendRequestAsync(string targetUserId);
@@ -74,6 +82,12 @@ namespace TrainingBuddy.Managers
 		public const int StepsPerPoint   = 2000;  // Steps required to earn 1 skill point (used for progress bar)
 		private const int SensorPollMs   = 2000;  // How often to read the device sensor (ms)
 		private const int FirebaseSyncMs = 60000; // How often to write to Firebase (ms)
+
+		// Some OEM sensor hubs (e.g. Samsung's dedicated sensor coprocessor) register the
+		// native step-counter device shortly after app start rather than immediately, so we
+		// poll briefly for it instead of declaring the sensor missing on the first check.
+		private const int SensorDetectRetries     = 5;
+		private const int SensorDetectRetryDelayMs = 500;
 
 		public const string AiPlayerName    = "Buddy"; // Display name for AI fill-in players — change here
 		private const int   MinRaceParticipants = 3;   // Minimum real players required to start
@@ -1233,10 +1247,19 @@ namespace TrainingBuddy.Managers
 		/// A single Firebase write happens every 60 s (and once on stop).
 		/// Call StopStepCounter() on OnApplicationPause/OnDestroy.
 		/// </summary>
-		public async void StartStepCounter()
+		public async Task<StepCounterAvailability> StartStepCounter()
 		{
-			if (StepCounterRunning) return;
-			if (Auth?.CurrentUser == null) return;
+			if (StepCounterRunning) return StepCounterAvailability.Available;
+			if (Auth?.CurrentUser == null) return StepCounterAvailability.Available;
+
+			// Fail fast, before touching Firebase, if this device can't actually count steps —
+			// the app is unusable without it.
+			StepCounterAvailability availability = await CheckStepCounterAvailabilityAsync();
+			if (availability != StepCounterAvailability.Available)
+			{
+				HandleStepCounterUnavailable(availability);
+				return availability;
+			}
 
 			// Load from Firebase, then compare with local PlayerPrefs backup.
 			// If Firebase is unreachable (offline) it may return 0 — in that case
@@ -1245,10 +1268,6 @@ namespace TrainingBuddy.Managers
 			_cachedUserName = data?.Child("UserName").Value?.ToString() ?? "";
 			_cachedSex      = data?.Child("Sex").Value?.ToString() ?? "";
 
-#if !UNITY_EDITOR
-			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION")) return;
-			if (!EnsureStepCounterDevice()) return;
-#endif
 			long firebaseSteps    = ReadLong(data?.Child("StepCount").Value);
 			long firebaseSnapshot = ReadLong(data?.Child("StepCountSnapshot").Value);
 
@@ -1307,12 +1326,13 @@ namespace TrainingBuddy.Managers
 			}
 
 #if UNITY_EDITOR
-			return; // No step sensor in the editor — leaderboard entry already written above
+			return StepCounterAvailability.Available; // No step sensor in the editor — leaderboard entry already written above
 #endif
 
 			_stepCts = new CancellationTokenSource();
 			StepCounterRunning = true;
 			_ = StepCounterLoop(_stepCts.Token);
+			return StepCounterAvailability.Available;
 		}
 
 		/// <summary>
@@ -1674,24 +1694,237 @@ namespace TrainingBuddy.Managers
 			PlayerPrefs.Save();
 		}
 
+		// StepCounter.current is only ever non-null when the platform has natively enumerated a
+		// real hardware sensor (e.g. UnityEngine.InputSystem.Android.AndroidStepCounter, backed by
+		// Android's TYPE_STEP_COUNTER). Do NOT call InputSystem.AddDevice<StepCounter>() here to
+		// "fix" a null device — that fabricates a disconnected managed-only device with no native
+		// sensor behind it, which reports enabled but never receives real step events. That fake
+		// device previously masked devices that genuinely have no step sensor (or hadn't finished
+		// registering it yet), causing steps to silently never count on those phones.
 		private bool EnsureStepCounterDevice()
 		{
-			if (StepCounter.current == null)
-			{
-				Debug.Log("StepCounter unavailable, attempting to re-register");
-				InputSystem.AddDevice<StepCounter>();
-			}
-
 			if (StepCounter.current == null) return false;
 
 			if (!StepCounter.current.enabled)
-			{
-				Debug.Log("StepCounter disabled, enabling");
 				InputSystem.EnableDevice(StepCounter.current);
-			}
 
 			return StepCounter.current.enabled;
 		}
+
+		/// <summary>
+		/// Checks whether this device can actually count steps: permission granted AND a real
+		/// native step-counter sensor present. Retries briefly since some OEM sensor hubs register
+		/// the sensor a little after app start rather than immediately.
+		/// </summary>
+		private async Task<StepCounterAvailability> CheckStepCounterAvailabilityAsync()
+		{
+#if UNITY_EDITOR
+			return StepCounterAvailability.Available;
+#else
+			if (!Permission.HasUserAuthorizedPermission("android.permission.ACTIVITY_RECOGNITION"))
+				return StepCounterAvailability.PermissionDenied;
+
+			for (int i = 0; i < SensorDetectRetries; i++)
+			{
+				if (EnsureStepCounterDevice()) return StepCounterAvailability.Available;
+				await UniTask.Delay(SensorDetectRetryDelayMs);
+			}
+
+			return StepCounterAvailability.SensorUnsupported;
+#endif
+		}
+
+		/// <summary>
+		/// The app is unusable without step tracking, so a missing sensor or denied permission
+		/// signs the user back out and blocks entry with an explanation instead of letting them
+		/// into a screen that will just never show any progress.
+		/// </summary>
+		private void HandleStepCounterUnavailable(StepCounterAvailability availability)
+		{
+			Auth?.SignOut();
+
+			string message = availability == StepCounterAvailability.PermissionDenied
+				? "TrainingBuddy needs the Activity Recognition permission to count your steps. Please grant it and log in again."
+				: "TrainingBuddy couldn't find a step counter sensor on this device. The app requires one to work and can't be used without it.";
+
+			UIManager?.ShowOverlay("Step Counter Required", message, "OK", () => UIManager?.ReturnToWelcomeScreen());
+		}
+
+		#endregion
+
+		#region Email Verification
+
+		/// <summary>
+		/// Checks whether the signed-in user has verified their email, reloading first since
+		/// IsEmailVerified is only a locally-cached flag — clicking the emailed link updates
+		/// Firebase server-side, and only shows up here after an explicit reload. Shows a
+		/// blocking overlay with a manual resend option if verification is still pending.
+		/// </summary>
+		public async Task<bool> EnsureEmailVerifiedAsync()
+		{
+			if (Auth?.CurrentUser == null) return false;
+
+			await Auth.CurrentUser.ReloadAsync();
+			if (Auth.CurrentUser.IsEmailVerified) return true;
+
+			UIManager?.ShowOverlay(
+				"Verificer Din Email",
+				$"Vi har sendt et verificeringslink til {Auth.CurrentUser.Email}. Venligst verificer din email og log ind igen.",
+				"Gensend Email",
+				() => _ = ResendVerificationEmailAsync(),
+				"OK",
+				() => { });
+
+			return false;
+		}
+
+		public async Task ResendVerificationEmailAsync()
+		{
+			if (Auth?.CurrentUser == null) return;
+			try
+			{
+				await Auth.CurrentUser.SendEmailVerificationAsync();
+			}
+			catch (Exception ex)
+			{
+				$"Failed to resend verification email: {ex}".Log();
+			}
+		}
+
+		/// <summary>
+		/// Shows a simple one-button informational overlay, if the UI layer is available.
+		/// </summary>
+		public void ShowMessage(string title, string message, string buttonText = "OK")
+		{
+			UIManager?.ShowOverlay(title, message, buttonText, () => { });
+		}
+
+		#endregion
+
+		#region Account Deletion
+
+		/// <summary>
+		/// Permanently deletes the signed-in user: their profile (including nested daily-step
+		/// history), leaderboard entry, both sides of every friendship, incoming friend
+		/// requests, their reserved username and friend-code slots, and their race
+		/// memberships — cancelling any race they're actively hosting so it doesn't dangle
+		/// with a deleted host, and dropping plain participation elsewhere. Historical
+		/// (completed/cancelled) races they hosted are left alone as records.
+		///
+		/// Requires the current password: Firebase Auth refuses to delete an account unless
+		/// the session was "recently" authenticated, and re-entering a password is also a
+		/// reasonable confirmation step for a destructive action regardless.
+		/// </summary>
+		public async Task<bool> DeleteAccountAsync(string password)
+		{
+			if (Auth?.CurrentUser == null) return false;
+
+			FirebaseUser user = Auth.CurrentUser;
+			string uid = user.UserId;
+
+			try
+			{
+				Credential credential = EmailAuthProvider.GetCredential(user.Email, password);
+				await user.ReauthenticateAsync(credential);
+			}
+			catch (Exception ex)
+			{
+				$"DeleteAccountAsync: reauthentication failed: {ex}".LogError();
+				ShowMessage("Delete Account", "Incorrect password. Your account was not deleted.");
+				return false;
+			}
+
+			DataSnapshot userSnapshot = await FetchUserData(user);
+			string friendCode = userSnapshot?.Child("FriendCode").Value?.ToString();
+			string userName   = userSnapshot?.Child("UserName").Value?.ToString();
+
+			var updates = new Dictionary<string, object>();
+
+			DataSnapshot userRaces = await GetUserRacesSnapshotAsync(uid);
+			if (userRaces is { Exists: true })
+			{
+				foreach (DataSnapshot raceEntry in userRaces.Children)
+				{
+					string raceId = raceEntry.Key;
+					string role = raceEntry.Child("role").Value?.ToString();
+					DataSnapshot race = await GetRaceSnapshotAsync(raceId);
+
+					if (race is { Exists: true })
+					{
+						string status = race.Child("status").Value?.ToString();
+						if (string.Equals(role, "host", StringComparison.OrdinalIgnoreCase))
+						{
+							if (IsActiveRaceStatus(status))
+							{
+								updates[$"races/{raceId}/status"] = "cancelled";
+								updates[$"joinRequests/{raceId}"] = null;
+							}
+						}
+						else
+						{
+							updates[$"races/{raceId}/participants/{uid}"] = null;
+						}
+					}
+
+					updates[$"joinRequests/{raceId}/{uid}"] = null;
+					updates[$"userRaces/{uid}/{raceId}"] = null;
+				}
+			}
+
+			DataSnapshot friends = await DatabaseReference.Child("friends").Child(uid).GetValueAsync();
+			if (friends.Exists)
+			{
+				foreach (DataSnapshot friend in friends.Children)
+					updates[$"friends/{friend.Key}/{uid}"] = null;
+			}
+			updates[$"friends/{uid}"] = null;
+
+			// Incoming requests only — outgoing requests sent to others aren't indexed anywhere
+			// to find them (no reverse lookup by sender). Left as harmless orphans; existing
+			// reads already skip any request whose sender no longer resolves to a user.
+			updates[$"friendRequests/{uid}"] = null;
+
+			updates[$"leaderboard/{uid}"] = null;
+			if (!string.IsNullOrEmpty(friendCode)) updates[$"friendCodes/{friendCode}"] = null;
+			if (!string.IsNullOrEmpty(userName))   updates[$"usernames/{userName}"] = null;
+			updates[$"users/{uid}"] = null; // includes nested dailySteps
+
+			try
+			{
+				await DatabaseReference.UpdateChildrenAsync(updates);
+			}
+			catch (Exception ex)
+			{
+				$"DeleteAccountAsync: database cleanup failed: {ex}".LogError();
+				ShowMessage("Delete Account", "Something went wrong deleting your data. Please try again.");
+				return false;
+			}
+
+			PlayerPrefs.DeleteKey(StepCountKey);
+			PlayerPrefs.DeleteKey(StepSnapshotKey);
+			PlayerPrefs.DeleteKey(DailyStepBaseKey);
+			PlayerPrefs.DeleteKey(DailyStepDateKey);
+			PlayerPrefs.Save();
+
+			// Must be last: DB rules and everything above are authenticated as this user, and
+			// deleting the auth record ends that session.
+			try
+			{
+				await user.DeleteAsync();
+			}
+			catch (Exception ex)
+			{
+				$"DeleteAccountAsync: failed to delete auth user: {ex}".LogError();
+				ShowMessage("Delete Account", "Your data was removed, but the sign-in record could not be deleted. Please contact support.");
+				return false;
+			}
+
+			return true;
+		}
+
+		#endregion
+
+		#region Utility
 
 		private static long ReadLong(object value) => value switch
 		{
