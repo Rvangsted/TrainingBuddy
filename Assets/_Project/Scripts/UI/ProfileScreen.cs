@@ -21,6 +21,7 @@ namespace TrainingBuddy.UI
 		private readonly FirebaseController _firebaseController;
 		private DataSnapshot _dataSnapshot;
 		private long _currentStepCount;
+		private readonly List<ActivityGraph.DataPoint> _historyDataPoints = new();
 
 		protected ProfileScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
@@ -197,19 +198,33 @@ namespace TrainingBuddy.UI
 
 		private async Task LoadActivityGraph()
 		{
-			// FetchDailyStepsAsync never includes today (see its doc comment) — "today" below is
-			// always the live running total, regardless of which platform/provider backs it.
+			// FetchDailyStepsAsync never includes today (see its doc comment) — history only.
+			// The "today" point is rebuilt separately, live, in UpdateTodayDataPoint().
 			var dailySteps = await _databaseManager.FetchDailyStepsAsync(5);
 
-			var dataPoints = new List<ActivityGraph.DataPoint>();
+			_historyDataPoints.Clear();
 			foreach (var (dateKey, steps) in dailySteps)
 			{
 				var date = DateTime.ParseExact(dateKey, "yyyy-MM-dd", null);
-				dataPoints.Add(new ActivityGraph.DataPoint(FormatDanishDate(date), steps));
+				_historyDataPoints.Add(new ActivityGraph.DataPoint(FormatDanishDate(date), steps));
 			}
 
+			UpdateTodayDataPoint();
+		}
+
+		// Re-appends a freshly computed "today" point onto the cached history and re-pushes the
+		// whole set to the graph — called on every StepCountChanged, not just on page load, so
+		// "I dag" actually tracks the live running total instead of freezing at whatever it was
+		// when the page first drew.
+		private void UpdateTodayDataPoint()
+		{
+			if (_activityGraph == null) return;
+
 			long todaySteps = Math.Max(0, _currentStepCount - _databaseManager.DailyStepBase);
-			dataPoints.Add(new ActivityGraph.DataPoint("I dag", todaySteps));
+			var dataPoints = new List<ActivityGraph.DataPoint>(_historyDataPoints)
+			{
+				new ActivityGraph.DataPoint("I dag", todaySteps)
+			};
 
 			_activityGraph.SetData(dataPoints, dataPoints.Count - 1);
 		}
@@ -238,6 +253,7 @@ namespace TrainingBuddy.UI
 		{
 			_currentStepCount = stepCount;
 			UpdateLevelingProgress();
+			UpdateTodayDataPoint();
 		}
 
 		private void OnLogout(ClickEvent evt)
