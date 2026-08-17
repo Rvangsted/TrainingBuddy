@@ -50,9 +50,17 @@ Idea: let accumulated steps be spent like a currency in-app.
 
 ## 4. Placement points (new leaderboard currency)
 
-- New point type awarded based on **placement/ranking within a run**, not raw step count.
-- This point type — not steps — is what the leaderboard should be ranked by.
-- Implies leaderboard logic needs to shift from summing steps to summing placement points.
+- **Scoped** — see `PlacementPoints_Scope.md`. New `users/{uid}/PlacementPoints`
+  (lifetime, no seasonal reset — matches every other stat in this codebase),
+  awarded in `MarkRaceWatchedAsync`'s existing "all watched → completed" hook, the
+  one place a race is unambiguously finished. Ranked across all participants
+  including AI filler (simplest; AI use the weakest real stats in the race so they
+  rarely skew it). `HighScoreScreen` switches its sort key from `StepCount` to this.
+- Interacts with #3: the pay-to-win stat bonus affects `FinishTime`, so paid runs
+  can indirectly buy leaderboard position too — an accepted consequence of that
+  earlier decision, not a new one.
+- Still open: the actual points-per-rank table/formula, whether last place gets a
+  consolation amount or zero, and how an award is shown to the player post-race.
 
 ## 5. Refer-a-friend system
 
