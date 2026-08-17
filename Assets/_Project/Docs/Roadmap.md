@@ -21,10 +21,17 @@ see `StepCounter_HealthKit_Implementation.md` §"What's left":
 
 Idea: let accumulated steps be spent like a currency in-app.
 
-- **Not yet confirmed feasible / scoped.** Needs investigation into how this interacts
-  with the existing step-sync model (per-device anchoring, 30-day sync cap, plausibility
-  clamp — see the HealthKit/Health Connect migration docs) before design, since spendable
-  currency raises the incentive to game step counts higher than a leaderboard alone does.
+- **Scoped** — see `StepsAsCurrency_Scope.md`. Design: a new `StepCurrency` balance
+  separate from the lifetime `StepCount` total (leaderboard/race-stat meaning of
+  `StepCount` stays untouched), backed by a `walletTransactions/{uid}` ledger for
+  refunds. Written client-side, same trust model `StepCount` already runs under —
+  no Cloud Functions layer. Known risk: a modified client could credit itself
+  currency, same as it already could inflate `StepCount` today; accepted
+  deliberately rather than building server-side validation infrastructure.
+- Conversion 1:1, continuous accrual, no balance cap. Refunds/failure handling are
+  confirmed as required but their exact mechanics wait on #3 (paid runs) being
+  scoped — the balance model is designed with a transaction ledger from the start
+  so refunds are possible later.
 - Depends on this landing before the paid-run system below, since that system is
   described as spending steps.
 
