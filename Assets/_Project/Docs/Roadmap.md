@@ -37,10 +37,16 @@ Idea: let accumulated steps be spent like a currency in-app.
 
 ## 3. Paid runs
 
-- Pay to **create** a run.
-- Pay to **join** a run.
-- Three separate payable amounts, each unlocking a different bonus tier.
-- Presumably paid for using the steps-currency from #2 — needs confirming.
+- **Scoped** — see `PaidRuns_Scope.md`. Paid with `StepCurrency` from #2. One shared
+  set of 3 tiers usable for both creating and joining a run; each tier is a fixed,
+  guaranteed bonus (not a shared pot). Pay-to-win confirmed acceptable: the bonus is a
+  real `SpeedPoints`/`AccelerationPoints` boost applied only within that race's
+  simulation (never written back to the account's real stats).
+- Refunds ride the `walletTransactions` ledger from #2: triggered by race cancellation,
+  a paid participant being kicked/leaving pre-start, or a race never reaching minimum
+  participants (the last one needs new auto-expiry logic — doesn't exist today).
+- Still open: concrete tier costs/bonus sizes (needs balancing against
+  `RaceSimulator`'s stat normalization and playtesting) and tier-selection UI.
 
 ## 4. Placement points (new leaderboard currency)
 
