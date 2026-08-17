@@ -1330,7 +1330,11 @@ namespace TrainingBuddy.Managers
 			_dailyStepBase = useLocal ? localDailyBase : firebaseDailyBase;
 			_dailyStepDate = (useLocal ? localDailyDate : firebaseDailyDate) ?? "";
 
-			string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+			// Local day, not UTC — matches GetDailyStepsAsync's local-calendar-day buckets. Using
+			// UTC here caused a premature rollover at UTC midnight (1-2am local time for Denmark),
+			// silently archiving part of the current local day as "yesterday" and resetting
+			// DailyStepBase mid-day.
+			string today = DateTime.Now.ToString("yyyy-MM-dd");
 			if (string.IsNullOrEmpty(_dailyStepDate))
 			{
 				// First session ever — seed today's base from the loaded total
@@ -1471,7 +1475,8 @@ namespace TrainingBuddy.Managers
 			if (Auth?.CurrentUser == null) return false;
 			if (_currentTotal == _lastSyncedTotal) return false;
 
-			string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
+			// Local day, not UTC — see the matching comment in StartStepCounter().
+			string today = DateTime.Now.ToString("yyyy-MM-dd");
 			var updates = new Dictionary<string, object>(extraFields)
 			{
 				{ "StepCount", (int)_currentTotal },
@@ -1781,7 +1786,8 @@ namespace TrainingBuddy.Managers
 				return result;
 			}
 
-			// Legacy/Editor fallback — hand-maintained Firebase buckets, UTC-day keyed.
+			// Legacy/Editor fallback — hand-maintained Firebase buckets, now local-day keyed to
+			// match WriteStepsToFirebaseAsync/StartStepCounter's day-rollover (see their comments).
 			try
 			{
 				DataSnapshot snapshot = await DatabaseReference
@@ -1792,11 +1798,11 @@ namespace TrainingBuddy.Managers
 					.LimitToLast(days)
 					.GetValueAsync();
 
-				string todayUtc = DateTime.UtcNow.ToString("yyyy-MM-dd");
+				string todayLocal = DateTime.Now.ToString("yyyy-MM-dd");
 				var result = new List<(string, long)>();
 				foreach (DataSnapshot child in snapshot.Children)
 				{
-					if (child.Key != todayUtc)
+					if (child.Key != todayLocal)
 						result.Add((child.Key, ReadLong(child.Value)));
 				}
 				return result; // Firebase returns children in ascending key order

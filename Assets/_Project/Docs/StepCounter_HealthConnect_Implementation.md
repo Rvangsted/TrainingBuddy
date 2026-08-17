@@ -397,7 +397,7 @@ if (_stepDataProvider != null)
     string todayLocal = DateTime.Now.ToString("yyyy-MM-dd");
     // ...filter out todayLocal, return the rest
 }
-// else: unchanged Firebase-backed fallback (Editor / no provider)
+// else: Firebase-backed fallback (Editor / no provider) — also local-day keyed now, see below.
 ```
 
 Real semantics fix in the process: the Firebase buckets were **UTC-day**
@@ -410,6 +410,26 @@ a same-day partial bucket at all — `GetDailyStepsAsync`'s contract is
 `LoadActivityGraph` drop its old UTC-string comparison entirely (it was
 there specifically to strip today's entry, which the provider path now
 guarantees never appears).
+
+**Follow-up bug found in real testing, same root cause:** the graph's
+*history* went local-day in the change above, but `DailyStepBase`/
+`_dailyStepDate` — the baseline `StartStepCounter()` and
+`WriteStepsToFirebaseAsync` use to decide when "today" rolls over for the
+**live** running "I dag" number — was still computed from
+`DateTime.UtcNow`. For Denmark (UTC+1/+2), that meant the rollover fired at
+UTC midnight — 1–2am **local** time — silently archiving the first hour or
+two of the real local day as "yesterday" and resetting the baseline mid-day.
+Symptom actually observed: the profile page's lifetime total (450) and the
+graph's live "I dag" figure (213) diverged by exactly the steps taken in
+that early-morning window, on an account that had read 0/0 for both just
+hours earlier. Fixed by switching all three `DateTime.UtcNow.ToString("yyyy-MM-dd")`
+call sites in `DatabaseManager.cs` (`StartStepCounter`'s rollover check,
+`WriteStepsToFirebaseAsync`'s rollover check, and `FetchDailyStepsAsync`'s
+Firebase-fallback today-exclusion) to `DateTime.Now` — the whole
+daily-bucketing concept is local-day now, consistently, not just the new
+provider queries. `TestUserSeeder.cs` still seeds fake `dailySteps` data
+UTC-keyed; harmless (only the Editor-fallback path would read it) but
+flagged in case it's worth aligning later.
 
 **Deliberately conservative — read path only.** The Firebase
 `dailySteps/{date}` writes are untouched and still happen on every
