@@ -1,6 +1,7 @@
 package dk.trainingbuddy.game.healthconnect
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.health.connect.client.PermissionController
 
@@ -14,6 +15,12 @@ class HealthConnectPermissionActivity : ComponentActivity() {
 
     private val requestPermissions =
         registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+            Log.i(
+                "HealthConnectBridge",
+                "HealthConnectPermissionActivity result: granted=$granted " +
+                    "(requested ${HealthConnectBridge.STEPS_PERMISSION}) — if steps isn't in the granted " +
+                    "set, the Health Connect consent screen's Steps toggle wasn't switched on before confirming"
+            )
             val receiver = HealthConnectBridge.pendingPermissionReceiver
             HealthConnectBridge.pendingPermissionReceiver = null
             receiver?.onResult(if (granted.contains(HealthConnectBridge.STEPS_PERMISSION)) "available" else "permissionDenied")

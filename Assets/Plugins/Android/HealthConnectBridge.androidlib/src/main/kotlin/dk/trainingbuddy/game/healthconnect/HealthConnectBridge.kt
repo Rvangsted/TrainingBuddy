@@ -1,7 +1,11 @@
 package dk.trainingbuddy.game.healthconnect
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.health.connect.HealthConnectManager
+import android.os.Build
+import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
@@ -32,6 +36,7 @@ interface StepsReceiver {
  */
 object HealthConnectBridge {
 
+    private const val TAG = "HealthConnectBridge"
     private const val PROVIDER_PACKAGE = "com.google.android.apps.healthdata"
     internal val STEPS_PERMISSION: String = HealthPermission.getReadPermission(StepsRecord::class)
 
@@ -48,6 +53,7 @@ object HealthConnectBridge {
     @JvmStatic
     fun checkAvailability(context: Context, receiver: AvailabilityReceiver) {
         if (!isProviderInstalled(context)) {
+            Log.i(TAG, "checkAvailability: Health Connect provider not installed")
             receiver.onResult("notInstalled")
             return
         }
@@ -56,8 +62,11 @@ object HealthConnectBridge {
             try {
                 val client = HealthConnectClient.getOrCreate(context)
                 val granted = client.permissionController.getGrantedPermissions()
-                receiver.onResult(if (granted.contains(STEPS_PERMISSION)) "available" else "permissionDenied")
+                val hasSteps = granted.contains(STEPS_PERMISSION)
+                Log.i(TAG, "checkAvailability: grantedPermissions=$granted hasStepsPermission=$hasSteps")
+                receiver.onResult(if (hasSteps) "available" else "permissionDenied")
             } catch (e: Exception) {
+                Log.e(TAG, "checkAvailability: failed to read granted permissions", e)
                 receiver.onResult("permissionDenied")
             }
         }
@@ -65,8 +74,32 @@ object HealthConnectBridge {
 
     @JvmStatic
     fun requestPermission(context: Context, receiver: AvailabilityReceiver) {
+        Log.i(TAG, "requestPermission: launching HealthConnectPermissionActivity for $STEPS_PERMISSION")
         pendingPermissionReceiver = receiver
         context.startActivity(Intent(context, HealthConnectPermissionActivity::class.java))
+    }
+
+    // Deep-links into Health Connect's own permission UI for this app, instead of the OS
+    // "App info" screen — that screen has no Health Connect section at all, which is why the old
+    // fallback button looked like it did nothing. The target intent differs by OS version: Android
+    // 14+ folded Health Connect into the platform permission framework (ACTION_MANAGE_HEALTH_PERMISSIONS,
+    // android.health.connect.HealthConnectManager), while 13 and below still route through the
+    // standalone Health Connect app's own settings action (HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS).
+    @JvmStatic
+    fun openHealthConnectSettings(context: Context): Boolean {
+        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            Intent(HealthConnectManager.ACTION_MANAGE_HEALTH_PERMISSIONS)
+                .putExtra(Intent.EXTRA_PACKAGE_NAME, context.packageName)
+        } else {
+            Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
+        }
+        return try {
+            context.startActivity(intent)
+            true
+        } catch (e: ActivityNotFoundException) {
+            Log.e(TAG, "openHealthConnectSettings: no activity resolved $intent", e)
+            false
+        }
     }
 
     @JvmStatic

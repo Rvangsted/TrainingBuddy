@@ -19,5 +19,13 @@ namespace TrainingBuddy.Managers
 		/// </summary>
 		Task<StepCounterAvailability> RequestPermissionAsync();
 		Task<long> GetStepsSinceAsync(DateTimeOffset since);
+
+		/// <summary>
+		/// Deep-links into the platform's own health-data permission settings (Health Connect's
+		/// app permission screen on Android) as a manual-fix fallback when RequestPermissionAsync
+		/// round-trips without granting access. Returns false if no such screen could be opened
+		/// (e.g. the provider app isn't installed), so callers can fall back further.
+		/// </summary>
+		bool OpenPlatformSettings();
 	}
 }

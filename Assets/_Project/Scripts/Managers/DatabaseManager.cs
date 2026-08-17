@@ -84,6 +84,14 @@ namespace TrainingBuddy.Managers
 		private string _cachedUserName;
 		private string _cachedSex;
 
+		private const long DeviceSyncMaxBacklogMillis = 30L * 24 * 60 * 60 * 1000; // 30-day cap on a single sync's reach
+		private const long MaxPlausibleStepsPerSync   = 20000;                     // sanity clamp, per the migration doc
+
+		// First per-device identifier in this codebase. Firebase RTDB keys forbid '.', '#', '$', '[', ']', '/',
+		// so the platform-provided id is sanitized defensively even though real device ids don't contain them.
+		private static readonly string DeviceId = SystemInfo.deviceUniqueIdentifier
+			.Replace('.', '_').Replace('#', '_').Replace('$', '_').Replace('[', '_').Replace(']', '_').Replace('/', '_');
+
 		// Android uses the Health Connect provider; iOS/Editor still use the raw-sensor path
 		// below until a HealthKitStepProvider exists — see StepCounter_HealthPlatform_Migration_Scope.md.
 		private readonly IStepDataProvider _stepDataProvider = CreateStepDataProvider();
@@ -1300,7 +1308,7 @@ namespace TrainingBuddy.Managers
 
 			if (_stepDataProvider != null)
 			{
-				long firebaseSyncTimestamp = ReadLong(data?.Child("LastSyncTimestamp").Value);
+				long firebaseSyncTimestamp = ReadLong(data?.Child("deviceSync").Child(DeviceId).Child("lastSyncTimestamp").Value);
 				long localSyncTimestamp    = long.TryParse(PlayerPrefs.GetString(LastSyncTimestampKey, "0"), out long parsedSync) ? parsedSync : 0;
 				_lastSyncTimestampMillis    = useLocal ? localSyncTimestamp : firebaseSyncTimestamp;
 			}
@@ -1374,6 +1382,11 @@ namespace TrainingBuddy.Managers
 		public Task<StepCounterAvailability> RequestStepProviderPermissionAsync()
 		{
 			return _stepDataProvider?.RequestPermissionAsync() ?? Task.FromResult(StepCounterAvailability.Available);
+		}
+
+		public bool OpenStepProviderSettings()
+		{
+			return _stepDataProvider?.OpenPlatformSettings() ?? false;
 		}
 
 		/// <summary>
@@ -1542,7 +1555,18 @@ namespace TrainingBuddy.Managers
 			}
 			else
 			{
-				long delta = await provider.GetStepsSinceAsync(DateTimeOffset.FromUnixTimeMilliseconds(_lastSyncTimestampMillis));
+				// Cap how far back a single sync can reach so a stale per-device anchor (e.g. an account
+				// left logged into someone else's phone for weeks) can't harvest that device's entire
+				// pre-existing Health Connect/HealthKit backlog — only up to 30 days of it.
+				long earliestAllowed = GetUnixTimestampMilliseconds() - DeviceSyncMaxBacklogMillis;
+				long since = Math.Max(_lastSyncTimestampMillis, earliestAllowed);
+
+				long delta = await provider.GetStepsSinceAsync(DateTimeOffset.FromUnixTimeMilliseconds(since));
+				if (delta > MaxPlausibleStepsPerSync)
+				{
+					$"SyncFromProviderAsync: clamping implausible delta {delta} to {MaxPlausibleStepsPerSync}".Log();
+					delta = MaxPlausibleStepsPerSync;
+				}
 				if (delta > 0)
 				{
 					_currentTotal += delta;
@@ -1552,7 +1576,10 @@ namespace TrainingBuddy.Managers
 			}
 
 			SaveProviderSyncLocally(_currentTotal, _lastSyncTimestampMillis);
-			await WriteStepsToFirebaseAsync(new Dictionary<string, object> { { "LastSyncTimestamp", _lastSyncTimestampMillis } });
+			await WriteStepsToFirebaseAsync(new Dictionary<string, object>
+			{
+				{ $"deviceSync/{DeviceId}/lastSyncTimestamp", _lastSyncTimestampMillis }
+			});
 		}
 
 		private async Task ArchiveDailyStepsAsync(string date, long steps)

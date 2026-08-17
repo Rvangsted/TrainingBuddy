@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using BedtimeCore;
 #if UNITY_ANDROID
 using UnityEngine;
 #endif
@@ -36,9 +37,12 @@ namespace TrainingBuddy.Managers
 				_tcs = tcs;
 			}
 
+			// Must be named exactly onResult (lowercase) to match AvailabilityReceiver.onResult in
+			// HealthConnectBridge.kt — AndroidJavaProxy dispatches by exact case-sensitive name match.
 			[UnityEngine.Scripting.Preserve]
-			public void OnResult(string status)
+			public void onResult(string status)
 			{
+				$"HealthConnect availability result: {status}".Log();
 				_tcs.TrySetResult(status switch
 				{
 					"available" => StepCounterAvailability.Available,
@@ -60,8 +64,10 @@ namespace TrainingBuddy.Managers
 				_tcs = tcs;
 			}
 
+			// Must be named exactly onResult (lowercase) to match StepsReceiver.onResult in
+			// HealthConnectBridge.kt — AndroidJavaProxy dispatches by exact case-sensitive name match.
 			[UnityEngine.Scripting.Preserve]
-			public void OnResult(long steps, bool success)
+			public void onResult(long steps, bool success)
 			{
 				_tcs.TrySetResult(success ? steps : 0);
 			}
@@ -101,6 +107,16 @@ namespace TrainingBuddy.Managers
 			return tcs.Task;
 #else
 			return Task.FromResult(0L);
+#endif
+		}
+
+		public bool OpenPlatformSettings()
+		{
+#if UNITY_ANDROID && !UNITY_EDITOR
+			using var bridge = new AndroidJavaClass(BridgeClassName);
+			return bridge.CallStatic<bool>("openHealthConnectSettings", CurrentActivity);
+#else
+			return false;
 #endif
 		}
 	}

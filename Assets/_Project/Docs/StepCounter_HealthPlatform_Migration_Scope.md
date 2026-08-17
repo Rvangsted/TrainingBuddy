@@ -1,4 +1,4 @@
-# Migrating Step Data to Health Connect (Android) / HealthKit (iOS)
+ # Migrating Step Data to Health Connect (Android) / HealthKit (iOS)
 
 ## Why
 

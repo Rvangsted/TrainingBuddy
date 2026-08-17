@@ -16,6 +16,7 @@
                 <ui:Label name="PermissionTitle" text="Tilladelser påkrævet" style="-unity-font-style: bold; font-size: 20px; white-space: normal; -unity-text-align: upper-center; margin-bottom: 12px;"/>
                 <ui:Label name="PermissionMessage" text="Appen skal bruge adgang til din aktivitet og placering for at tælle skridt og finde løb i nærheden." style="font-size: 14px; white-space: normal; -unity-text-align: upper-center; margin-bottom: 24px; color: rgb(80,80,80);"/>
                 <ui:Button name="GrantPermissionButton" text="Giv tilladelser" style="padding: 12px 24px; background-color: rgb(150,210,0); border-radius: 8px; font-size: 16px; border-width: 0;"/>
+                <ui:Button name="OpenSettingsButton" text="Åbn indstillinger" class="text-button" style="margin-top: 12px; display: none;"/>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
