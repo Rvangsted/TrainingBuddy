@@ -1321,7 +1321,31 @@ namespace TrainingBuddy.Managers
 				_deviceAnchor          = useLocal ? localSnapshot : firebaseSnapshot;
 			}
 
-			// Load daily step base and handle day rollover
+			LoadDailyStepBaseAndHandleRollover(data, useLocal);
+
+			// Immediately show the saved count while we wait for the first sensor tick
+			StepCountChanged?.Invoke(_currentTotal);
+
+			// Write leaderboard entry immediately so user appears before first 60s sync
+			_ = WriteLeaderboardEntryAsync(Auth.CurrentUser.UserId);
+
+#if UNITY_EDITOR
+			return StepCounterAvailability.Available; // No step sensor in the editor — leaderboard entry already written above
+#endif
+
+			_stepCts = new CancellationTokenSource();
+			StepCounterRunning = true;
+			_ = _stepDataProvider != null ? ProviderSyncLoop(_stepDataProvider, _stepCts.Token) : StepCounterLoop(_stepCts.Token);
+			return StepCounterAvailability.Available;
+		}
+
+		/// <summary>
+		/// Loads DailyStepBase/DailyStepDate (Firebase vs. local PlayerPrefs backup, per
+		/// `useLocal`) and rolls the day over if it's changed since the last session — archiving
+		/// yesterday's total and reseeding today's baseline from the current running total.
+		/// </summary>
+		private void LoadDailyStepBaseAndHandleRollover(DataSnapshot data, bool useLocal)
+		{
 			long firebaseDailyBase   = ReadLong(data?.Child("DailyStepBase").Value);
 			string firebaseDailyDate = data?.Child("DailyStepDate").Value?.ToString() ?? "";
 			long localDailyBase      = PlayerPrefs.GetInt(DailyStepBaseKey, 0);
@@ -1352,32 +1376,26 @@ namespace TrainingBuddy.Managers
 				SaveDailyBaseLocally();
 				_ = ArchiveDailyStepsAsync(prevDate, prevDaySteps);
 			}
+		}
 
-			// Immediately show the saved count while we wait for the first sensor tick
-			StepCountChanged?.Invoke(_currentTotal);
+		/// <summary>
+		/// Writes UserName/Sex/StepCount to this user's leaderboard entry, if a display name has
+		/// been loaded. Shared by StartStepCounter (fire-and-forget, for an instant first
+		/// appearance) and WriteStepsToFirebaseAsync (awaited, as part of the periodic sync).
+		/// </summary>
+		private Task WriteLeaderboardEntryAsync(string uid)
+		{
+			if (string.IsNullOrEmpty(_cachedUserName)) return Task.CompletedTask;
 
-			// Write leaderboard entry immediately so user appears before first 60s sync
-			if (!string.IsNullOrEmpty(_cachedUserName))
-			{
-				_ = DatabaseReference
-					.Child("leaderboard")
-					.Child(Auth.CurrentUser.UserId)
-					.UpdateChildrenAsync(new Dictionary<string, object>
-					{
-						{ "UserName",  _cachedUserName },
-						{ "Sex",       _cachedSex },
-						{ "StepCount", (int)_currentTotal }
-					});
-			}
-
-#if UNITY_EDITOR
-			return StepCounterAvailability.Available; // No step sensor in the editor — leaderboard entry already written above
-#endif
-
-			_stepCts = new CancellationTokenSource();
-			StepCounterRunning = true;
-			_ = _stepDataProvider != null ? ProviderSyncLoop(_stepDataProvider, _stepCts.Token) : StepCounterLoop(_stepCts.Token);
-			return StepCounterAvailability.Available;
+			return DatabaseReference
+				.Child("leaderboard")
+				.Child(uid)
+				.UpdateChildrenAsync(new Dictionary<string, object>
+				{
+					{ "UserName",  _cachedUserName },
+					{ "Sex",       _cachedSex },
+					{ "StepCount", (int)_currentTotal }
+				});
 		}
 
 		public Task<StepCounterAvailability> CheckStepProviderAvailabilityAsync()
@@ -1505,18 +1523,7 @@ namespace TrainingBuddy.Managers
 					.Child(uid)
 					.UpdateChildrenAsync(updates);
 
-				if (!string.IsNullOrEmpty(_cachedUserName))
-				{
-					await DatabaseReference
-						.Child("leaderboard")
-						.Child(uid)
-						.UpdateChildrenAsync(new Dictionary<string, object>
-						{
-							{ "UserName",  _cachedUserName },
-							{ "Sex",       _cachedSex },
-							{ "StepCount", (int)_currentTotal }
-						});
-				}
+				await WriteLeaderboardEntryAsync(uid);
 
 				_lastSyncedTotal = _currentTotal;
 				return true;

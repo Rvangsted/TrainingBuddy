@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
 using BedtimeCore;
-using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
-using TrainingBuddy.UI.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Button = UnityEngine.UIElements.Button;
@@ -14,17 +12,13 @@ namespace TrainingBuddy.UI
 		private Button _loginButton;
 		private Button _registerButton;
 		private Button _privacyButton;
-		
-		private readonly FirebaseController _firebaseController;
-		
-		public WelcomeScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
+
+		public WelcomeScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.WelcomeScreenVisualTree, "welcome-wrapper");
 			_layoutData.WelcomeScreen = this;
-			
-			_firebaseController = firebaseController;
 		}
-		
+
 		public override void Initialize()
 		{
 			_loginButton = Layout.Q<Button>("LoginButton");
@@ -33,8 +27,10 @@ namespace TrainingBuddy.UI
 
 			_loginButton.RegisterCallback<ClickEvent>(OnLogin);
 			_registerButton.RegisterCallback<ClickEvent>(OnRegister);
-			_privacyButton.RegisterCallback<ClickEvent>(OnTest);
+			_privacyButton.RegisterCallback<ClickEvent>(OnPrivacyPolicyClicked);
 		}
+
+		#region Health data permission flow
 
 		private VisualElement _permissionOverlay;
 		private Label _permissionMessage;
@@ -196,6 +192,8 @@ namespace TrainingBuddy.UI
 #endif
 		}
 
+		#endregion
+
 		private void OnLogin(ClickEvent evt)
 		{
 			_uiManager.ChangePage(_layoutData.LoginScreen);
@@ -206,33 +204,12 @@ namespace TrainingBuddy.UI
 			_uiManager.ChangePage(_layoutData.RegisterScreen);
 		}
 		
-		private async void OnTest(ClickEvent evt)
+		// No privacy policy content/URL exists yet — see StepCounter_HealthPlatform_Migration_Scope.md's
+		// "App Store / Play Store review prep" item. Placeholder until that's written, matching the
+		// same honest stub MainMenu.cs's own PrivacyButton already uses.
+		private void OnPrivacyPolicyClicked(ClickEvent evt)
 		{
-			// var title = LocalizationSettings.StringDatabase.GetLocalizedString("text_are_you_sure");
-			// var message = LocalizationSettings.StringDatabase.GetLocalizedString("text_are_you_sure_subtitle");
-			// var cancelText = LocalizationSettings.StringDatabase.GetLocalizedString("button_cancel");
-			// var confirmText = LocalizationSettings.StringDatabase.GetLocalizedString("button_delete_user");
-			//
-			// _uiManager.ShowOverlay(
-			// 	title,
-			// 	message,
-			// 	cancelText,
-			// 	() => Debug.Log("Cancel"),
-			// 	confirmText,
-			// 	() => Debug.Log("Delete User"),
-			// 	UniversalOverlay.PopupImage.Friends
-			// );
-
-// #if !UNITY_EDITOR
-// 			if (!CheckPermission())
-// 			{
-// 				return;
-// 			}
-// #endif
-			if (await _firebaseController.FirebaseLogin("admin@trainingbuddy.dk", "smjo3y2kZRfk7jN^@wGN4z8K^"))
-			{
-				_uiManager.ChangePage(_layoutData.MainMenu);
-			}
+			"Privacy button clicked — no privacy policy content wired up yet.".Log();
 		}
 	}
 }

@@ -12,7 +12,9 @@ that's now in place.
 - ✅ Android — Health Connect provider built, permission flow built, two
   real-world bugs found in testing and fixed, anti-cheat gap closed.
 - ✅ Daily-breakdown graph (`ProfileScreen`) now queries providers directly
-  (read path only) — see §9.
+  (read path only), local-day-keyed, and live-updates correctly — see §9.
+- ✅ General cleanup pass (hardcoded admin credential removed, step-counter
+  code de-duplicated/extracted for readability) — see §10.
 - 🟡 iOS — provider code written (see
   [`StepCounter_HealthKit_Implementation.md`](./StepCounter_HealthKit_Implementation.md)),
   but not yet compiled, build-profile'd, or QA'd — no Mac/Xcode was
@@ -431,6 +433,17 @@ provider queries. `TestUserSeeder.cs` still seeds fake `dailySteps` data
 UTC-keyed; harmless (only the Editor-fallback path would read it) but
 flagged in case it's worth aligning later.
 
+**Second follow-up bug, also found in real testing:** after the fix above,
+the lifetime total (top of profile page) kept climbing live as expected,
+but "I dag" stayed frozen. Cause: `ProfileScreen.LoadActivityGraph()` only
+ran once, when the page first drew — `OnStepCountChanged` (which fires on
+every sync) updated the lifetime counter and the leveling bar, but never
+touched the graph. Fixed by caching the fetched history separately
+(`_historyDataPoints`) and adding `UpdateTodayDataPoint()`, which rebuilds
+just the "today" point from the current running total and re-pushes the
+combined set to the graph — called both after the initial fetch and from
+`OnStepCountChanged`, with no extra history re-fetch needed.
+
 **Deliberately conservative — read path only.** The Firebase
 `dailySteps/{date}` writes are untouched and still happen on every
 platform. They're redundant on Android/iOS now (nothing reads them there
@@ -439,7 +452,37 @@ that write path is a separate, lower-risk future cleanup, not bundled here.
 
 ---
 
-## 10. What's left
+## 10. General cleanup pass
+
+A few things tidied up alongside the fixes above, once the daily-graph work
+made it clear the step-counter code had grown organically across several
+rounds of edits:
+
+- **Security fix — unrelated to Health Connect, but overdue.**
+  `WelcomeScreen.cs`'s "Privacy" button was secretly a debug shortcut
+  (`OnTest`) that logged straight into a hardcoded admin account
+  (`admin@trainingbuddy.dk` / a plaintext password), with a block of
+  commented-out test code above it. Replaced with an honest stub —
+  `OnPrivacyPolicyClicked`, just logging a line — matching the same
+  placeholder `MainMenu.cs`'s own Privacy button already uses (neither
+  links to real privacy policy content yet; see §11). Also removed the
+  now-fully-unused `FirebaseController` field/constructor parameter that
+  only existed for that one call.
+  **Still needed, outside of code:** that admin password is already in
+  git history from before this cleanup and needs to be rotated in Firebase
+  Auth directly — deleting it from the current file doesn't undo old
+  commits.
+- **`DatabaseManager.cs` — de-duplicated and extracted.** The
+  daily-rollover logic (the exact code that caused both bugs above) was
+  pulled out of `StartStepCounter()` into its own
+  `LoadDailyStepBaseAndHandleRollover(data, useLocal)` method, so it's easy
+  to find and reason about on its own. The leaderboard-entry write —
+  previously copy-pasted identically in both `StartStepCounter()`
+  (fire-and-forget) and `WriteStepsToFirebaseAsync()` (awaited) — is now
+  one shared `WriteLeaderboardEntryAsync(uid)` returning a `Task` either
+  call site can use either way.
+
+## 11. What's left
 
 Straight from the scope doc's phasing, in order:
 
@@ -455,8 +498,15 @@ Straight from the scope doc's phasing, in order:
    Still needs: the iOS Build Profile + bundle identifier (doesn't exist in
    this project yet), an actual compile/build on a Mac, and on-device QA —
    none of that was possible in the environment this was written in.
-3. **Store review prep** — privacy policy text, usage strings.
+3. **Store review prep** — privacy policy text, usage strings (the
+   `PrivacyButton` on both `WelcomeScreen` and `MainMenu` are still honest
+   stubs with nothing to link to yet — see §10).
 
-**Also flagged, unrelated to this migration but noticed along the way:**
-`WelcomeScreen.cs`'s `OnTest` method has a hardcoded admin email/password
-committed in plaintext. Worth removing/rotating independent of this work.
+**Resolved during the cleanup pass (§10):** the hardcoded admin credential
+in `WelcomeScreen.cs` is gone from the code. **Still outstanding, and not
+a code task:** rotate that account's password in Firebase Auth directly,
+since it's already sitting in git history from before this fix.
+
+**Minor, low-priority, not blocking anything:** `TestUserSeeder.cs` still
+seeds fake `dailySteps` test data with UTC-keyed dates (§9) — only affects
+the Editor/no-provider fallback path, cosmetic only.
