@@ -64,8 +64,19 @@ Idea: let accumulated steps be spent like a currency in-app.
 
 ## 5. Refer-a-friend system
 
-- Referring a friend rewards the referrer with points (presumably the placement points
-  from #4, or possibly a separate reward — needs confirming).
+- **Scoped** — see `ReferAFriend_Scope.md`. Reuses the existing `FriendCode` as the
+  referral code (no new code system needed); a new "referral code" field at signup
+  sets `users/{uid}/ReferredBy` once. Both sides get rewarded in `StepCurrency`,
+  gated on the new account's first real step sync (not instant at signup) to raise
+  the bar against disposable-email farming, since there's no other anti-multi-account
+  check today.
+- Key finding: since there's no Cloud Functions layer, a referred account's client
+  literally cannot write to the referrer's node under current Firebase rules. Solved
+  by reusing the `friendRequests`-style pattern — a new `referralRewards/{referrerUid}/{newUid}`
+  node the new user writes a pending claim into, which the referrer's own client reads
+  and claims on its next sync.
+- Still open: reward amounts, and whether a valid referral should auto-add the friend
+  relationship as a bonus.
 
 ## 6. Better error messaging
 
