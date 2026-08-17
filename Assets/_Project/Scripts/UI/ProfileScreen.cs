@@ -197,13 +197,13 @@ namespace TrainingBuddy.UI
 
 		private async Task LoadActivityGraph()
 		{
+			// FetchDailyStepsAsync never includes today (see its doc comment) — "today" below is
+			// always the live running total, regardless of which platform/provider backs it.
 			var dailySteps = await _databaseManager.FetchDailyStepsAsync(5);
-			string today = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
 			var dataPoints = new List<ActivityGraph.DataPoint>();
 			foreach (var (dateKey, steps) in dailySteps)
 			{
-				if (dateKey == today) continue;
 				var date = DateTime.ParseExact(dateKey, "yyyy-MM-dd", null);
 				dataPoints.Add(new ActivityGraph.DataPoint(FormatDanishDate(date), steps));
 			}

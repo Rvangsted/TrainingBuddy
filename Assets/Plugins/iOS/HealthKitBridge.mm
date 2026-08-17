@@ -9,6 +9,7 @@
 
 typedef void (*HealthKitIntCallback)(int requestId, int value);
 typedef void (*HealthKitStepsCallback)(int requestId, long long steps, int success);
+typedef void (*HealthKitJsonCallback)(int requestId, const char *json, int success);
 
 static HKHealthStore *GetHealthStore()
 {
@@ -66,6 +67,63 @@ void _HealthKit_QueryStepsSince(int requestId, long long sinceUnixMillis, Health
             callback(requestId, (long long)steps, success ? 1 : 0);
         });
     }];
+
+    [GetHealthStore() executeQuery:query];
+}
+
+// Calendar-based day buckets (HKStatisticsCollectionQuery, anchored to the device's local
+// calendar), distinct from _HealthKit_QueryStepsSince's single cumulative-sum query. Marshaled
+// back as a JSON string rather than parallel arrays — a raw C function pointer can't carry a
+// managed array across the ObjC/C# boundary the way Android's AndroidJavaProxy can, and this
+// project already depends on Newtonsoft.Json for exactly this kind of C# side parsing.
+void _HealthKit_QueryDailySteps(int requestId, long long startUnixMillis, long long endUnixMillis, HealthKitJsonCallback callback)
+{
+    HKQuantityType *stepType = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
+    NSDate *start = [NSDate dateWithTimeIntervalSince1970:(startUnixMillis / 1000.0)];
+    NSDate *end = [NSDate dateWithTimeIntervalSince1970:(endUnixMillis / 1000.0)];
+    NSPredicate *predicate = [HKQuery predicateForSamplesWithStartDate:start endDate:end options:HKQueryOptionStrictStartDate];
+
+    NSCalendar *calendar = [NSCalendar currentCalendar]; // device's local calendar/timezone
+    NSDateComponents *interval = [[NSDateComponents alloc] init];
+    interval.day = 1;
+    NSDate *anchor = [calendar startOfDayForDate:start];
+
+    HKStatisticsCollectionQuery *query = [[HKStatisticsCollectionQuery alloc] initWithQuantityType:stepType
+                                                                            quantitySamplePredicate:predicate
+                                                                                            options:HKStatisticsOptionCumulativeSum
+                                                                                         anchorDate:anchor
+                                                                                 intervalComponents:interval];
+
+    query.initialResultsHandler = ^(HKStatisticsCollectionQuery *q, HKStatisticsCollection *results, NSError *error) {
+        NSMutableArray *buckets = [NSMutableArray array];
+        BOOL success = (error == nil);
+        if (success && results)
+        {
+            NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+            formatter.dateFormat = @"yyyy-MM-dd";
+            formatter.calendar = calendar;
+
+            [results enumerateStatisticsFromDate:start
+                                           toDate:end
+                                       withBlock:^(HKStatistics *stat, BOOL *stop) {
+                double daySteps = 0;
+                HKQuantity *sum = stat.sumQuantity;
+                if (sum)
+                {
+                    daySteps = [sum doubleValueForUnit:[HKUnit countUnit]];
+                }
+                NSString *dateKey = [formatter stringFromDate:stat.startDate];
+                [buckets addObject:@{ @"date": dateKey, @"steps": @((long long)daySteps) }];
+            }];
+        }
+
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:buckets options:0 error:nil];
+        NSString *json = jsonData ? [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] : @"[]";
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            callback(requestId, [json UTF8String], success ? 1 : 0);
+        });
+    };
 
     [GetHealthStore() executeQuery:query];
 }

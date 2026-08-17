@@ -11,13 +11,14 @@ that's now in place.
 **Status at a glance:**
 - ✅ Android — Health Connect provider built, permission flow built, two
   real-world bugs found in testing and fixed, anti-cheat gap closed.
+- ✅ Daily-breakdown graph (`ProfileScreen`) now queries providers directly
+  (read path only) — see §9.
 - 🟡 iOS — provider code written (see
   [`StepCounter_HealthKit_Implementation.md`](./StepCounter_HealthKit_Implementation.md)),
   but not yet compiled, build-profile'd, or QA'd — no Mac/Xcode was
   available when it was written. Still effectively on the old raw-sensor
   path (see `StepCounter_Fix.md`) until that happens.
-- ❌ Device QA matrix, store review prep, daily-breakdown UI migration — not
-  started.
+- ❌ Device QA matrix, store review prep — not started.
 
 ---
 
@@ -123,10 +124,11 @@ them otherwise.
 | `requestPermission(context, receiver)` | Launches `HealthConnectPermissionActivity` (see below) to run the actual consent flow. |
 | `openHealthConnectSettings(context)` | Deep-links into Health Connect's own permission screen for this app (added today, see §4). |
 | `getStepsSince(context, sinceEpochMillis, receiver)` | `client.aggregate(AggregateRequest(StepsRecord.COUNT_TOTAL, timeRange))` — the actual step query. |
+| `getDailyStepsSince(context, days, receiver)` | `client.aggregateGroupByPeriod(AggregateGroupByPeriodRequest(..., period = Period.ofDays(1)))` — calendar-based (local-day) bucketing, distinct from `getStepsSince`'s fixed-duration total. Backs the daily-breakdown graph, see §9. |
 
-Results are delivered back to C# through two small callback interfaces,
-`AvailabilityReceiver`/`StepsReceiver`, implemented on the C# side as
-`AndroidJavaProxy` (see §3).
+Results are delivered back to C# through small callback interfaces —
+`AvailabilityReceiver`/`StepsReceiver`/`DailyStepsReceiver` — implemented on
+the C# side as `AndroidJavaProxy` (see §3).
 
 ### `HealthConnectPermissionActivity.kt` — why a whole extra Activity exists
 
@@ -380,14 +382,52 @@ can't be fully solved client-side anyway.
 
 ---
 
-## 8. What's left
+## 9. Daily-breakdown graph: querying providers directly
+
+`ProfileScreen`'s weekly activity graph used to source its history purely
+from Firebase's hand-maintained `dailySteps/{date}` buckets (written
+universally by `WriteStepsToFirebaseAsync`/`ArchiveDailyStepsAsync`,
+regardless of platform). `DatabaseManager.FetchDailyStepsAsync` now prefers
+the provider when one exists:
+
+```csharp
+if (_stepDataProvider != null)
+{
+    var providerDays = await _stepDataProvider.GetDailyStepsAsync(days);
+    string todayLocal = DateTime.Now.ToString("yyyy-MM-dd");
+    // ...filter out todayLocal, return the rest
+}
+// else: unchanged Firebase-backed fallback (Editor / no provider)
+```
+
+Real semantics fix in the process: the Firebase buckets were **UTC-day**
+keyed (`DateTime.UtcNow`); Health Connect's `aggregateGroupByPeriod` and
+HealthKit's `HKStatisticsCollectionQuery` both bucket by the device's
+**local calendar day**. `getDailyStepsSince`'s Kotlin implementation ends
+its query range at local midnight *today* (not "now"), so it never returns
+a same-day partial bucket at all — `GetDailyStepsAsync`'s contract is
+"never includes today" on both platforms, which let `ProfileScreen`'s
+`LoadActivityGraph` drop its old UTC-string comparison entirely (it was
+there specifically to strip today's entry, which the provider path now
+guarantees never appears).
+
+**Deliberately conservative — read path only.** The Firebase
+`dailySteps/{date}` writes are untouched and still happen on every
+platform. They're redundant on Android/iOS now (nothing reads them there
+anymore) but stay as a harmless fallback and historical record; removing
+that write path is a separate, lower-risk future cleanup, not bundled here.
+
+---
+
+## 10. What's left
 
 Straight from the scope doc's phasing, in order:
 
 1. **Device QA matrix** for the Android path above — real devices across
    Android versions (Health Connect behaves differently pre/post API 34),
    including the manual test scenarios in this session's per-device
-   anchoring plan (new-device isolation, 30-day cap, plausibility clamp).
+   anchoring plan (new-device isolation, 30-day cap, plausibility clamp),
+   plus the new daily-breakdown query (§9).
 2. **iOS: HealthKit provider** — code written (native Obj-C bridge, the
    `HealthKitStepProvider : IStepDataProvider`, and the Xcode
    capability/entitlement build-postprocessing), see
@@ -396,9 +436,6 @@ Straight from the scope doc's phasing, in order:
    this project yet), an actual compile/build on a Mac, and on-device QA —
    none of that was possible in the environment this was written in.
 3. **Store review prep** — privacy policy text, usage strings.
-4. **Stretch:** migrate `ProfileScreen`/`ActivityGraph`'s daily-breakdown UI
-   to query the platforms' own daily aggregation directly instead of the
-   hand-maintained `dailySteps/{date}` buckets.
 
 **Also flagged, unrelated to this migration but noticed along the way:**
 `WelcomeScreen.cs`'s `OnTest` method has a hardcoded admin email/password

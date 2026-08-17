@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace TrainingBuddy.Managers
@@ -27,5 +28,12 @@ namespace TrainingBuddy.Managers
 		/// (e.g. the provider app isn't installed), so callers can fall back further.
 		/// </summary>
 		bool OpenPlatformSettings();
+
+		/// <summary>
+		/// Per-local-calendar-day step totals for the last `days` *complete* days — never
+		/// including today, since callers already compute "today" live from the running total.
+		/// Oldest-to-newest, dateKey formatted "yyyy-MM-dd" in the device's local calendar.
+		/// </summary>
+		Task<IReadOnlyList<(string dateKey, long steps)>> GetDailyStepsAsync(int days);
 	}
 }

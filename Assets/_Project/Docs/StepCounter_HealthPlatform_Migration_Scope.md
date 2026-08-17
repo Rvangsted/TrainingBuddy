@@ -204,11 +204,18 @@ below).
    simulators don't produce real step data on either platform.
 4. **App Store / Play Store review prep.** Privacy policy updates, usage
    strings, and (for iOS) anticipating HealthKit review scrutiny.
-5. **Stretch:** migrate the daily-breakdown UI (`ProfileScreen`,
-   `ActivityGraph`) to pull directly from the platforms' own daily
-   aggregation queries instead of the manually-maintained
-   `dailySteps/{date}` buckets — not required for the core fix, but removes
-   more hand-rolled bookkeeping once the provider abstraction exists.
+5. **Stretch — done (read path only):** `ProfileScreen`'s daily-breakdown
+   graph now pulls from `IStepDataProvider.GetDailyStepsAsync` (Health
+   Connect's `aggregateGroupByPeriod`, HealthKit's
+   `HKStatisticsCollectionQuery`) instead of the `dailySteps/{date}` Firebase
+   buckets, on any platform with a provider. Deliberately conservative:
+   the buckets are still *written* exactly as before on every platform (kept
+   as a harmless fallback/historical record and as the Editor's only data
+   source) — full removal of that write path is a separate future cleanup.
+   Also fixed a latent bug in the process: the buckets were UTC-day keyed;
+   the new provider-backed path is local-calendar-day keyed, matching what
+   Health Connect/HealthKit (and users) actually mean by "today"/"yesterday".
+   See `StepCounter_HealthConnect_Implementation.md`/`StepCounter_HealthKit_Implementation.md`.
 
 ## Maintained Unity package check (done)
 

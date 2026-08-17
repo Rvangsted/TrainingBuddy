@@ -28,9 +28,16 @@ Input System uses for its CoreMotion pedometer bridge
 | `_HealthKit_RequestAuthorization(requestId, callback)` | `requestAuthorizationToShareTypes:nil readTypes:{stepCount}` |
 | `_HealthKit_QueryStepsSince(requestId, sinceUnixMillis, callback)` | `HKStatisticsQuery` with `HKStatisticsOptionCumulativeSum` over `[HKQuery predicateForSamplesWithStartDate:endDate:options:]` |
 | `_HealthKit_OpenSettings()` | Opens `UIApplicationOpenSettingsURLString` — this app's own Settings page, which on iOS *is* where Health access lives (unlike Android's plain App Info screen) |
+| `_HealthKit_QueryDailySteps(requestId, startUnixMillis, endUnixMillis, callback)` | `HKStatisticsCollectionQuery` anchored to local-day boundaries (`NSCalendar.currentCalendar`, `intervalComponents.day = 1`). Backs the daily-breakdown graph — see §5. |
 
 All async callbacks dispatch back onto the main queue before invoking the
-function pointer.
+function pointer. `_HealthKit_QueryDailySteps` is the one exception to the
+"plain typed callback" shape above: it marshals its result back as a JSON
+string (`[{"date":"yyyy-MM-dd","steps":N}, ...]` via `NSJSONSerialization`)
+rather than parallel arrays, since a raw C function pointer can't carry a
+managed array across the ObjC/C# boundary the way Android's
+`AndroidJavaProxy` can — the C# side parses it with `Newtonsoft.Json`
+(already a project dependency).
 
 ## 2. The C# wrapper — `HealthKitStepProvider.cs`
 
@@ -107,6 +114,26 @@ non-null on iOS, the legacy `CheckStepCounterAvailabilityAsync()` path
 string) stops running on real iOS devices entirely, same as it already does
 on Android.
 
+## 5. Daily-breakdown graph: `GetDailyStepsAsync`
+
+`IStepDataProvider` gained
+`Task<IReadOnlyList<(string dateKey, long steps)>> GetDailyStepsAsync(int days)`,
+which `DatabaseManager.FetchDailyStepsAsync` now prefers over the old
+Firebase `dailySteps/{date}` buckets whenever a provider exists — see
+`StepCounter_HealthConnect_Implementation.md` §9 for the full picture
+(shared logic, not iOS-specific).
+
+The iOS side's query range ends at **local midnight today**, not "now" —
+deliberately matching `HealthConnectBridge.kt`'s `getDailyStepsSince` exactly,
+so it never hands back a partial same-day bucket at all:
+```csharp
+DateTimeOffset localNow = DateTimeOffset.Now;
+DateTimeOffset endOfRange = new DateTimeOffset(localNow.Date, localNow.Offset);
+DateTimeOffset startOfRange = endOfRange.AddDays(-days);
+```
+`FetchDailyStepsAsync`'s today-exclusion filter is then just defensive
+belt-and-suspenders on this platform too, not load-bearing.
+
 ## What's left
 
 None of this has been compiled or run — there's no Unity Editor or Mac/Xcode
@@ -123,7 +150,8 @@ in the environment this was written in. Before trusting it:
    and `Info.plist` has the usage string.
 4. Run on a real device (or Simulator with manually seeded Health app
    data). Confirm the authorization sheet appears, `GetStepsSinceAsync`
-   returns real data matching the Health app, and "Open Settings" lands on
-   this app's Settings page.
-5. Device QA matrix, store review prep, and the daily-breakdown UI
-   migration are still entirely open — see the scope doc's phasing.
+   returns real data matching the Health app, `GetDailyStepsAsync` (§5)
+   returns per-day totals matching the Health app's history, and
+   "Open Settings" lands on this app's Settings page.
+5. Device QA matrix and store review prep are still open — see the scope
+   doc's phasing.

@@ -1760,9 +1760,28 @@ namespace TrainingBuddy.Managers
 			return result;
 		}
 
+		/// <summary>
+		/// Never includes today — "today" is always computed live by the caller from the running
+		/// total, the same way it already was before this method had a provider-backed path.
+		/// </summary>
 		public async Task<List<(string dateKey, long steps)>> FetchDailyStepsAsync(int days = 5)
 		{
 			if (Auth?.CurrentUser == null) return new List<(string, long)>();
+
+			if (_stepDataProvider != null)
+			{
+				IReadOnlyList<(string dateKey, long steps)> providerDays = await _stepDataProvider.GetDailyStepsAsync(days);
+				string todayLocal = DateTime.Now.ToString("yyyy-MM-dd");
+				var result = new List<(string, long)>();
+				foreach (var day in providerDays)
+				{
+					if (day.dateKey != todayLocal)
+						result.Add(day);
+				}
+				return result;
+			}
+
+			// Legacy/Editor fallback — hand-maintained Firebase buckets, UTC-day keyed.
 			try
 			{
 				DataSnapshot snapshot = await DatabaseReference
@@ -1773,9 +1792,13 @@ namespace TrainingBuddy.Managers
 					.LimitToLast(days)
 					.GetValueAsync();
 
+				string todayUtc = DateTime.UtcNow.ToString("yyyy-MM-dd");
 				var result = new List<(string, long)>();
 				foreach (DataSnapshot child in snapshot.Children)
-					result.Add((child.Key, ReadLong(child.Value)));
+				{
+					if (child.Key != todayUtc)
+						result.Add((child.Key, ReadLong(child.Value)));
+				}
 				return result; // Firebase returns children in ascending key order
 			}
 			catch (Exception ex)

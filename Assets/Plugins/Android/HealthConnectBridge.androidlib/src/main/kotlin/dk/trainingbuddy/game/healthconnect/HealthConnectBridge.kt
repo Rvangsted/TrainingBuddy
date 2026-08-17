@@ -9,12 +9,16 @@ import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalDate
+import java.time.Period
+import java.time.ZoneId
 
 /**
  * Implemented on the C# side via AndroidJavaProxy, the same way
@@ -27,6 +31,10 @@ interface AvailabilityReceiver {
 
 interface StepsReceiver {
     fun onResult(steps: Long, success: Boolean)
+}
+
+interface DailyStepsReceiver {
+    fun onResult(dateKeys: Array<String>, steps: LongArray, success: Boolean)
 }
 
 /**
@@ -119,6 +127,37 @@ object HealthConnectBridge {
                 receiver.onResult(response[StepsRecord.COUNT_TOTAL] ?: 0L, true)
             } catch (e: Exception) {
                 receiver.onResult(0L, false)
+            }
+        }
+    }
+
+    // Calendar-based aggregation (aggregateGroupByPeriod), distinct from getStepsSince's
+    // fixed-duration aggregate() — this is what actually buckets by the device's local calendar
+    // day rather than a raw elapsed-time window, which is the whole point of asking Health
+    // Connect instead of hand-rolling day boundaries in UTC.
+    @JvmStatic
+    fun getDailyStepsSince(context: Context, days: Int, receiver: DailyStepsReceiver) {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val client = HealthConnectClient.getOrCreate(context)
+                val zone = ZoneId.systemDefault()
+                val endDay = LocalDate.now(zone)
+                val startDay = endDay.minusDays(days.toLong())
+
+                val response = client.aggregateGroupByPeriod(
+                    AggregateGroupByPeriodRequest(
+                        metrics = setOf(StepsRecord.COUNT_TOTAL),
+                        timeRangeFilter = TimeRangeFilter.between(startDay.atStartOfDay(), endDay.atStartOfDay()),
+                        period = Period.ofDays(1)
+                    )
+                )
+
+                val dateKeys = Array(response.size) { i -> response[i].startTime.toLocalDate().toString() }
+                val steps = LongArray(response.size) { i -> response[i].result[StepsRecord.COUNT_TOTAL] ?: 0L }
+                receiver.onResult(dateKeys, steps, true)
+            } catch (e: Exception) {
+                Log.e(TAG, "getDailyStepsSince: failed to aggregate daily steps", e)
+                receiver.onResult(emptyArray(), LongArray(0), false)
             }
         }
     }

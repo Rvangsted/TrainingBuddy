@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BedtimeCore;
 #if UNITY_IOS && !UNITY_EDITOR
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using AOT;
+using Newtonsoft.Json;
 #endif
 
 namespace TrainingBuddy.Managers
@@ -19,15 +20,24 @@ namespace TrainingBuddy.Managers
 #if UNITY_IOS && !UNITY_EDITOR
 		private delegate void IntCallback(int requestId, int value);
 		private delegate void StepsCallback(int requestId, long steps, int success);
+		private delegate void JsonCallback(int requestId, string json, int success);
 
 		[DllImport("__Internal")] private static extern int _HealthKit_IsAvailable();
 		[DllImport("__Internal")] private static extern void _HealthKit_RequestAuthorization(int requestId, IntCallback callback);
 		[DllImport("__Internal")] private static extern void _HealthKit_QueryStepsSince(int requestId, long sinceUnixMillis, StepsCallback callback);
+		[DllImport("__Internal")] private static extern void _HealthKit_QueryDailySteps(int requestId, long startUnixMillis, long endUnixMillis, JsonCallback callback);
 		[DllImport("__Internal")] private static extern int _HealthKit_OpenSettings();
 
 		private static int _nextRequestId;
 		private static readonly Dictionary<int, TaskCompletionSource<StepCounterAvailability>> AuthRequests = new();
 		private static readonly Dictionary<int, TaskCompletionSource<long>> StepsRequests = new();
+		private static readonly Dictionary<int, TaskCompletionSource<IReadOnlyList<(string dateKey, long steps)>>> DailyStepsRequests = new();
+
+		private class DailyStepBucketJson
+		{
+			public string date;
+			public long steps;
+		}
 
 		// Must be static — native code holds this as a raw function pointer, not a managed
 		// delegate/closure, so IL2CPP/AOT can only marshal a static method group here (the same
@@ -57,6 +67,32 @@ namespace TrainingBuddy.Managers
 				StepsRequests.Remove(requestId);
 				tcs.TrySetResult(success != 0 ? steps : 0);
 			}
+		}
+
+		[MonoPInvokeCallback(typeof(JsonCallback))]
+		private static void OnDailyStepsResult(int requestId, string json, int success)
+		{
+			if (!DailyStepsRequests.TryGetValue(requestId, out var tcs)) return;
+			DailyStepsRequests.Remove(requestId);
+
+			var result = new List<(string, long)>();
+			if (success != 0 && !string.IsNullOrEmpty(json))
+			{
+				try
+				{
+					var buckets = JsonConvert.DeserializeObject<List<DailyStepBucketJson>>(json);
+					if (buckets != null)
+					{
+						foreach (var bucket in buckets)
+							result.Add((bucket.date, bucket.steps));
+					}
+				}
+				catch (Exception ex)
+				{
+					$"HealthKit daily steps: failed to parse native JSON response: {ex}".LogError();
+				}
+			}
+			tcs.TrySetResult(result);
 		}
 #endif
 
@@ -106,6 +142,27 @@ namespace TrainingBuddy.Managers
 			return _HealthKit_OpenSettings() != 0;
 #else
 			return false;
+#endif
+		}
+
+		public Task<IReadOnlyList<(string dateKey, long steps)>> GetDailyStepsAsync(int days)
+		{
+#if UNITY_IOS && !UNITY_EDITOR
+			var tcs = new TaskCompletionSource<IReadOnlyList<(string dateKey, long steps)>>();
+			int requestId = Interlocked.Increment(ref _nextRequestId);
+			DailyStepsRequests[requestId] = tcs;
+
+			// Range ends at local midnight *today*, not "now" — matches HealthConnectBridge.kt's
+			// getDailyStepsSince exactly, so this never hands back a partial today bucket at all
+			// (DatabaseManager.FetchDailyStepsAsync's today-exclusion filter is then just a
+			// defensive no-op here, same as it is on Android).
+			DateTimeOffset localNow = DateTimeOffset.Now;
+			DateTimeOffset endOfRange = new DateTimeOffset(localNow.Date, localNow.Offset);
+			DateTimeOffset startOfRange = endOfRange.AddDays(-days);
+			_HealthKit_QueryDailySteps(requestId, startOfRange.ToUnixTimeMilliseconds(), endOfRange.ToUnixTimeMilliseconds(), OnDailyStepsResult);
+			return tcs.Task;
+#else
+			return Task.FromResult<IReadOnlyList<(string, long)>>(Array.Empty<(string, long)>());
 #endif
 		}
 	}

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using BedtimeCore;
 #if UNITY_ANDROID
@@ -72,6 +73,32 @@ namespace TrainingBuddy.Managers
 				_tcs.TrySetResult(success ? steps : 0);
 			}
 		}
+
+		// Mirrors dk.trainingbuddy.game.healthconnect.DailyStepsReceiver.
+		private class DailyStepsCallback : AndroidJavaProxy
+		{
+			private readonly TaskCompletionSource<IReadOnlyList<(string dateKey, long steps)>> _tcs;
+
+			public DailyStepsCallback(TaskCompletionSource<IReadOnlyList<(string dateKey, long steps)>> tcs)
+				: base("dk.trainingbuddy.game.healthconnect.DailyStepsReceiver")
+			{
+				_tcs = tcs;
+			}
+
+			// Must be named exactly onResult (lowercase) to match DailyStepsReceiver.onResult in
+			// HealthConnectBridge.kt — AndroidJavaProxy dispatches by exact case-sensitive name match.
+			[UnityEngine.Scripting.Preserve]
+			public void onResult(string[] dateKeys, long[] steps, bool success)
+			{
+				var result = new List<(string, long)>();
+				if (success)
+				{
+					for (int i = 0; i < dateKeys.Length; i++)
+						result.Add((dateKeys[i], steps[i]));
+				}
+				_tcs.TrySetResult(result);
+			}
+		}
 #endif
 
 		public Task<StepCounterAvailability> CheckAvailabilityAsync()
@@ -117,6 +144,18 @@ namespace TrainingBuddy.Managers
 			return bridge.CallStatic<bool>("openHealthConnectSettings", CurrentActivity);
 #else
 			return false;
+#endif
+		}
+
+		public Task<IReadOnlyList<(string dateKey, long steps)>> GetDailyStepsAsync(int days)
+		{
+#if UNITY_ANDROID && !UNITY_EDITOR
+			var tcs = new TaskCompletionSource<IReadOnlyList<(string dateKey, long steps)>>();
+			using var bridge = new AndroidJavaClass(BridgeClassName);
+			bridge.CallStatic("getDailyStepsSince", CurrentActivity, days, new DailyStepsCallback(tcs));
+			return tcs.Task;
+#else
+			return Task.FromResult<IReadOnlyList<(string, long)>>(Array.Empty<(string, long)>());
 #endif
 		}
 	}
