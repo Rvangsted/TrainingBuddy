@@ -148,7 +148,7 @@ object HealthConnectBridge {
                     AggregateGroupByPeriodRequest(
                         metrics = setOf(StepsRecord.COUNT_TOTAL),
                         timeRangeFilter = TimeRangeFilter.between(startDay.atStartOfDay(), endDay.atStartOfDay()),
-                        period = Period.ofDays(1)
+                        timeRangeSlicer = Period.ofDays(1)
                     )
                 )
 

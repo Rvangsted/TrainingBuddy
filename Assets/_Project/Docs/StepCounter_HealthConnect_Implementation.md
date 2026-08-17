@@ -124,7 +124,7 @@ them otherwise.
 | `requestPermission(context, receiver)` | Launches `HealthConnectPermissionActivity` (see below) to run the actual consent flow. |
 | `openHealthConnectSettings(context)` | Deep-links into Health Connect's own permission screen for this app (added today, see §4). |
 | `getStepsSince(context, sinceEpochMillis, receiver)` | `client.aggregate(AggregateRequest(StepsRecord.COUNT_TOTAL, timeRange))` — the actual step query. |
-| `getDailyStepsSince(context, days, receiver)` | `client.aggregateGroupByPeriod(AggregateGroupByPeriodRequest(..., period = Period.ofDays(1)))` — calendar-based (local-day) bucketing, distinct from `getStepsSince`'s fixed-duration total. Backs the daily-breakdown graph, see §9. |
+| `getDailyStepsSince(context, days, receiver)` | `client.aggregateGroupByPeriod(AggregateGroupByPeriodRequest(..., timeRangeSlicer = Period.ofDays(1)))` — calendar-based (local-day) bucketing, distinct from `getStepsSince`'s fixed-duration total. Backs the daily-breakdown graph, see §9. |
 
 Results are delivered back to C# through small callback interfaces —
 `AvailabilityReceiver`/`StepsReceiver`/`DailyStepsReceiver` — implemented on
