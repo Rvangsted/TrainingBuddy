@@ -91,6 +91,9 @@ namespace TrainingBuddy.FireBase
 			if (await _databaseManager.StartStepCounter() != StepCounterAvailability.Available)
 				return false;
 #endif
+			// Fire-and-forget: claims any paid-run refunds owed from a kick/cancel that happened
+			// while this account wasn't the acting client — see PaidRuns_Scope.md / ClaimPendingRefundsAsync.
+			_ = _databaseManager.ClaimPendingRefundsAsync();
 			return true;
 		}
 

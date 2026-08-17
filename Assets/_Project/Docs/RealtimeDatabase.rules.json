@@ -103,6 +103,16 @@
           ".validate": "newData.hasChildren(['type', 'amount', 'status', 'createdAt']) && (newData.child('type').val() == 'earn' || newData.child('type').val() == 'spend' || newData.child('type').val() == 'refund') && (newData.child('status').val() == 'settled' || newData.child('status').val() == 'refunded')"
         }
       }
+    },
+
+    "pendingRefunds": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2)",
+        "$raceId": {
+          ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
+          ".validate": "!newData.exists() || newData.hasChildren(['amount', 'spendTxId', 'createdAt'])"
+        }
+      }
     }
   }
 }

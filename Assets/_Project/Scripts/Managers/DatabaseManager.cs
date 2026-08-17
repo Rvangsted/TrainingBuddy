@@ -26,22 +26,37 @@ namespace TrainingBuddy.Managers
 		ProviderNotInstalled // Health Connect missing on Android 13 and below; not reachable via the current sensor-based provider.
 	}
 
+	/// <summary>
+	/// Paid-run entry tiers — see PaidRuns_Scope.md. One shared ladder used for both hosting and
+	/// joining a race. Cost is charged in StepCurrency; StatBonus is added to SpeedPoints/
+	/// AccelerationPoints for that race's simulation only (DatabaseManager.StartRaceAsync),
+	/// never persisted back to the account's real stats.
+	/// </summary>
+	public enum RaceEntryTier
+	{
+		None  = 0,
+		Basic = 1,
+		Plus  = 2,
+		Elite = 3
+	}
+
 	public interface IDatabaseManager
 	{
 		public FirebaseAuth Auth { get; set; }
 		public DatabaseReference DatabaseReference { get; set; }
 		public JsonSerializerSettings JsonSettings { get; set; }
 
-		public Task<string> HostRaceAsync(RaceData race, int capacity, string description = null);
+		public Task<string> HostRaceAsync(RaceData race, int capacity, string description = null, RaceEntryTier tier = RaceEntryTier.None);
 		public Task<string> GetActiveRaceIdAsync();
 		public Task<UserData?> GetUserByFriendCodeAsync(string friendCode);
-		public Task JoinRaceDirectlyAsync(string raceId);
+		public Task JoinRaceDirectlyAsync(string raceId, RaceEntryTier tier = RaceEntryTier.None);
 		public Task KickParticipantAsync(string raceId, string participantUserId);
 		public Task<int> FetchRaceCapacityAsync(string raceId);
 		public Task<string> GetRaceStatusAsync(string raceId);
-		public Task SubmitJoinRequestAsync(string raceId);
+		public Task SubmitJoinRequestAsync(string raceId, RaceEntryTier tier = RaceEntryTier.None);
 		public Task RetractJoinRequestAsync(string raceId);
 		public Task<bool> HandleJoinRequestAsync(string raceId, string requesterUserId, bool approve);
+		public Task FinalizeApprovedJoinAsync(string raceId);
 		public Task LeaveRaceAsync(string raceId);
 		public Task<RaceSimulation> StartRaceAsync(string raceId);
 		public Task<RaceSimulation> FetchRaceSimulationAsync(string raceId);
@@ -49,6 +64,7 @@ namespace TrainingBuddy.Managers
 		public void StopRaceStartListener();
 		public Task MarkRaceWatchedAsync(string raceId);
 		public Task CancelRaceAsync(string raceId);
+		public Task ClaimPendingRefundsAsync();
 		public Task PatchUserFields(Dictionary<string, object> fields);
 		public Task<StepCounterAvailability> StartStepCounter();
 		public void StopStepCounter();
@@ -120,6 +136,16 @@ namespace TrainingBuddy.Managers
 
 		public const string AiPlayerName    = "Buddy"; // Display name for AI fill-in players — change here
 		private const int   MinRaceParticipants = 3;   // Minimum real players required to start
+
+		// Paid-run tiers — see PaidRuns_Scope.md. Cost in StepCurrency, StatBonus applied to
+		// SpeedPoints/AccelerationPoints for one race's simulation only. Placeholder balancing
+		// numbers, picked relative to RaceSimulator.MaxStatPoints (50) — tune freely, not final.
+		private static readonly Dictionary<RaceEntryTier, (int Cost, int StatBonus)> RaceEntryTiers = new()
+		{
+			{ RaceEntryTier.Basic, (1000, 5) },
+			{ RaceEntryTier.Plus,  (3000, 12) },
+			{ RaceEntryTier.Elite, (7000, 25) },
+		};
 
 		public event Action<long> StepCountChanged;
 
@@ -268,7 +294,155 @@ namespace TrainingBuddy.Managers
 			await HostRaceAsync(race, 5);
 		}
 
-		public async Task<string> HostRaceAsync(RaceData race, int capacity, string description = null)
+		/// <summary>
+		/// Debits a tier's cost from the given user's StepCurrency and records a "spend" wallet
+		/// transaction, returning update-dict entries to MERGE into a caller's own root-scoped
+		/// `updates` dictionary — this does not write anything itself. Callers combine this with
+		/// their race-mutation entries into one UpdateChildrenAsync call so payment and the race
+		/// action succeed or fail together (see PaidRuns_Scope.md "Payment timing"). Always sets
+		/// participants/{uid}/paidTier (even for RaceEntryTier.None, as 0); only touches
+		/// StepCurrency/walletTransactions when a paid tier is actually selected. Throws if the
+		/// user can't afford the tier — callers should not have written anything yet at that point.
+		/// </summary>
+		private async Task<Dictionary<string, object>> BuildTierChargeUpdatesAsync(string uid, string raceId, RaceEntryTier tier)
+		{
+			var updates = new Dictionary<string, object>
+			{
+				[$"races/{raceId}/participants/{uid}/paidTier"] = (int)tier,
+			};
+
+			if (tier == RaceEntryTier.None) return updates;
+
+			int cost = RaceEntryTiers[tier].Cost;
+			DataSnapshot userSnapshot = await FetchUserDataById(uid);
+			long balance = ReadLong(userSnapshot?.Child("StepCurrency").Value);
+			if (balance < cost)
+			{
+				throw new InvalidOperationException($"Du har ikke nok mønter til dette niveau. Det koster {cost}, og du har {balance}.");
+			}
+
+			string txId = DatabaseReference.Child("walletTransactions").Child(uid).Push().Key;
+			updates[$"users/{uid}/StepCurrency"] = (int)(balance - cost);
+			updates[$"walletTransactions/{uid}/{txId}/type"] = "spend";
+			updates[$"walletTransactions/{uid}/{txId}/amount"] = cost;
+			updates[$"walletTransactions/{uid}/{txId}/relatedRaceId"] = raceId;
+			updates[$"walletTransactions/{uid}/{txId}/status"] = "settled";
+			updates[$"walletTransactions/{uid}/{txId}/createdAt"] = GetUnixTimestampMilliseconds();
+			updates[$"races/{raceId}/participants/{uid}/spendTxId"] = txId;
+
+			return updates;
+		}
+
+		/// <summary>
+		/// Refunds a participant's paid tier for a race, if they paid one — reverses the exact
+		/// spend transaction recorded at signup/join time (participants/{uid}/spendTxId),
+		/// flipping its status to "refunded" so the same payment can't be refunded twice. Returns
+		/// update-dict entries to merge into a caller's own updates (same convention as
+		/// BuildTierChargeUpdatesAsync); returns an empty dict if there's nothing to refund
+		/// (no paid tier, or already refunded).
+		/// SELF-REFUND ONLY — uid must be the acting/authenticated user (e.g. LeaveRaceAsync).
+		/// For a host/admin refunding someone ELSE (kick, cancel), Firebase rules only let a user
+		/// write their own users/{uid}/StepCurrency, so use BuildPendingRefundUpdates instead —
+		/// it records a claim the affected user's own client redeems via ClaimPendingRefundsAsync.
+		/// </summary>
+		private async Task<Dictionary<string, object>> BuildTierRefundUpdatesAsync(string uid, DataSnapshot participantSnapshot)
+		{
+			int tierValue = ConvertToNullableInt(participantSnapshot.Child("paidTier").Value) ?? 0;
+			string spendTxId = participantSnapshot.Child("spendTxId").Value?.ToString();
+			if (tierValue == 0 || string.IsNullOrEmpty(spendTxId)) return new Dictionary<string, object>();
+
+			DataSnapshot txSnapshot = await DatabaseReference.Child("walletTransactions").Child(uid).Child(spendTxId).GetValueAsync();
+			if (txSnapshot is not { Exists: true } || txSnapshot.Child("status").Value?.ToString() != "settled")
+				return new Dictionary<string, object>(); // already refunded, or never settled — nothing to do
+
+			int amount = ConvertToNullableInt(txSnapshot.Child("amount").Value) ?? 0;
+			string relatedRaceId = txSnapshot.Child("relatedRaceId").Value?.ToString();
+			DataSnapshot userSnapshot = await FetchUserDataById(uid);
+			long balance = ReadLong(userSnapshot?.Child("StepCurrency").Value);
+			string refundTxId = DatabaseReference.Child("walletTransactions").Child(uid).Push().Key;
+
+			return new Dictionary<string, object>
+			{
+				[$"users/{uid}/StepCurrency"] = (int)(balance + amount),
+				[$"walletTransactions/{uid}/{spendTxId}/status"] = "refunded",
+				[$"walletTransactions/{uid}/{refundTxId}/type"] = "refund",
+				[$"walletTransactions/{uid}/{refundTxId}/amount"] = amount,
+				[$"walletTransactions/{uid}/{refundTxId}/relatedRaceId"] = relatedRaceId,
+				[$"walletTransactions/{uid}/{refundTxId}/status"] = "settled",
+				[$"walletTransactions/{uid}/{refundTxId}/createdAt"] = GetUnixTimestampMilliseconds(),
+			};
+		}
+
+		/// <summary>
+		/// Host/admin-authored: records that a kicked/cancelled-out participant is owed a refund,
+		/// for KickParticipantAsync/CancelRaceAsync where the acting user isn't the affected one.
+		/// Firebase rules only let a user write their own users/{uid}/StepCurrency (see
+		/// StepsAsCurrency_Scope.md), so the host can't credit someone else's balance directly —
+		/// this just leaves a claim under pendingRefunds/{uid}/{raceId} (write allowed there for
+		/// the race's host, same convention as joinRequests/{raceId}/{requesterId}) that the
+		/// affected user's own client redeems via ClaimPendingRefundsAsync. Returns update-dict
+		/// entries to merge into a caller's own updates; empty if the participant never paid.
+		/// </summary>
+		private Dictionary<string, object> BuildPendingRefundUpdates(string uid, string raceId, DataSnapshot participantSnapshot)
+		{
+			int tierValue = ConvertToNullableInt(participantSnapshot.Child("paidTier").Value) ?? 0;
+			string spendTxId = participantSnapshot.Child("spendTxId").Value?.ToString();
+			if (tierValue == 0 || string.IsNullOrEmpty(spendTxId)) return new Dictionary<string, object>();
+			if (!RaceEntryTiers.TryGetValue((RaceEntryTier)tierValue, out var tierDef)) return new Dictionary<string, object>();
+
+			return new Dictionary<string, object>
+			{
+				[$"pendingRefunds/{uid}/{raceId}/amount"] = tierDef.Cost,
+				[$"pendingRefunds/{uid}/{raceId}/spendTxId"] = spendTxId,
+				[$"pendingRefunds/{uid}/{raceId}/createdAt"] = GetUnixTimestampMilliseconds(),
+			};
+		}
+
+		/// <summary>
+		/// Self-authored: claims any refunds owed to the current user (see
+		/// BuildPendingRefundUpdates above) — credits StepCurrency, records a "refund" wallet
+		/// transaction per claim, flips the original spend transaction's status to "refunded" so
+		/// it can't be claimed twice, and clears the claimed marker. A no-op if nothing is
+		/// pending. UI should call this on app start/login (e.g. alongside StartStepCounter) so a
+		/// kicked or cancelled-out player's refund lands the next time they open the app.
+		/// </summary>
+		public async Task ClaimPendingRefundsAsync()
+		{
+			if (Auth?.CurrentUser == null) return;
+			string uid = Auth.CurrentUser.UserId;
+
+			DataSnapshot pendingSnapshot = await DatabaseReference.Child("pendingRefunds").Child(uid).GetValueAsync();
+			if (pendingSnapshot is not { Exists: true }) return;
+
+			DataSnapshot userSnapshot = await FetchUserDataById(uid);
+			long balance = ReadLong(userSnapshot?.Child("StepCurrency").Value);
+
+			var updates = new Dictionary<string, object>();
+			foreach (DataSnapshot pending in pendingSnapshot.Children)
+			{
+				string raceId = pending.Key;
+				int amount = ConvertToNullableInt(pending.Child("amount").Value) ?? 0;
+				string spendTxId = pending.Child("spendTxId").Value?.ToString();
+				if (amount <= 0 || string.IsNullOrEmpty(spendTxId)) continue;
+
+				balance += amount;
+				string refundTxId = DatabaseReference.Child("walletTransactions").Child(uid).Push().Key;
+				updates[$"walletTransactions/{uid}/{spendTxId}/status"] = "refunded";
+				updates[$"walletTransactions/{uid}/{refundTxId}/type"] = "refund";
+				updates[$"walletTransactions/{uid}/{refundTxId}/amount"] = amount;
+				updates[$"walletTransactions/{uid}/{refundTxId}/relatedRaceId"] = raceId;
+				updates[$"walletTransactions/{uid}/{refundTxId}/status"] = "settled";
+				updates[$"walletTransactions/{uid}/{refundTxId}/createdAt"] = GetUnixTimestampMilliseconds();
+				updates[$"pendingRefunds/{uid}/{raceId}"] = null;
+			}
+
+			if (updates.Count == 0) return;
+			updates[$"users/{uid}/StepCurrency"] = (int)balance;
+
+			await DatabaseReference.UpdateChildrenAsync(updates);
+		}
+
+		public async Task<string> HostRaceAsync(RaceData race, int capacity, string description = null, RaceEntryTier tier = RaceEntryTier.None)
         {
             if (Auth?.CurrentUser == null)
             {
@@ -315,12 +489,16 @@ namespace TrainingBuddy.Managers
                 [$"userRaces/{Auth.CurrentUser.UserId}/{raceId}/joinedAt"] = timestamp,
             };
 
+            // Charged in the same atomic update as race creation — see BuildTierChargeUpdatesAsync.
+            Dictionary<string, object> chargeUpdates = await BuildTierChargeUpdatesAsync(Auth.CurrentUser.UserId, raceId, tier);
+            foreach (var kvp in chargeUpdates) updates[kvp.Key] = kvp.Value;
+
             await DatabaseReference.UpdateChildrenAsync(updates);
 
             return raceId;
         }
 
-        public async Task JoinRaceDirectlyAsync(string raceId)
+        public async Task JoinRaceDirectlyAsync(string raceId, RaceEntryTier tier = RaceEntryTier.None)
         {
             if (Auth?.CurrentUser == null)
             {
@@ -376,11 +554,15 @@ namespace TrainingBuddy.Managers
                 [$"userRaces/{userId}/{raceId}/joinedAt"] = timestamp,
             };
 
+            // Charged in the same atomic update as joining — see BuildTierChargeUpdatesAsync.
+            Dictionary<string, object> chargeUpdates = await BuildTierChargeUpdatesAsync(userId, raceId, tier);
+            foreach (var kvp in chargeUpdates) updates[kvp.Key] = kvp.Value;
+
             await DatabaseReference.UpdateChildrenAsync(updates);
             await SyncRaceOpenClosedStatusAsync(raceId);
         }
 
-        public async Task SubmitJoinRequestAsync(string raceId)
+        public async Task SubmitJoinRequestAsync(string raceId, RaceEntryTier tier = RaceEntryTier.None)
         {
             if (Auth?.CurrentUser == null)
             {
@@ -422,6 +604,7 @@ namespace TrainingBuddy.Managers
                 { "requestedAt", timestamp },
                 { "status", "pending" },
                 { "displayName", Auth.CurrentUser.DisplayName ?? string.Empty },
+                { "tier", (int)tier }, // charged only on approval, see HandleJoinRequestAsync — PaidRuns_Scope.md
             };
 
             await EnsureUserCanJoinRace(Auth.CurrentUser.UserId, raceId);
@@ -509,21 +692,13 @@ namespace TrainingBuddy.Managers
                     return false;
                 }
 
-                string displayName = requestSnapshot.Child("displayName").Value?.ToString();
-
-                DataSnapshot userSnapshot = await FetchUserDataById(requesterUserId);
-                if (string.IsNullOrWhiteSpace(displayName))
-                {
-                    displayName = userSnapshot?.Child("UserName").Value?.ToString() ?? string.Empty;
-                }
-                string sex = userSnapshot?.Child("Sex").Value?.ToString() ?? string.Empty;
-
-                updates[$"races/{raceId}/participants/{requesterUserId}/joinedAt"] = timestamp;
-                updates[$"races/{raceId}/participants/{requesterUserId}/displayName"] = displayName ?? string.Empty;
-                updates[$"races/{raceId}/participants/{requesterUserId}/isHost"] = false;
-                updates[$"races/{raceId}/participants/{requesterUserId}/sex"] = sex;
-                updates[$"userRaces/{requesterUserId}/{raceId}/role"] = "participant";
-                updates[$"userRaces/{requesterUserId}/{raceId}/joinedAt"] = timestamp;
+                // Note: approval only flips the request's status — it does NOT create the
+                // participant entry or charge a paid tier here. Firebase rules only let a user
+                // write their own users/{uid}/StepCurrency (see StepsAsCurrency_Scope.md's
+                // no-Cloud-Functions decision), and the host approving is a different user than
+                // the requester being charged, so both that write and the participant entry
+                // itself must happen on the requester's own client — see FinalizeApprovedJoinAsync,
+                // which the requester calls once they observe their request was approved.
             }
             else
             {
@@ -531,8 +706,73 @@ namespace TrainingBuddy.Managers
             }
 
             await DatabaseReference.UpdateChildrenAsync(updates);
-            if (approve) await SyncRaceOpenClosedStatusAsync(raceId);
             return true;
+        }
+
+        public async Task FinalizeApprovedJoinAsync(string raceId)
+        {
+            if (Auth?.CurrentUser == null)
+            {
+                throw new InvalidOperationException("Cannot join a race without an authenticated user.");
+            }
+
+            string userId = Auth.CurrentUser.UserId;
+
+            DataSnapshot requestSnapshot = await DatabaseReference.Child("joinRequests").Child(raceId).Child(userId).GetValueAsync();
+            if (requestSnapshot is not { Exists: true } ||
+                !string.Equals(requestSnapshot.Child("status").Value?.ToString(), "approved", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Your join request has not been approved.");
+            }
+
+            DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
+            if (raceSnapshot is not { Exists: true })
+            {
+                throw new InvalidOperationException("Race not found.");
+            }
+
+            string status = raceSnapshot.Child("status").Value?.ToString();
+            if (!string.IsNullOrEmpty(status) && status != "open")
+            {
+                throw new InvalidOperationException("Race is no longer open for joining.");
+            }
+
+            int capacity = ConvertToNullableInt(raceSnapshot.Child("capacity").Value) ?? 0;
+            long participantsCount = raceSnapshot.Child("participants").ChildrenCount;
+            if (capacity > 0 && participantsCount >= capacity)
+            {
+                throw new InvalidOperationException("Race is already at capacity.");
+            }
+
+            RaceEntryTier tier = (RaceEntryTier)(ConvertToNullableInt(requestSnapshot.Child("tier").Value) ?? 0);
+            long timestamp = GetUnixTimestampMilliseconds();
+
+            DataSnapshot userSnapshot = await FetchUserDataById(userId);
+            string displayName = requestSnapshot.Child("displayName").Value?.ToString();
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                displayName = userSnapshot?.Child("UserName").Value?.ToString() ?? string.Empty;
+            }
+            string sex = userSnapshot?.Child("Sex").Value?.ToString() ?? string.Empty;
+
+            var updates = new Dictionary<string, object>
+            {
+                [$"races/{raceId}/participants/{userId}/joinedAt"] = timestamp,
+                [$"races/{raceId}/participants/{userId}/displayName"] = displayName ?? string.Empty,
+                [$"races/{raceId}/participants/{userId}/isHost"] = false,
+                [$"races/{raceId}/participants/{userId}/sex"] = sex,
+                [$"userRaces/{userId}/{raceId}/role"] = "participant",
+                [$"userRaces/{userId}/{raceId}/joinedAt"] = timestamp,
+                [$"joinRequests/{raceId}/{userId}"] = null,
+            };
+
+            // Charged here, self-authored, in the same atomic update as finalizing the join —
+            // see BuildTierChargeUpdatesAsync and the note in HandleJoinRequestAsync above.
+            Dictionary<string, object> chargeUpdates = await BuildTierChargeUpdatesAsync(userId, raceId, tier);
+            foreach (var kvp in chargeUpdates) updates[kvp.Key] = kvp.Value;
+
+            await DatabaseReference.UpdateChildrenAsync(updates);
+            await SyncRaceOpenClosedStatusAsync(raceId);
         }
 
         public async Task KickParticipantAsync(string raceId, string participantUserId)
@@ -568,6 +808,12 @@ namespace TrainingBuddy.Managers
                 [$"userRaces/{participantUserId}/{raceId}"] = null,
                 [$"joinRequests/{raceId}/{participantUserId}"] = null,
             };
+
+            // Kicked by the host/an admin, not by the affected participant themselves — a direct
+            // refund isn't possible (see BuildPendingRefundUpdates), so leave a claim instead.
+            DataSnapshot participantSnapshot = raceSnapshot.Child("participants").Child(participantUserId);
+            Dictionary<string, object> refundUpdates = BuildPendingRefundUpdates(participantUserId, raceId, participantSnapshot);
+            foreach (var kvp in refundUpdates) updates[kvp.Key] = kvp.Value;
 
             await DatabaseReference.UpdateChildrenAsync(updates);
             await SyncRaceOpenClosedStatusAsync(raceId);
@@ -608,7 +854,8 @@ namespace TrainingBuddy.Managers
                 throw new InvalidOperationException("Hosts must cancel their race instead of leaving it.");
             }
 
-            if (raceSnapshot.Child("participants").Child(Auth.CurrentUser.UserId) is not { Exists: true })
+            DataSnapshot leavingParticipantSnapshot = raceSnapshot.Child("participants").Child(Auth.CurrentUser.UserId);
+            if (leavingParticipantSnapshot is not { Exists: true })
             {
                 return;
             }
@@ -620,6 +867,10 @@ namespace TrainingBuddy.Managers
             };
 
             updates[$"joinRequests/{raceId}/{Auth.CurrentUser.UserId}"] = null;
+
+            // Refund a paid entry fee before the participant entry is deleted above.
+            Dictionary<string, object> refundUpdates = await BuildTierRefundUpdatesAsync(Auth.CurrentUser.UserId, leavingParticipantSnapshot);
+            foreach (var kvp in refundUpdates) updates[kvp.Key] = kvp.Value;
 
             await DatabaseReference.UpdateChildrenAsync(updates);
             await SyncRaceOpenClosedStatusAsync(raceId);
@@ -656,6 +907,15 @@ namespace TrainingBuddy.Managers
                 DataSnapshot userSnap  = await FetchUserDataById(userId);
                 int speedPoints = ConvertToNullableInt(userSnap?.Child("SpeedPoints").Value) ?? 0;
                 int accelPoints = ConvertToNullableInt(userSnap?.Child("AccelerationPoints").Value) ?? 0;
+
+                // Paid-tier bonus applies to this race's simulation input only — never written
+                // back to the account's real SpeedPoints/AccelerationPoints. See PaidRuns_Scope.md.
+                var paidTier = (RaceEntryTier)(ConvertToNullableInt(participant.Child("paidTier").Value) ?? 0);
+                if (paidTier != RaceEntryTier.None && RaceEntryTiers.TryGetValue(paidTier, out var tierDef))
+                {
+                    speedPoints += tierDef.StatBonus;
+                    accelPoints += tierDef.StatBonus;
+                }
 
                 participantInputs.Add((userId, displayName, sex, speedPoints, accelPoints));
             }
@@ -911,6 +1171,16 @@ namespace TrainingBuddy.Managers
             foreach (DataSnapshot participant in raceSnapshot.Child("participants").Children)
             {
                 updates[$"userRaces/{participant.Key}/{raceId}"] = null;
+
+                // Refund any paid entry fee — AI fillers never pay, skip them. Direct self-refund
+                // when the acting user IS this participant (e.g. the host cancelling their own
+                // race); everyone else can't be credited directly (see BuildPendingRefundUpdates)
+                // so they get a claim instead.
+                if (participant.Child("isAI").Value is true) continue;
+                Dictionary<string, object> refundUpdates = participant.Key == Auth.CurrentUser.UserId
+                    ? await BuildTierRefundUpdatesAsync(participant.Key, participant)
+                    : BuildPendingRefundUpdates(participant.Key, raceId, participant);
+                foreach (var kvp in refundUpdates) updates[kvp.Key] = kvp.Value;
             }
 
             await DatabaseReference.UpdateChildrenAsync(updates);
@@ -2090,6 +2360,7 @@ namespace TrainingBuddy.Managers
 
 			updates[$"leaderboard/{uid}"] = null;
 			updates[$"walletTransactions/{uid}"] = null;
+			updates[$"pendingRefunds/{uid}"] = null;
 			if (!string.IsNullOrEmpty(friendCode)) updates[$"friendCodes/{friendCode}"] = null;
 			if (!string.IsNullOrEmpty(userName))   updates[$"usernames/{userName}"] = null;
 			updates[$"users/{uid}"] = null; // includes nested dailySteps

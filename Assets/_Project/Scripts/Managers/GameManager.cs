@@ -43,7 +43,10 @@ namespace TrainingBuddy.Managers
 			if (paused)
 				_databaseManager.StopStepCounter();
 			else
+			{
 				_ = _databaseManager.StartStepCounter();
+				_ = _databaseManager.ClaimPendingRefundsAsync();
+			}
 		}
 	}
 }
