@@ -80,4 +80,14 @@ Idea: let accumulated steps be spent like a currency in-app.
 
 ## 6. Better error messaging
 
-- General pass on error messages shown to the user throughout the app.
+- **Scoped** — see `ErrorMessaging_Scope.md`. Fixing gaps in an existing mechanism,
+  not building a new one: `UniversalOverlay`/`ShowMessage` already exists but is
+  reused ad hoc, several user-initiated actions (join/leave race, login) currently
+  fail completely silently, some places show raw `ex.Message` verbatim (works today
+  by accident, not by design), and copy is a genuine Danish/English mix in a couple
+  of spots (`DeleteAccountAsync`).
+- Scope: user-initiated actions first (join/leave race, register, login, cancel,
+  kick, delete account) — passive background fetches (leaderboard, friends list)
+  stay logging-only for now, deferred as a separate lower-priority pass.
+- Design: one shared helper that only ever shows a pre-written user-safe message or
+  one shared generic fallback — never raw/technical/English exception text again.
