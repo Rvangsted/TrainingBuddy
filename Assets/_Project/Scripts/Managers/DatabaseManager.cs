@@ -92,14 +92,16 @@ namespace TrainingBuddy.Managers
 		private static readonly string DeviceId = SystemInfo.deviceUniqueIdentifier
 			.Replace('.', '_').Replace('#', '_').Replace('$', '_').Replace('[', '_').Replace(']', '_').Replace('/', '_');
 
-		// Android uses the Health Connect provider; iOS/Editor still use the raw-sensor path
-		// below until a HealthKitStepProvider exists — see StepCounter_HealthPlatform_Migration_Scope.md.
+		// Android uses the Health Connect provider, iOS uses the HealthKit provider; only the
+		// Editor still falls back to the raw-sensor path — see StepCounter_HealthPlatform_Migration_Scope.md.
 		private readonly IStepDataProvider _stepDataProvider = CreateStepDataProvider();
 
 		private static IStepDataProvider CreateStepDataProvider()
 		{
 #if UNITY_ANDROID && !UNITY_EDITOR
 			return new HealthConnectStepProvider();
+#elif UNITY_IOS && !UNITY_EDITOR
+			return new HealthKitStepProvider();
 #else
 			return null;
 #endif

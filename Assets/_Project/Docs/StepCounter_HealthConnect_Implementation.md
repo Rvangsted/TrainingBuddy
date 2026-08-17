@@ -11,8 +11,11 @@ that's now in place.
 **Status at a glance:**
 - ✅ Android — Health Connect provider built, permission flow built, two
   real-world bugs found in testing and fixed, anti-cheat gap closed.
-- ❌ iOS — not started. Still on the old raw-sensor path (see
-  `StepCounter_Fix.md`), which still has the original reboot-loss bug.
+- 🟡 iOS — provider code written (see
+  [`StepCounter_HealthKit_Implementation.md`](./StepCounter_HealthKit_Implementation.md)),
+  but not yet compiled, build-profile'd, or QA'd — no Mac/Xcode was
+  available when it was written. Still effectively on the old raw-sensor
+  path (see `StepCounter_Fix.md`) until that happens.
 - ❌ Device QA matrix, store review prep, daily-breakdown UI migration — not
   started.
 
@@ -385,12 +388,13 @@ Straight from the scope doc's phasing, in order:
    Android versions (Health Connect behaves differently pre/post API 34),
    including the manual test scenarios in this session's per-device
    anchoring plan (new-device isolation, 30-day cap, plausibility clamp).
-2. **iOS: HealthKit provider** — not started at all. Needs the build target
-   brought up, a native Obj-C plugin (`HealthKit_IsAvailable`,
-   `HealthKit_RequestAuthorization`, `HealthKit_QueryStepsSince`), Xcode
-   capability/entitlement wiring, and a `HealthKitStepProvider : IStepDataProvider`.
-   See the scope doc's "Building the iOS provider natively" section for the
-   full breakdown.
+2. **iOS: HealthKit provider** — code written (native Obj-C bridge, the
+   `HealthKitStepProvider : IStepDataProvider`, and the Xcode
+   capability/entitlement build-postprocessing), see
+   [`StepCounter_HealthKit_Implementation.md`](./StepCounter_HealthKit_Implementation.md).
+   Still needs: the iOS Build Profile + bundle identifier (doesn't exist in
+   this project yet), an actual compile/build on a Mac, and on-device QA —
+   none of that was possible in the environment this was written in.
 3. **Store review prep** — privacy policy text, usage strings.
 4. **Stretch:** migrate `ProfileScreen`/`ActivityGraph`'s daily-breakdown UI
    to query the platforms' own daily aggregation directly instead of the
