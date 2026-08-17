@@ -93,6 +93,16 @@
           ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || auth.uid == $uid || root.child('races').child($raceId).child('hostId').val() == auth.uid)"
         }
       }
+    },
+
+    "walletTransactions": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2)",
+        "$txId": {
+          ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2)",
+          ".validate": "newData.hasChildren(['type', 'amount', 'status', 'createdAt']) && (newData.child('type').val() == 'earn' || newData.child('type').val() == 'spend' || newData.child('type').val() == 'refund') && (newData.child('status').val() == 'settled' || newData.child('status').val() == 'refunded')"
+        }
+      }
     }
   }
 }

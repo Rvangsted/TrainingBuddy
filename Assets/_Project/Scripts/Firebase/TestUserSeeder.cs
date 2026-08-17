@@ -152,6 +152,7 @@ namespace TrainingBuddy.FireBase
                 int dailyStepBase = totalSteps - todaySteps;
 
                 userData.StepCount     = totalSteps;
+                userData.StepCurrency  = totalSteps;
                 userData.DailyStepBase = dailyStepBase;
                 userData.DailyStepDate = today;
 

@@ -54,6 +54,9 @@ namespace TrainingBuddy.UI
 			_currentStepCount = Convert.ToInt64(_dataSnapshot.Child("StepCount").Value ?? 0L);
 			UpdateLevelingProgress();
 
+			long stepCurrency = Convert.ToInt64(_dataSnapshot.Child("StepCurrency").Value ?? 0L);
+			Layout.Q<Label>("LevelingBottomLeftElementLabel").text = $"{stepCurrency} mønter";
+
 			Layout.Q<Label>("Name").text = _dataSnapshot.Child("UserName").Value.ToString();
 			int dobMonth = Convert.ToInt32(_dataSnapshot.Child("DateOfBirthMonth").Value);
 			string monthAbbr = new DateTime(2000, dobMonth, 1).ToString("MMM");

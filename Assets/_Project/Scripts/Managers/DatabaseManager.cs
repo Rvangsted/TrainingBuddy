@@ -77,6 +77,7 @@ namespace TrainingBuddy.Managers
 		private long _deviceAnchor = -1;   // Device sensor value at session start (-1 = not yet anchored)
 		private long _currentTotal;        // Running total reported to UI
 		private long _lastSyncedTotal = -1;// Last value written to Firebase
+		private long _currentCurrency;     // StepCurrency balance — minted 1:1 with synced step deltas, see StepsAsCurrency_Scope.md
 		private long _dailyStepBase;       // Value of _currentTotal at start of today
 		private string _dailyStepDate;     // The date string (yyyy-MM-dd) for _dailyStepBase
 		private long _lastSyncTimestampMillis = -1; // Provider-backed path only: unix ms anchor paired with _baseStepCount. -1 = not yet anchored.
@@ -225,6 +226,7 @@ namespace TrainingBuddy.Managers
 			       userData.SpeedPoints ??= currentUserdata.SpeedPoints;
 			       userData.StepCount ??= currentUserdata.StepCount;
 			       userData.StepCountSnapshot ??= currentUserdata.StepCountSnapshot;
+			       userData.StepCurrency ??= currentUserdata.StepCurrency;
 			       userData.LastSyncTimestamp ??= currentUserdata.LastSyncTimestamp;
 			       userData.UserLevel ??= currentUserdata.UserLevel;
 
@@ -1308,6 +1310,12 @@ namespace TrainingBuddy.Managers
 			_currentTotal     = _baseStepCount;
 			_lastSyncedTotal  = _baseStepCount;
 
+			// StepCurrency accrues in lockstep with StepCount (see WriteStepsToFirebaseAsync), so
+			// whichever source (local vs. Firebase) was ahead for steps is ahead for currency too.
+			long firebaseCurrency = ReadLong(data?.Child("StepCurrency").Value);
+			long localCurrency    = PlayerPrefs.GetInt(StepCurrencyKey, 0);
+			_currentCurrency = useLocal ? localCurrency : firebaseCurrency;
+
 			if (_stepDataProvider != null)
 			{
 				long firebaseSyncTimestamp = ReadLong(data?.Child("deviceSync").Child(DeviceId).Child("lastSyncTimestamp").Value);
@@ -1493,11 +1501,17 @@ namespace TrainingBuddy.Managers
 			if (Auth?.CurrentUser == null) return false;
 			if (_currentTotal == _lastSyncedTotal) return false;
 
+			// StepCount only ever increases between syncs (see StepCounterLoop/SyncFromProviderAsync),
+			// so this delta is always positive — it's what gets minted into StepCurrency this sync.
+			long stepsDelta  = _currentTotal - _lastSyncedTotal;
+			long newCurrency = _currentCurrency + stepsDelta;
+
 			// Local day, not UTC — see the matching comment in StartStepCounter().
 			string today = DateTime.Now.ToString("yyyy-MM-dd");
 			var updates = new Dictionary<string, object>(extraFields)
 			{
 				{ "StepCount", (int)_currentTotal },
+				{ "StepCurrency", (int)newCurrency },
 			};
 
 			// Day rolled over mid-session — archive the previous day then reset base
@@ -1524,14 +1538,43 @@ namespace TrainingBuddy.Managers
 					.UpdateChildrenAsync(updates);
 
 				await WriteLeaderboardEntryAsync(uid);
+				await WriteWalletEarnTransactionAsync(uid, stepsDelta);
 
 				_lastSyncedTotal = _currentTotal;
+				_currentCurrency = newCurrency;
+				PlayerPrefs.SetInt(StepCurrencyKey, (int)_currentCurrency);
+				PlayerPrefs.Save();
 				return true;
 			}
 			catch (Exception ex)
 			{
 				$"WriteStepsToFirebaseAsync failed: {ex}".Log();
 				return false;
+			}
+		}
+
+		/// <summary>
+		/// Records a step-accrual credit in the wallet ledger (see StepsAsCurrency_Scope.md).
+		/// Best-effort: unlike the StepCurrency balance write above, a failure here doesn't get
+		/// retried — it just means this one earn isn't itemized in the ledger, which is an
+		/// acceptable gap for accrual (unlike spends/refunds, nothing needs to reverse an earn).
+		/// </summary>
+		private async Task WriteWalletEarnTransactionAsync(string uid, long amount)
+		{
+			try
+			{
+				DatabaseReference txRef = DatabaseReference.Child("walletTransactions").Child(uid).Push();
+				await txRef.SetValueAsync(new Dictionary<string, object>
+				{
+					{ "type", "earn" },
+					{ "amount", (int)amount },
+					{ "status", "settled" },
+					{ "createdAt", GetUnixTimestampMilliseconds() },
+				});
+			}
+			catch (Exception ex)
+			{
+				$"WriteWalletEarnTransactionAsync failed: {ex}".Log();
 			}
 		}
 
@@ -1843,6 +1886,7 @@ namespace TrainingBuddy.Managers
 		// Scoped per user so multiple accounts on the same device don't share data.
 		private string StepCountKey    => $"StepCount_{Auth?.CurrentUser?.UserId ?? "anon"}";
 		private string StepSnapshotKey => $"StepCountSnapshot_{Auth?.CurrentUser?.UserId ?? "anon"}";
+		private string StepCurrencyKey => $"StepCurrency_{Auth?.CurrentUser?.UserId ?? "anon"}";
 		private string LastSyncTimestampKey => $"LastSyncTimestamp_{Auth?.CurrentUser?.UserId ?? "anon"}";
 		private string DailyStepBaseKey => $"DailyStepBase_{Auth?.CurrentUser?.UserId ?? "anon"}";
 		private string DailyStepDateKey => $"DailyStepDate_{Auth?.CurrentUser?.UserId ?? "anon"}";
@@ -2045,6 +2089,7 @@ namespace TrainingBuddy.Managers
 			updates[$"friendRequests/{uid}"] = null;
 
 			updates[$"leaderboard/{uid}"] = null;
+			updates[$"walletTransactions/{uid}"] = null;
 			if (!string.IsNullOrEmpty(friendCode)) updates[$"friendCodes/{friendCode}"] = null;
 			if (!string.IsNullOrEmpty(userName))   updates[$"usernames/{userName}"] = null;
 			updates[$"users/{uid}"] = null; // includes nested dailySteps
@@ -2062,6 +2107,7 @@ namespace TrainingBuddy.Managers
 
 			PlayerPrefs.DeleteKey(StepCountKey);
 			PlayerPrefs.DeleteKey(StepSnapshotKey);
+			PlayerPrefs.DeleteKey(StepCurrencyKey);
 			PlayerPrefs.DeleteKey(LastSyncTimestampKey);
 			PlayerPrefs.DeleteKey(DailyStepBaseKey);
 			PlayerPrefs.DeleteKey(DailyStepDateKey);

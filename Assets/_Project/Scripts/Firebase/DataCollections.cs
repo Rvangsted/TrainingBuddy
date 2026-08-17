@@ -16,10 +16,25 @@ namespace TrainingBuddy.FireBase
 		public int? SpeedPoints;
 		public int? StepCount;
 		public int? StepCountSnapshot;
+		public int? StepCurrency;
 		public int? DailyStepBase;
 		public string DailyStepDate;
 		public long? LastSyncTimestamp;
 		public int? UserLevel;
+	}
+
+	/// <summary>
+	/// Ledger entry under walletTransactions/{uid}/{txId} — see StepsAsCurrency_Scope.md.
+	/// Written directly by DatabaseManager as a plain dictionary, not via this struct
+	/// (same convention as FriendRequest/FriendEntry); kept here to document the shape.
+	/// </summary>
+	public struct WalletTransaction
+	{
+		public string Type;         // "earn" | "spend" | "refund"
+		public int Amount;
+		public string RelatedRaceId; // set for spend/refund entries once #3 (paid runs) exists; absent for earns
+		public string Status;       // "settled" | "refunded"
+		public long CreatedAt;
 	}
 	
 	public struct FriendEntry

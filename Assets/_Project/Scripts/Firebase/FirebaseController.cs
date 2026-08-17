@@ -229,6 +229,7 @@ namespace TrainingBuddy.FireBase
 		        SpeedPoints = 0,
 		        StepCount = 0,
 		        StepCountSnapshot = 0,
+		        StepCurrency = 0,
 		        UserLevel = 1,
 	        };
 
