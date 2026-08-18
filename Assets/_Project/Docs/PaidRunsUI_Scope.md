@@ -76,10 +76,11 @@ Editor imports it, so this can't be pre-wired from outside the Editor.
   `SubmitJoinRequestAsync`/`HandleJoinRequestAsync`/`FinalizeApprovedJoinAsync`
   have zero UI callers today — a pre-existing, separate gap. Flagged here,
   not built. This pass only touches the direct-join path.
-- **The paid-participant badge is in scope** — small and directly related.
-  Requires adding `paidTier` to `FetchCurrentRaceParticipantsAsync`'s
-  returned tuple, and a small badge element in `CreateHostCard`/
-  `CreateLobbyCard` (built in C#, same as the rest of those rows).
+- **The paid-participant badge is explicitly out of scope for now.** Pay-to-
+  win itself remains confirmed acceptable (per `PaidRuns_Scope.md`) — this is
+  specifically about *not* building the visual "who paid" indicator at this
+  time. Not a technical blocker (see Design below for what it'd take), a
+  deliberate call not to build it yet. Revisit only if asked.
 
 ## Design
 
@@ -98,15 +99,16 @@ Editor imports it, so this can't be pre-wired from outside the Editor.
 - Both flows wrap their call in try/catch → `_databaseManager.ShowError(...)`
   — covers the insufficient-balance case and any other guard exception for
   free, no new error-handling work needed.
-- **Paid badge**: a small `VisualElement` added to a participant row when
-  `paidTier != None` (e.g. a colored dot/label naming the tier) — exact
-  visual not decided (see Still open).
+- **Paid badge (not being built now)**: if revisited later, would need
+  `paidTier` added to `FetchCurrentRaceParticipantsAsync`'s returned tuple,
+  and a small `VisualElement` added to a participant row when
+  `paidTier != None` in `CreateHostCard`/`CreateLobbyCard` (built in C#, same
+  as the rest of those rows) — e.g. a colored dot/label naming the tier.
 
 ## Still open
 
 - Exact visual design of `TierPickerControl` (vertical list vs. segmented
-  control) and of the paid-participant badge (per-tier color? icon? text
-  only?) — needs an actual mockup pass, not decided here.
+  control) — needs an actual mockup pass, not decided here.
 - Whether to add the optional race `description` field to the new Create
   Race screen at the same time — `HostRaceAsync` already accepts it, nothing
   in the UI sets it today. Cheap to include since the plumbing exists.

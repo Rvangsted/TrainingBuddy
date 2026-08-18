@@ -20,7 +20,7 @@ namespace TrainingBuddy.FireBase
 	public class DatabaseTasks : MonoBehaviour, IDatabaseTasks
 	{
 		[Inject] private IDatabaseManager _databaseManager;
-		
+
 		[InspectorButton]
 		public async void CreateUser(UserData user)
 		{

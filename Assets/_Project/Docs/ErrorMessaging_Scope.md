@@ -139,6 +139,15 @@ not implemented yet.
   case the doc flagged, short of building real queueing.
 - `DeleteAccountAsync`'s three English catches now route through
   `UserMessages` (Danish) instead of inline English strings.
+- **Found later, genuinely missed by the original retrofit list**:
+  `FirebaseController.FirebaseRegister`'s pre-submit field-validation guards
+  (empty username/sex/email/password/passwordConfirm, mismatched passwords,
+  incomplete date of birth) logged and returned `false` with zero UI
+  feedback — registering with a blank field silently did nothing. Now routed
+  through `ShowMessage`/`UserMessages` like everything else. The two
+  existing post-submit failures (email already in use, generic registration
+  failure) were also moved into `UserMessages` for consistency (previously
+  inline strings, predating the catalog).
 
 ## UI (Resolved)
 

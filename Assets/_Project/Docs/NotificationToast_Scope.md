@@ -4,8 +4,28 @@ New shared UI infrastructure, motivated by a gap found while punch-listing
 the remaining roadmap UI work: refer-a-friend's reward moments currently
 land completely silently. Written as reusable infra rather than a one-off,
 since the underlying need ("something happened in the background, tell the
-player without interrupting them") isn't specific to referrals. Scoping
-only, not implemented yet.
+player without interrupting them") isn't specific to referrals.
+
+**Implemented:**
+- `ToastNotification` (new: `Controls/ToastNotification.cs`,
+  `Layouts/Overlays/ToastNotification.uxml`,
+  `Stylesheets/ToastNotification.uss`) — message-only, auto-dismisses after
+  3s, slide/fade via USS transition, queues a second toast rather than
+  overwriting or showing both at once. Mirrors `UniversalOverlay`'s
+  MonoBehaviour + `Configure(uiDocument, asset)` pattern.
+- `UIManager.ShowToast(string message)` — new method alongside `ShowOverlay`.
+- `DatabaseManager` gained `ReferralRewardGranted`/`ReferralRewardClaimed`
+  events, fired from `GrantReferralMilestoneRewardAsync`'s success path and
+  `ClaimReferralRewardsAsync` respectively. `UIManager.Initialize()`
+  subscribes to both once, showing a toast with the actual credited amount
+  (not hardcoded, so it stays correct if the reward amounts are rebalanced).
+
+**One manual step still required** (same reason as `CreateRaceScreen` in
+`PaidRunsUI_Scope.md` — Unity only allocates a new asset's GUID on import,
+so a serialized reference can't be pre-wired from a text-editing session):
+open the `UIManager` component's Inspector (same GameObject that already has
+`_overlayAsset` assigned) and drag `ToastNotification.uxml` into the new
+"Toast Asset" field.
 
 ## Current state
 
@@ -56,11 +76,19 @@ only, not implemented yet.
     `DatabaseManager.ReferralRewardClaimed` event carrying the claimed
     amount, e.g. `ShowToast("En ven du henviste gav dig 1000 mønter!")`.
 
+## Resolved (implementation-time calls, not asked separately)
+
+- **Visual design**: top-of-screen banner (doesn't compete with bottom
+  safe-area content/nav), dark card (`--color-dark`/`--color-light` tokens,
+  matching `UniversalOverlay`'s palette) with rounded corners, slide-down +
+  fade via a `.toast-root--visible` class toggle and a 250ms USS transition.
+  Not a mockup-reviewed design — easy to retune since it's plain USS.
+- **Exact copy**: "Du fik {amount} mønter som velkomstbonus!" (new user) /
+  "En ven du henviste gav dig {amount} mønter!" (referrer) — amount
+  interpolated from the actual credited value, not hardcoded.
+
 ## Still open
 
-- Exact visual design (colors, on-screen position, slide/fade animation) —
-  not decided here.
-- Exact Danish copy for both toast messages.
 - Whether toasts should eventually cover other passive events (placement
   points, friend-request auto-processing, etc.) — not required for v1; this
   doc only scopes the referral hookup.

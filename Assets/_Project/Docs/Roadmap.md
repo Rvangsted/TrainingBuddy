@@ -108,23 +108,25 @@ Found by auditing what's actually reachable in the app vs. what only exists
 in the backend, after #2–#6 above landed. Scoped, not implemented, in
 priority order:
 
-1. **Paid-runs tier UI** (`PaidRunsUI_Scope.md`) — **implemented**: new
-   Create Race screen (tier picker + race-name input) and a join-confirm
-   modal on `FindLobbyScreen`. One manual Unity Editor step still needed
-   (wiring the new screen's `VisualTreeAsset` in `LayoutData`'s Inspector —
-   see the doc). Not yet compiled/playtested. The pre-existing, separate
-   join-request/host-approval flow gap (`SubmitJoinRequestAsync` etc. have
-   no UI at all) remains explicitly deferred, not bundled in.
-2. **Paid-participant badge** in lobby/host cards — not yet built; bundled
-   into the same doc, small and directly related.
-3. **Notification toast component** (`NotificationToast_Scope.md`) — new
-   shared, non-blocking infra; no toast/snackbar exists anywhere today.
-   Needed so refer-a-friend's reward moments (currently silent) can
-   actually tell the player something happened.
-4. **Refer-a-friend UI** (`ReferAFriend_Scope.md` "UI" section) — invite-
+1. **Paid-runs tier UI** (`PaidRunsUI_Scope.md`) — **implemented, wired, and
+   compiles**: new Create Race screen (tier picker + race-name input) and a
+   join-confirm modal on `FindLobbyScreen`. Not yet playtested end-to-end on
+   a real device. The pre-existing, separate join-request/host-approval flow
+   gap (`SubmitJoinRequestAsync` etc. have no UI at all) remains explicitly
+   deferred, not bundled in.
+2. ~~Paid-participant badge~~ — **explicitly deferred, not wanted for now**
+   (pay-to-win itself is still fine; just not the visual "who paid"
+   indicator). See `PaidRunsUI_Scope.md`. Revisit only if asked.
+3. **Notification toast component** (`NotificationToast_Scope.md`) —
+   **implemented**: new `ToastNotification` control + `UIManager.ShowToast`,
+   wired to both refer-a-friend reward moments via new `DatabaseManager`
+   events. One manual Unity Editor step still needed (wiring
+   `ToastNotification.uxml` into `UIManager`'s new "Toast Asset" Inspector
+   field — see the doc). Not yet compiled/playtested.
+4. **Refer-a-friend UI** (`ReferAFriend_Scope.md` "UI" section) — reward-
+   confirmation half is now done (toast hookup above); still open: invite-
    promotion section on `ProfileScreen`, `RegisterScreen` field polish to
-   match the existing section/label pattern, reward-confirmation hookup
-   into the toast above.
+   match the existing section/label pattern.
 5. **Placement-points visual polish** (`PlacementPoints_Scope.md` "UI"
    section) — distinct styling for the post-race "+N placeringspoint" line
    and the `ProfileScreen` label, currently both visually generic.

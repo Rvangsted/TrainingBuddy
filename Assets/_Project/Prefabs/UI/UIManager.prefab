@@ -73,8 +73,9 @@ MonoBehaviour:
   _header: {fileID: 9197481963319205126, guid: e8979326af3fae647bb4c3ec95907f80, type: 3}
   _content: {fileID: 9197481963319205126, guid: 652907255766ce64baa3c4193c702f97,
     type: 3}
-  _footer: {fileID: 9197481963319205126, guid: 1a0b55688565fbd4c8ccbe3624f6b81a, type: 3}
   _overlayAsset: {fileID: 9197481963319205126, guid: 039eb7934b25451ea13bb293907400a5,
+    type: 3}
+  _toastAsset: {fileID: 9197481963319205126, guid: d47c72da3cd745a4990480e660015a04,
     type: 3}
   _raceBackgroundFrames:
   - {fileID: 2800000, guid: e3d787b8bbf5d9049a292d28833ae50b, type: 3}

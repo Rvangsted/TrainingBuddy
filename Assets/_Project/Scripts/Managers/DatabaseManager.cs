@@ -183,6 +183,12 @@ namespace TrainingBuddy.Managers
 
 		public event Action<long> StepCountChanged;
 
+		// Refer-a-friend reward moments — see NotificationToast_Scope.md. Both fire deep in the
+		// background (step-sync loop / app-start claim), with no UI-visible click behind them, so
+		// UIManager subscribes once at startup to surface a toast instead of leaving these silent.
+		public event Action<int> ReferralRewardGranted; // this account's own welcome bonus landed
+		public event Action<int> ReferralRewardClaimed; // this account credited as a referrer
+
 		public bool StepCounterRunning { get; private set; }
 		public bool HasStepDataProvider => _stepDataProvider != null;
 		public long DailyStepBase => _dailyStepBase;
@@ -2040,6 +2046,7 @@ namespace TrainingBuddy.Managers
 				_currentCurrency = newCurrency;
 				PlayerPrefs.SetInt(StepCurrencyKey, (int)_currentCurrency);
 				PlayerPrefs.Save();
+				ReferralRewardGranted?.Invoke(ReferralNewUserReward);
 				return true;
 			}
 			catch (Exception ex)
@@ -2076,6 +2083,7 @@ namespace TrainingBuddy.Managers
 			long balance = ReadLong(userSnapshot?.Child("StepCurrency").Value);
 			long timestamp = GetUnixTimestampMilliseconds();
 			var updates = new Dictionary<string, object>();
+			int claimedTotal = 0;
 
 			foreach (DataSnapshot pending in pendingSnapshot.Children)
 			{
@@ -2086,6 +2094,7 @@ namespace TrainingBuddy.Managers
 				if (amount <= 0) continue;
 
 				balance += amount;
+				claimedTotal += amount;
 				string txId = DatabaseReference.Child("walletTransactions").Child(uid).Push().Key;
 				updates[$"walletTransactions/{uid}/{txId}/type"] = "earn";
 				updates[$"walletTransactions/{uid}/{txId}/amount"] = amount;
@@ -2099,6 +2108,7 @@ namespace TrainingBuddy.Managers
 			updates[$"users/{uid}/StepCurrency"] = (int)balance;
 
 			await DatabaseReference.UpdateChildrenAsync(updates);
+			ReferralRewardClaimed?.Invoke(claimedTotal);
 		}
 
 		private Task SyncStepsToFirebase(long deviceValue)

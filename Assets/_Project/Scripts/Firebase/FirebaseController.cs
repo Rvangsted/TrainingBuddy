@@ -153,42 +153,49 @@ namespace TrainingBuddy.FireBase
 		    if (string.IsNullOrEmpty(username))
 		    {
 			    $"Username is empty".Log();
+			    _databaseManager.ShowMessage(UserMessages.RegisterTitle, UserMessages.RegisterMissingUsername);
 			    return false;
 		    }
 
 		    if (string.IsNullOrEmpty(sex))
 		    {
 			    $"Sex is empty".Log();
+			    _databaseManager.ShowMessage(UserMessages.RegisterTitle, UserMessages.RegisterMissingSex);
 			    return false;
 		    }
 
 		    if (string.IsNullOrEmpty(email))
 	        {
 	            $"Email is empty".Log();
+	            _databaseManager.ShowMessage(UserMessages.RegisterTitle, UserMessages.RegisterMissingEmail);
 	            return false;
 	        }
 
 		    if (string.IsNullOrEmpty(password))
 	        {
 		        $"Password is empty".Log();
+		        _databaseManager.ShowMessage(UserMessages.RegisterTitle, UserMessages.RegisterMissingPassword);
 		        return false;
 	        }
 
 		    if (string.IsNullOrEmpty(passwordConfirm))
 		    {
 			    $"Password confirm is empty".Log();
+			    _databaseManager.ShowMessage(UserMessages.RegisterTitle, UserMessages.RegisterMissingPasswordConfirm);
 			    return false;
 		    }
 
 		    if (password != passwordConfirm)
 		    {
 			    $"Passwords doesn't match".Log();
+			    _databaseManager.ShowMessage(UserMessages.RegisterTitle, UserMessages.RegisterPasswordMismatch);
 			    return false;
 		    }
 
 		    if (dobDay <= 0 || dobMonth <= 0 || dobYear <= 0)
 		    {
 			    $"Date of birth is incomplete".Log();
+			    _databaseManager.ShowMessage(UserMessages.RegisterTitle, UserMessages.RegisterMissingDateOfBirth);
 			    return false;
 		    }
 
@@ -202,10 +209,8 @@ namespace TrainingBuddy.FireBase
 
 		        $"RegisterTask failed with {RegisterTask.Exception}".Log();
 		        _databaseManager.ShowMessage(
-			        "Registrering fejlede",
-			        emailTaken
-				        ? "En konto med denne email findes allerede. Log ind i stedet."
-				        : "Registrering fejlede. Tjek venligst at oplysningerne er korrekte.");
+			        UserMessages.RegisterTitle,
+			        emailTaken ? UserMessages.RegisterEmailTaken : UserMessages.RegisterFailed);
 		        return false;
 	        }
 

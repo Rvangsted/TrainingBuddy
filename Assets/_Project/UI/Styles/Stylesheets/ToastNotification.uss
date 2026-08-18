@@ -1,0 +1,32 @@
+.toast-root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    align-items: center;
+    padding-top: 24px;
+}
+
+.toast-card {
+    max-width: 320px;
+    padding: 14px 20px;
+    border-radius: 20px;
+    background-color: var(--color-dark);
+    translate: 0 -40px;
+    opacity: 0;
+    transition-property: translate, opacity;
+    transition-duration: 250ms;
+    transition-timing-function: ease-out;
+}
+
+.toast-root--visible .toast-card {
+    translate: 0 0;
+    opacity: 1;
+}
+
+.toast-message {
+    color: var(--color-light);
+    font-size: var(--font-size-m);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}

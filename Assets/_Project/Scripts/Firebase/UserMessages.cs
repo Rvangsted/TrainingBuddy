@@ -52,6 +52,20 @@ namespace TrainingBuddy.FireBase
 		public const string LoginNoSuchAccount   = "Der findes ingen konto med denne email.";
 		public const string LoginFailed          = "Login mislykkedes. Prøv venligst igen.";
 
+		// Register (FirebaseController.FirebaseRegister) — the pre-submit field-validation
+		// guards logged and returned false with no UI feedback at all until this pass; a genuine
+		// gap, not something the original error-messaging retrofit list covered.
+		public const string RegisterTitle                 = "Registrering fejlede";
+		public const string RegisterMissingUsername        = "Indtast venligst et brugernavn.";
+		public const string RegisterMissingSex              = "Vælg venligst dit køn.";
+		public const string RegisterMissingEmail            = "Indtast venligst din emailadresse.";
+		public const string RegisterMissingPassword         = "Indtast venligst en adgangskode.";
+		public const string RegisterMissingPasswordConfirm  = "Bekræft venligst din adgangskode.";
+		public const string RegisterPasswordMismatch        = "Adgangskoderne er ikke ens.";
+		public const string RegisterMissingDateOfBirth      = "Udfyld venligst hele din fødselsdato.";
+		public const string RegisterEmailTaken              = "En konto med denne email findes allerede. Log ind i stedet.";
+		public const string RegisterFailed                  = "Registrering fejlede. Tjek venligst at oplysningerne er korrekte.";
+
 		// Delete account (DatabaseManager.DeleteAccountAsync)
 		public const string DeleteAccountTitle             = "Slet konto";
 		public const string DeleteAccountWrongPassword     = "Forkert adgangskode. Din konto blev ikke slettet.";

@@ -14,7 +14,9 @@ namespace TrainingBuddy.UI
 		[SerializeField] private VisualTreeAsset _header;
 		[SerializeField] private VisualTreeAsset _content;
 		[SerializeField] private VisualTreeAsset _overlayAsset;
+		[SerializeField] private VisualTreeAsset _toastAsset;
 		private UniversalOverlay _universalOverlay;
+		private ToastNotification _toastNotification;
 
 		public VisualElement Header { get; private set; }
 		public VisualElement Content { get; private set; }
@@ -71,15 +73,21 @@ namespace TrainingBuddy.UI
 				_universalOverlay = gameObject.AddComponent<UniversalOverlay>();
 			}
 
+			if (_toastNotification == null && !TryGetComponent(out _toastNotification))
+			{
+				_toastNotification = gameObject.AddComponent<ToastNotification>();
+			}
+
 			WarmupFonts();
 
 			_universalOverlay?.Configure(_uiDocument, _overlayAsset);
+			_toastNotification?.Configure(_uiDocument, _toastAsset);
 		}
 
 		public void Initialize()
 		{
 			_databaseManager.UIManager = this;
-			
+
 			Header = _header.Instantiate();
 			Content = _content.Instantiate();
 
@@ -89,6 +97,12 @@ namespace TrainingBuddy.UI
 			Content.AddToClassList("layout-content");
 
 			SetupSafeAreaContainer();
+
+			// Refer-a-friend reward moments — see NotificationToast_Scope.md. Both events fire
+			// deep in the background with no UI-visible click behind them, so this is the one
+			// place that turns them into something the player actually sees.
+			_databaseManager.ReferralRewardGranted += amount => ShowToast($"Du fik {amount} mønter som velkomstbonus!");
+			_databaseManager.ReferralRewardClaimed += amount => ShowToast($"En ven du henviste gav dig {amount} mønter!");
 
 			// Don't navigate yet — Firebase hasn't finished initializing at this point (GameManager's
 			// Initialize() is still running), so Auth.CurrentUser isn't known yet. GameManager calls
@@ -138,6 +152,16 @@ namespace TrainingBuddy.UI
 		public void HideOverlay()
 		{
 			_universalOverlay?.Hide();
+		}
+
+		/// <summary>
+		/// Non-blocking, auto-dismissing notification — see NotificationToast_Scope.md. Use for
+		/// passive "something happened in the background" moments; anything needing an explicit
+		/// response from the player should still use ShowOverlay.
+		/// </summary>
+		public void ShowToast(string message)
+		{
+			_toastNotification?.Show(message);
 		}
 
 		private void InitializeBackButton()
