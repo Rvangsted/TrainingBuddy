@@ -94,6 +94,14 @@
             <ui:Label text="Se din aktivitet fra den sidste måned" name="FriendSubtitle" class="friend-subtitle font-regular"/>
             <ui:VisualElement name="FriendsContent" class="friends-content"/>
         </ui:VisualElement>
+        <ui:VisualElement name="InviteContainer" class="invite-container">
+            <ui:Label text="Inviter en ven" name="InviteTitle" class="invite-title font-title"/>
+            <ui:Label text="I får begge mønter, når din ven kommer i gang" name="InviteSubtitle" class="invite-subtitle font-regular"/>
+            <ui:VisualElement name="InviteCodeRow" class="invite-code-row">
+                <ui:Label text="######" name="InviteCodeLabel" class="invite-code-label font-title"/>
+                <ui:Button text="Kopiér" name="InviteCopyButton" class="invite-copy-button font-regular"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
         <ui:VisualElement name="MenuContainer" class="menu-container">
             <TrainingBuddy.UI.Controls.LocalizedButton name="AboutButton" key="button_about" class="about-button square-button"/>
             <TrainingBuddy.UI.Controls.LocalizedButton name="SettingsButton" key="button_settings" class="settings-button square-button"/>

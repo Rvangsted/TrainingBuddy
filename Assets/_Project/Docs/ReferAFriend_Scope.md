@@ -113,25 +113,28 @@ boundary the friend-request system already respects.
 ## UI (Resolved)
 
 Found while punch-listing remaining roadmap UI work: the backend above is
-fully wired, but nothing communicates any of it to a player.
+fully wired, but nothing communicates any of it to a player. All three
+items below are now implemented.
 
-- **Invite-promotion section on `ProfileScreen`.** No natural slot exists
-  today (screen runs Info → Stats → Activity graph → Friends → Menu buttons
-  → profile picture — mapped in full while researching this). Add a new
-  block near the existing `FriendCode` display framing it as an invite:
-  the code plus a short line explaining both sides' rewards. Exact copy/
-  layout not decided here.
-- **`RegisterScreen`'s referral field needs to match the established section
-  pattern.** Every other field (`GenderSection`, `DobSection`) is wrapped in
-  `<ui:VisualElement class="section-container">` with a
-  `LocalizedLabel class="font-title section-label"` — the current
-  `ReferralCode` field (`RegisterScreen.uxml`) is a bare, unlabeled
-  `TextField` outside that pattern. Wrap it the same way (plain, non-
-  localized label per the earlier decision to skip Unity's Localization
-  tables for this field).
-- **Reward confirmation** — see `NotificationToast_Scope.md`. Both the new
-  user's welcome bonus and the referrer's payout currently land completely
-  silently; they'll hook into the new toast component there instead.
+- **Invite-promotion section on `ProfileScreen`.** New `InviteContainer`
+  block added between `FriendsContainer` and `MenuContainer` (no natural
+  slot existed — screen runs Info → Stats → Activity graph → Friends → Menu
+  buttons → profile picture): title, a one-line reward explanation, and a
+  row showing the player's own `FriendCode` with a "Kopiér" button
+  (`GUIUtility.systemCopyBuffer`). The copy action fires a toast
+  ("Kode kopieret!") via `UIManager.ShowToast` — a small extension of the
+  toast component beyond `NotificationToast_Scope.md`'s original
+  referral-reward-only scope, used here for the same kind of passive,
+  non-blocking confirmation.
+- **`RegisterScreen`'s referral field now matches the established section
+  pattern.** Wrapped in a `ReferralSection` `<ui:VisualElement
+  class="section-container">` with a plain (non-localized, per the earlier
+  decision) `<ui:Label class="font-title section-label">`, same structural
+  shape as `GenderSection`/`DobSection` — previously a bare, unlabeled
+  `TextField` outside that pattern.
+- **Reward confirmation** — see `NotificationToast_Scope.md`. Implemented
+  there: both the new user's welcome bonus and the referrer's payout now
+  show a toast instead of landing silently.
 
 - **Farming is reduced, not eliminated** — someone determined can still run
   multiple disposable-email accounts through the milestone gate manually.

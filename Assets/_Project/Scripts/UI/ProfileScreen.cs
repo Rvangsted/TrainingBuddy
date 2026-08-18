@@ -21,6 +21,7 @@ namespace TrainingBuddy.UI
 		private readonly FirebaseController _firebaseController;
 		private DataSnapshot _dataSnapshot;
 		private long _currentStepCount;
+		private string _friendCode = string.Empty;
 		private readonly List<ActivityGraph.DataPoint> _historyDataPoints = new();
 
 		protected ProfileScreen(LayoutData layoutData, UIManager uiManager, FirebaseController firebaseController, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
@@ -38,6 +39,11 @@ namespace TrainingBuddy.UI
 
 			_logoutButton = Layout.Q<Button>("LogoutButton");
 			_logoutButton.RegisterCallback<ClickEvent>(OnLogout);
+
+			// Invite section — see ReferAFriend_Scope.md. Registered once here (not in
+			// DrawLayout, unlike the Speed/Acceleration buttons below) since the handler reads
+			// _friendCode fresh off the field rather than closing over a per-draw local.
+			Layout.Q<Button>("InviteCopyButton").RegisterCallback<ClickEvent>(OnCopyInviteCode);
 		}
 
 		// ── Layout drawing ────────────────────────────────────────────────────────
@@ -66,6 +72,9 @@ namespace TrainingBuddy.UI
 			Layout.Q<Label>("DateOfBirth").text = $"{_dataSnapshot.Child("DateOfBirthDay").Value} {monthAbbr} {_dataSnapshot.Child("DateOfBirthYear").Value}";
 			Layout.Q<Label>("UserID").text = $"ID {_dataSnapshot.Child("FriendCode").Value}";
 			Layout.Q<VisualElement>("ProfilePicture").AddToClassList("Kvinde");
+
+			_friendCode = _dataSnapshot.Child("FriendCode").Value?.ToString() ?? string.Empty;
+			Layout.Q<Label>("InviteCodeLabel").text = _friendCode;
 
 			_activityGraph = Layout.Q<ActivityGraph>("WeeklyDistanceGraph");
 			_activityGraph.ValueFormatter = value => value >= 1000
@@ -282,6 +291,14 @@ namespace TrainingBuddy.UI
 		{
 			_firebaseController.FirebaseLogout();
 			_uiManager.ChangePage(_layoutData.WelcomeScreen);
+		}
+
+		private void OnCopyInviteCode(ClickEvent evt)
+		{
+			if (string.IsNullOrEmpty(_friendCode)) return;
+
+			GUIUtility.systemCopyBuffer = _friendCode;
+			_uiManager.ShowToast("Kode kopieret!");
 		}
 
 		private async void OnSearchFriend(string friendCode)

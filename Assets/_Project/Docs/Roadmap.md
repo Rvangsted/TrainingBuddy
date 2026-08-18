@@ -123,10 +123,11 @@ priority order:
    events. One manual Unity Editor step still needed (wiring
    `ToastNotification.uxml` into `UIManager`'s new "Toast Asset" Inspector
    field — see the doc). Not yet compiled/playtested.
-4. **Refer-a-friend UI** (`ReferAFriend_Scope.md` "UI" section) — reward-
-   confirmation half is now done (toast hookup above); still open: invite-
-   promotion section on `ProfileScreen`, `RegisterScreen` field polish to
-   match the existing section/label pattern.
+4. **Refer-a-friend UI** (`ReferAFriend_Scope.md` "UI" section) —
+   **implemented**: invite-promotion section on `ProfileScreen` (code +
+   copy button, confirms via a toast), reward-confirmation toast hookup, and
+   `RegisterScreen` field polish to match the existing section/label
+   pattern. Not yet compiled/playtested.
 5. **Placement-points visual polish** (`PlacementPoints_Scope.md` "UI"
    section) — distinct styling for the post-race "+N placeringspoint" line
    and the `ProfileScreen` label, currently both visually generic.
