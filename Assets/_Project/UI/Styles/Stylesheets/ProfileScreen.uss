@@ -216,14 +216,18 @@
     display: none;
 }
 
+/* Placement points — see PlacementPoints_Scope.md "UI". Was display: none (pre-existing,
+   unrelated to placement points — this container had no content before that feature landed);
+   now shown with its own icon (cap.png, already styled below) and an accent-colored caption
+   underneath, distinct from the mønter label on the left. */
 .stats-container .leveling-container .leveling-bottom-container .leveling-bottom-right-container {
-    display: none;
     flex-grow: 1;
     align-items: flex-end;
     justify-content: flex-end;
 }
 
 .stats-container .leveling-container .leveling-bottom-container .leveling-bottom-right-container .leveling-bottom-right-element {
+    position: relative;
     margin: 0 15px 20px 0;
     width: 60px;
     height: 60px;
@@ -235,7 +239,15 @@
 }
 
 .stats-container .leveling-container .leveling-bottom-container .leveling-bottom-right-container .leveling-bottom-right-element .leveling-bottom-right-element-label {
-    display: none;
+    position: absolute;
+    bottom: -22px;
+    left: -20px;
+    width: 100px;
+    white-space: normal;
+    -unity-text-align: upper-center;
+    font-size: var(--font-size-xs);
+    color: var(--color-magenta);
+    -unity-font-style: bold;
 }
 
 /* Stats */

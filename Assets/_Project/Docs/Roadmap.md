@@ -129,8 +129,11 @@ priority order:
    `RegisterScreen` field polish to match the existing section/label
    pattern. Not yet compiled/playtested.
 5. **Placement-points visual polish** (`PlacementPoints_Scope.md` "UI"
-   section) — distinct styling for the post-race "+N placeringspoint" line
-   and the `ProfileScreen` label, currently both visually generic.
+   section) — **implemented**: rich-text bold/magenta styling on the
+   post-race "+N placeringspoint" line, and the `ProfileScreen` label given
+   its own icon/caption. Turned out the `ProfileScreen` label wasn't visible
+   at all — its container was `display: none` (pre-existing, unrelated to
+   placement points). Not yet compiled/playtested.
 6. **Error popup styling** (`ErrorMessaging_Scope.md` "UI" section) — a
    color/accent variant on `UniversalOverlay` for errors vs. success/info;
    lowest priority, purely cosmetic since the functional fix already shipped.

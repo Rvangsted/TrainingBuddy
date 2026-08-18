@@ -207,7 +207,12 @@ namespace TrainingBuddy.UI
 				if (rank > 0)
 				{
 					int points = PlacementPointsTable.GetPoints(rank);
-					message += $"\n+{points} placeringspoint";
+					// Rich text (UI Toolkit Label supports this out of the box) so the award
+					// reads as a distinct line rather than an afterthought — see
+					// PlacementPoints_Scope.md "UI". Stays inline in the same popup rather than
+					// a toast: this is the direct outcome of the race already on screen, not an
+					// unrelated background event.
+					message += $"\n<b><size=120%><color=#AF59FF>+{points} placeringspoint</color></size></b>";
 				}
 			}
 

@@ -153,19 +153,32 @@ not how many steps you've banked.
 
 ## UI (Resolved)
 
-Found while punch-listing remaining roadmap UI work: both hookups above are
-functionally wired but visually indistinct from their surroundings.
+Found while punch-listing remaining roadmap UI work: both hookups were
+functionally wired but visually indistinct from their surroundings (or, in
+the `ProfileScreen` case, not visible at all). Both now implemented.
 
 - **Post-race popup**: the "+N placeringspoint" line
-  (`RaceScreen.AnnounceWinner`) currently sits as plain second-line text in
-  the existing win/lose overlay. Give it its own visual weight (larger/bold/
-  accent-colored) so it reads as a distinct award, not an afterthought —
-  stays inline in the same popup rather than moving to a toast
-  (`NotificationToast_Scope.md`): this is the direct outcome of the race the
-  player is already looking at, not an unrelated background event.
-- **`ProfileScreen` label**: the `PlacementPoints` label
-  (`LevelingBottomRightElementLabel`) currently reuses the `StepCurrency`
-  label's exact style. Give it its own small icon/accent so it reads as a
-  distinct stat, not a mønter lookalike.
-- Exact color/icon/typography for both — no mockup done here, needs a real
-  design pass.
+  (`RaceScreen.AnnounceWinner`) now uses UI Toolkit's built-in rich-text
+  support (`<b>`/`<size>`/`<color>` — `Label` supports this out of the box,
+  no UXML/structural change needed) to render bold, slightly larger, and in
+  the app's magenta accent (`#AF59FF`, matching `--color-magenta`) — reads
+  as a distinct award line rather than an afterthought. Stays inline in the
+  same popup rather than moving to a toast (`NotificationToast_Scope.md`):
+  this is the direct outcome of the race the player is already looking at,
+  not an unrelated background event.
+- **`ProfileScreen` label — found a bigger gap while implementing this**:
+  the whole `leveling-bottom-right-container` (holding
+  `LevelingBottomRightElement`/`LevelingBottomRightElementLabel`) was
+  `display: none` in `ProfileScreen.uss` — pre-existing, unrelated to
+  placement points (that container had no real content assigned to it
+  before this feature), but it meant the label added when placement points
+  first landed was never actually visible. Now shown: keeps the existing
+  `cap.png` icon (already styled, just hidden) and adds a small bold
+  magenta caption underneath ("{N}\nplacering", matching the two-line
+  number-then-unit convention `LevelingProgressValueLabel` already uses
+  elsewhere on this screen) so it reads as a distinct stat rather than a
+  mønter lookalike. The `StepCurrency` circle on the *left* was left alone
+  — it's marked `/* Unused */` in the stylesheet, a separate pre-existing
+  question not part of this task.
+- Not a mockup-reviewed design in either case — colors/copy are easy to
+  retune since it's plain USS/rich-text, not a decided visual spec.
