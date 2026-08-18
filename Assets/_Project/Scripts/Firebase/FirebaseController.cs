@@ -94,6 +94,9 @@ namespace TrainingBuddy.FireBase
 			// Fire-and-forget: claims any paid-run refunds owed from a kick/cancel that happened
 			// while this account wasn't the acting client — see PaidRuns_Scope.md / ClaimPendingRefundsAsync.
 			_ = _databaseManager.ClaimPendingRefundsAsync();
+			// Fire-and-forget: claims any PlacementPoints owed from a race another participant's
+			// client completed — see PlacementPoints_Scope.md / ClaimPendingPlacementPointsAsync.
+			_ = _databaseManager.ClaimPendingPlacementPointsAsync();
 			return true;
 		}
 

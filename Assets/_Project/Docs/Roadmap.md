@@ -59,8 +59,9 @@ Idea: let accumulated steps be spent like a currency in-app.
 - Interacts with #3: the pay-to-win stat bonus affects `FinishTime`, so paid runs
   can indirectly buy leaderboard position too — an accepted consequence of that
   earlier decision, not a new one.
-- Still open: the actual points-per-rank table/formula, whether last place gets a
-  consolation amount or zero, and how an award is shown to the player post-race.
+- **Implemented** — points-per-rank table, last-place handling, and post-race UI
+  are resolved and built; see `PlacementPoints_Scope.md` "Resolved". Compiles
+  clean; not yet playtested end-to-end on a real device.
 
 ## 5. Refer-a-friend system
 

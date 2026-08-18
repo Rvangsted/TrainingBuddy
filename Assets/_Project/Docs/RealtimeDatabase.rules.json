@@ -82,7 +82,7 @@
       ".read": "auth != null",
       "$uid": {
         ".write": "auth != null && auth.uid == $uid",
-        ".validate": "newData.hasChildren(['UserName', 'Sex', 'StepCount'])"
+        ".validate": "newData.hasChildren(['UserName', 'Sex', 'StepCount', 'PlacementPoints'])"
       }
     },
 
@@ -111,6 +111,16 @@
         "$raceId": {
           ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || root.child('races').child($raceId).child('hostId').val() == auth.uid)",
           ".validate": "!newData.exists() || newData.hasChildren(['amount', 'spendTxId', 'createdAt'])"
+        }
+      }
+    },
+
+    "pendingPlacementPoints": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2)",
+        "$raceId": {
+          ".write": "auth != null && (auth.uid == $uid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || root.child('races').child($raceId).child('participants').child(auth.uid).exists())",
+          ".validate": "!newData.exists() || newData.hasChildren(['points', 'createdAt'])"
         }
       }
     }

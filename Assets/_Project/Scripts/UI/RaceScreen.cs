@@ -195,6 +195,22 @@ namespace TrainingBuddy.UI
 			bool isCurrentUserWinner = currentUserId != null && winner.UserId == currentUserId;
 			string message           = isCurrentUserWinner ? "Du vandt løbet!" : $"{winner.Name} vinder løbet!";
 
+			// Client-side display only — computed from data already in memory so the popup can
+			// show a number instantly, with no wait on MarkRaceWatchedAsync's DB round-trip.
+			// MarkRaceWatchedAsync still does the authoritative award using the same rank/table
+			// (PlacementPointsTable, PlacementPoints_Scope.md) once every participant has watched.
+			if (currentUserId != null)
+			{
+				var ranked = new List<PlayerRaceData>(_activePlayers);
+				ranked.Sort((a, b) => a.FinishTime.CompareTo(b.FinishTime));
+				int rank = ranked.FindIndex(p => p.UserId == currentUserId) + 1;
+				if (rank > 0)
+				{
+					int points = PlacementPointsTable.GetPoints(rank);
+					message += $"\n+{points} placeringspoint";
+				}
+			}
+
 			string raceId = _activeRaceId;
 			_uiManager.ShowOverlay(
 				"Løbet er slut!",

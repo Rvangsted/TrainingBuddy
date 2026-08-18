@@ -21,6 +21,7 @@ namespace TrainingBuddy.FireBase
 		public string DailyStepDate;
 		public long? LastSyncTimestamp;
 		public int? UserLevel;
+		public int? PlacementPoints;
 	}
 
 	/// <summary>
@@ -62,6 +63,29 @@ namespace TrainingBuddy.FireBase
 		public string UserName;
 		public string Sex;
 		public int StepCount;
+		public int PlacementPoints;
+	}
+
+	/// <summary>
+	/// Placement Points — see PlacementPoints_Scope.md. Single shared rank→points lookup used by
+	/// both RaceScreen's client-side post-race display and DatabaseManager's authoritative award,
+	/// so the two can never drift out of sync. Rebalance by editing this table only.
+	/// </summary>
+	public static class PlacementPointsTable
+	{
+		private static readonly Dictionary<int, int> PointsByRank = new()
+		{
+			{ 1, 50 },
+			{ 2, 30 },
+			{ 3, 20 },
+			{ 4, 10 },
+			{ 5, 5 },
+		};
+
+		// Ranks past the table above — future-proofing only, race capacity is a fixed 5 today.
+		private const int DefaultPoints = 5;
+
+		public static int GetPoints(int rank) => PointsByRank.TryGetValue(rank, out int points) ? points : DefaultPoints;
 	}
 
 	public struct RaceSimulationParticipant

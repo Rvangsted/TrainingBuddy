@@ -35,8 +35,8 @@ namespace TrainingBuddy.UI
 			}
 
 			var sortedEntries = entries
-				.Select(e => new LeaderboardEntryData(e.UserName, e.StepCount, SexToAvatarClass(e.Sex)))
-				.OrderByDescending(e => e.Steps)
+				.Select(e => new LeaderboardEntryData(e.UserName, e.PlacementPoints, SexToAvatarClass(e.Sex)))
+				.OrderByDescending(e => e.Points)
 				.ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
 				.ToList();
 
@@ -91,7 +91,7 @@ namespace TrainingBuddy.UI
 			var distanceLabel = Layout.Q<Label>($"{prefix}Distance");
 			if (distanceLabel != null)
 			{
-				distanceLabel.text = entry.Steps.ToString("N0", new CultureInfo("da-DK"));
+				distanceLabel.text = entry.Points.ToString("N0", new CultureInfo("da-DK"));
 			}
 		}
 
@@ -112,7 +112,7 @@ namespace TrainingBuddy.UI
 			nameLabel.AddToClassList("leaderboard-name");
 			nameLabel.AddToClassList("font-title");
 
-			var distanceLabel = new Label(entry.Steps.ToString("N0", new CultureInfo("da-DK")));
+			var distanceLabel = new Label(entry.Points.ToString("N0", new CultureInfo("da-DK")));
 			distanceLabel.AddToClassList("leaderboard-distance");
 			distanceLabel.AddToClassList("font-regular");
 
@@ -136,15 +136,15 @@ namespace TrainingBuddy.UI
 
 		private sealed class LeaderboardEntryData
 		{
-			public LeaderboardEntryData(string name, int steps, string avatarClass)
+			public LeaderboardEntryData(string name, int points, string avatarClass)
 			{
 				Name = name ?? string.Empty;
-				Steps = steps;
+				Points = points;
 				AvatarClass = avatarClass;
 			}
 
 			public string Name { get; }
-			public int Steps { get; }
+			public int Points { get; }
 			public string AvatarClass { get; }
 		}
 	}

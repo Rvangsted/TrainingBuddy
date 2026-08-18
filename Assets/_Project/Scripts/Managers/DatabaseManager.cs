@@ -65,6 +65,7 @@ namespace TrainingBuddy.Managers
 		public Task MarkRaceWatchedAsync(string raceId);
 		public Task CancelRaceAsync(string raceId);
 		public Task ClaimPendingRefundsAsync();
+		public Task ClaimPendingPlacementPointsAsync();
 		public Task PatchUserFields(Dictionary<string, object> fields);
 		public Task<StepCounterAvailability> StartStepCounter();
 		public void StopStepCounter();
@@ -100,6 +101,7 @@ namespace TrainingBuddy.Managers
 		private CancellationTokenSource _stepCts;
 		private string _cachedUserName;
 		private string _cachedSex;
+		private long _cachedPlacementPoints; // Mirrored into every leaderboard write so pre-existing entries (from before this field existed) satisfy the "leaderboard/$uid" validate rule
 
 		private const long DeviceSyncMaxBacklogMillis = 30L * 24 * 60 * 60 * 1000; // 30-day cap on a single sync's reach
 		private const long MaxPlausibleStepsPerSync   = 20000;                     // sanity clamp, per the migration doc
@@ -180,6 +182,7 @@ namespace TrainingBuddy.Managers
 				[$"leaderboard/{user.UserID}/UserName"]  = user.UserName,
 				[$"leaderboard/{user.UserID}/Sex"]       = user.Sex ?? "",
 				[$"leaderboard/{user.UserID}/StepCount"] = 0,
+				[$"leaderboard/{user.UserID}/PlacementPoints"] = 0,
 			};
 
 			Task task = DatabaseReference.UpdateChildrenAsync(updates);
@@ -255,6 +258,7 @@ namespace TrainingBuddy.Managers
 			       userData.StepCurrency ??= currentUserdata.StepCurrency;
 			       userData.LastSyncTimestamp ??= currentUserdata.LastSyncTimestamp;
 			       userData.UserLevel ??= currentUserdata.UserLevel;
+			       userData.PlacementPoints ??= currentUserdata.PlacementPoints;
 
 			       string json = JsonConvert.SerializeObject(userData, JsonSettings);
 
@@ -1116,8 +1120,101 @@ namespace TrainingBuddy.Managers
                 }
             }
 
-            if (allWatched)
+            // Guard against re-awarding if this is somehow called again after completion —
+            // only the transition into "completed" should ever award points, once.
+            string statusBeforeCompletion = raceSnapshot.Child("status").Value?.ToString();
+            if (allWatched && !string.Equals(statusBeforeCompletion, "completed", StringComparison.OrdinalIgnoreCase))
+            {
+                await AwardPlacementPointsAsync(raceId, raceSnapshot);
                 await DatabaseReference.Child("races").Child(raceId).Child("status").SetValueAsync("completed");
+            }
+        }
+
+        /// <summary>
+        /// Ranks the race's stored simulation by FinishTime and awards PlacementPoints (see
+        /// PlacementPointsTable, PlacementPoints_Scope.md) to every non-AI participant. AI
+        /// participants are ranked too (they occupy real placements) but never awarded anything.
+        /// Firebase rules only let a user write their own users/{uid} and leaderboard/{uid} — so
+        /// the acting client (whichever participant's MarkRaceWatchedAsync call happens to be the
+        /// one that observes "all watched") can only credit itself directly. Every OTHER real
+        /// participant instead gets a pendingPlacementPoints/{uid}/{raceId} claim, redeemed by
+        /// their own client via ClaimPendingPlacementPointsAsync — same pattern this codebase
+        /// already uses for refunds (BuildPendingRefundUpdates / ClaimPendingRefundsAsync).
+        /// </summary>
+        private async Task AwardPlacementPointsAsync(string raceId, DataSnapshot raceSnapshot)
+        {
+            RaceSimulation simulation = await FetchRaceSimulationAsync(raceId);
+            if (simulation?.Participants == null || simulation.Participants.Count == 0) return;
+
+            var ranked = new List<RaceSimulationParticipant>(simulation.Participants);
+            ranked.Sort((a, b) => a.FinishTime.CompareTo(b.FinishTime));
+
+            string actingUserId = Auth?.CurrentUser?.UserId;
+            long timestamp = GetUnixTimestampMilliseconds();
+            var updates = new Dictionary<string, object>();
+
+            for (int i = 0; i < ranked.Count; i++)
+            {
+                string userId = ranked[i].UserId;
+                bool isAI = userId.StartsWith("ai_", StringComparison.Ordinal) ||
+                    raceSnapshot.Child("participants").Child(userId).Child("isAI").Value is true;
+                if (isAI) continue;
+
+                int points = PlacementPointsTable.GetPoints(i + 1);
+
+                if (userId == actingUserId)
+                {
+                    DataSnapshot userSnapshot = await FetchUserDataById(userId);
+                    long newTotal = ReadLong(userSnapshot?.Child("PlacementPoints").Value) + points;
+                    updates[$"users/{userId}/PlacementPoints"] = (int)newTotal;
+                    updates[$"leaderboard/{userId}/PlacementPoints"] = (int)newTotal;
+                    _cachedPlacementPoints = newTotal; // keep in sync — see WriteLeaderboardEntryAsync
+                }
+                else
+                {
+                    updates[$"pendingPlacementPoints/{userId}/{raceId}/points"] = points;
+                    updates[$"pendingPlacementPoints/{userId}/{raceId}/createdAt"] = timestamp;
+                }
+            }
+
+            if (updates.Count > 0)
+                await DatabaseReference.UpdateChildrenAsync(updates);
+        }
+
+        /// <summary>
+        /// Self-authored: claims any PlacementPoints owed to the current user from races another
+        /// participant's client completed (see AwardPlacementPointsAsync above). Credits
+        /// users/{uid}/PlacementPoints and leaderboard/{uid}/PlacementPoints and clears each
+        /// claim; a no-op if nothing is pending. Call at app start/login alongside
+        /// ClaimPendingRefundsAsync so a claim lands the next time the owed player opens the app.
+        /// </summary>
+        public async Task ClaimPendingPlacementPointsAsync()
+        {
+            if (Auth?.CurrentUser == null) return;
+            string uid = Auth.CurrentUser.UserId;
+
+            DataSnapshot pendingSnapshot = await DatabaseReference.Child("pendingPlacementPoints").Child(uid).GetValueAsync();
+            if (pendingSnapshot is not { Exists: true }) return;
+
+            DataSnapshot userSnapshot = await FetchUserDataById(uid);
+            long total = ReadLong(userSnapshot?.Child("PlacementPoints").Value);
+
+            var updates = new Dictionary<string, object>();
+            foreach (DataSnapshot pending in pendingSnapshot.Children)
+            {
+                int points = ConvertToNullableInt(pending.Child("points").Value) ?? 0;
+                if (points <= 0) continue;
+
+                total += points;
+                updates[$"pendingPlacementPoints/{uid}/{pending.Key}"] = null;
+            }
+
+            if (updates.Count == 0) return;
+            updates[$"users/{uid}/PlacementPoints"] = (int)total;
+            updates[$"leaderboard/{uid}/PlacementPoints"] = (int)total;
+            _cachedPlacementPoints = total; // keep in sync — see WriteLeaderboardEntryAsync
+
+            await DatabaseReference.UpdateChildrenAsync(updates);
         }
 
         public async Task CancelRaceAsync(string raceId)
@@ -1571,6 +1668,7 @@ namespace TrainingBuddy.Managers
 			DataSnapshot data = await FetchUserData(Auth.CurrentUser);
 			_cachedUserName = data?.Child("UserName").Value?.ToString() ?? "";
 			_cachedSex      = data?.Child("Sex").Value?.ToString() ?? "";
+			_cachedPlacementPoints = ReadLong(data?.Child("PlacementPoints").Value);
 
 			long firebaseSteps = ReadLong(data?.Child("StepCount").Value);
 			long localSteps    = PlayerPrefs.GetInt(StepCountKey, 0);
@@ -1657,9 +1755,12 @@ namespace TrainingBuddy.Managers
 		}
 
 		/// <summary>
-		/// Writes UserName/Sex/StepCount to this user's leaderboard entry, if a display name has
-		/// been loaded. Shared by StartStepCounter (fire-and-forget, for an instant first
-		/// appearance) and WriteStepsToFirebaseAsync (awaited, as part of the periodic sync).
+		/// Writes UserName/Sex/StepCount/PlacementPoints to this user's leaderboard entry, if a
+		/// display name has been loaded. Shared by StartStepCounter (fire-and-forget, for an
+		/// instant first appearance) and WriteStepsToFirebaseAsync (awaited, as part of the
+		/// periodic sync). PlacementPoints is mirrored from _cachedPlacementPoints rather than
+		/// omitted — the "leaderboard/$uid" validate rule requires it on every write, and a
+		/// pre-existing entry from before this field existed wouldn't have it otherwise.
 		/// </summary>
 		private Task WriteLeaderboardEntryAsync(string uid)
 		{
@@ -1672,7 +1773,8 @@ namespace TrainingBuddy.Managers
 				{
 					{ "UserName",  _cachedUserName },
 					{ "Sex",       _cachedSex },
-					{ "StepCount", (int)_currentTotal }
+					{ "StepCount", (int)_currentTotal },
+					{ "PlacementPoints", (int)_cachedPlacementPoints }
 				});
 		}
 
@@ -2361,6 +2463,7 @@ namespace TrainingBuddy.Managers
 			updates[$"leaderboard/{uid}"] = null;
 			updates[$"walletTransactions/{uid}"] = null;
 			updates[$"pendingRefunds/{uid}"] = null;
+			updates[$"pendingPlacementPoints/{uid}"] = null;
 			if (!string.IsNullOrEmpty(friendCode)) updates[$"friendCodes/{friendCode}"] = null;
 			if (!string.IsNullOrEmpty(userName))   updates[$"usernames/{userName}"] = null;
 			updates[$"users/{uid}"] = null; // includes nested dailySteps
