@@ -22,6 +22,12 @@ namespace TrainingBuddy.FireBase
 		public long? LastSyncTimestamp;
 		public int? UserLevel;
 		public int? PlacementPoints;
+
+		// Refer-a-friend — see ReferAFriend_Scope.md. ReferredBy is set once, at CreateUser time,
+		// and never changes afterward. ReferralRewardGranted guards the new-user milestone reward
+		// (DatabaseManager.GrantReferralMilestoneRewardAsync) so it can only ever fire once.
+		public string ReferredBy;
+		public bool? ReferralRewardGranted;
 	}
 
 	/// <summary>

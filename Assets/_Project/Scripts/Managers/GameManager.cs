@@ -47,6 +47,7 @@ namespace TrainingBuddy.Managers
 				_ = _databaseManager.StartStepCounter();
 				_ = _databaseManager.ClaimPendingRefundsAsync();
 				_ = _databaseManager.ClaimPendingPlacementPointsAsync();
+				_ = _databaseManager.ClaimReferralRewardsAsync();
 			}
 		}
 	}

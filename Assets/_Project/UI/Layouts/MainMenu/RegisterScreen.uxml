@@ -20,6 +20,7 @@
                     <ui:IntegerField name="DobYear" class="dob-field dob-field-year" label="" placeholder-text="YYYY"/>
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:TextField name="ReferralCode" class="field-email" placeholder-text="Henvisningskode (valgfrit)"/>
             <TrainingBuddy.UI.Controls.LocalizedButton key="button_register_user" name="RegisterButton" class="button-large alt-button register-button"/>
         </ui:VisualElement>
         <ui:VisualElement name="Separator" class="separator-container">

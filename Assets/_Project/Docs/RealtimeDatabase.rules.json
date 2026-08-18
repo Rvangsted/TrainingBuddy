@@ -123,6 +123,17 @@
           ".validate": "!newData.exists() || newData.hasChildren(['points', 'createdAt'])"
         }
       }
+    },
+
+    "referralRewards": {
+      "$referrerUid": {
+        ".read": "auth != null && (auth.uid == $referrerUid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2)",
+        "$newUid": {
+          ".read": "auth != null && (auth.uid == $newUid || auth.uid == $referrerUid || root.child('users').child(auth.uid).child('UserLevel').val() >= 2)",
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('UserLevel').val() >= 2 || auth.uid == $newUid || auth.uid == $referrerUid)",
+          ".validate": "!newData.exists() || (newData.hasChildren(['amount', 'createdAt', 'status']) && (newData.child('status').val() == 'pending' || newData.child('status').val() == 'claimed'))"
+        }
+      }
     }
   }
 }

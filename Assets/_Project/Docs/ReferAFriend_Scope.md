@@ -88,13 +88,28 @@ boundary the friend-request system already respects.
 - **Both sides get rewarded** (referrer for referring, new user for
   redeeming a code) — gives the new signup an actual reason to enter one.
 
-## Still open
+## Resolved
 
-- **Reward amount(s)** for each side — not guessed at here.
-- **Optional nice-to-have**: auto-create the `friends/{uid}/{friendUid}`
-  relationship when a valid referral code is used at signup, since both
-  parties already know each other by definition — skips the
-  request/accept round-trip. Not required for v1.
+- **Reward amounts:** referrer gets 1000 `StepCurrency` (one free Basic-tier
+  race entry — rewards the harder-to-farm side generously); new user gets
+  500 as a welcome bonus (kept lower to cap the payoff from disposable-email
+  farming, since account creation is the directly farmable side).
+- **Friend auto-add: yes.** A valid referral code at signup writes both
+  sides of the `friends/{uid}/{friendUid}` link, but not in one shot —
+  Firebase rules only ever allow a self-write to `friends/{auth.uid}/...`,
+  so each side is written by its own client: the new user writes their own
+  `friends/{newUid}/{referrerUid}` atomically alongside `CreateUser`; the
+  referrer writes the reverse `friends/{referrerUid}/{newUid}` entry when
+  their own client claims the pending reward (`ClaimReferralRewardsAsync`).
+  Same asymmetric-timing trade-off already accepted for the StepCurrency
+  reward itself — the referrer's friends list won't show the new user until
+  the referrer's app is next opened.
+- **Implemented** — see `DatabaseManager.GrantReferralMilestoneRewardAsync`
+  (new user's milestone reward + `referralRewards` pending claim) and
+  `ClaimReferralRewardsAsync` (referrer's pull-based claim + friend link).
+  `RegisterScreen` gained a plain (non-localized) optional "referral code"
+  field, matching the existing DOB fields' convention of skipping the
+  Localization system for secondary/optional inputs.
 - **Farming is reduced, not eliminated** — someone determined can still run
   multiple disposable-email accounts through the milestone gate manually.
   Same "accepted risk, revisit only if actually observed" framing already

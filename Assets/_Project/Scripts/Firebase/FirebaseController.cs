@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using BedtimeCore;
 using Cysharp.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace TrainingBuddy.FireBase
 		public Task<bool> CheckDependencies();
 		public Task<bool> FirebaseLogin(string email, string password);
 		public void FirebaseLogout();
-		public Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm, int dobDay, int dobMonth, int dobYear);
+		public Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm, int dobDay, int dobMonth, int dobYear, string referralCode = null);
 		public Task<bool> SendPasswordResetEmailAsync(string email);
 	}
 
@@ -97,6 +98,9 @@ namespace TrainingBuddy.FireBase
 			// Fire-and-forget: claims any PlacementPoints owed from a race another participant's
 			// client completed — see PlacementPoints_Scope.md / ClaimPendingPlacementPointsAsync.
 			_ = _databaseManager.ClaimPendingPlacementPointsAsync();
+			// Fire-and-forget: claims any referral rewards owed as a referrer — see
+			// ReferAFriend_Scope.md / ClaimReferralRewardsAsync.
+			_ = _databaseManager.ClaimReferralRewardsAsync();
 			return true;
 		}
 
@@ -142,7 +146,7 @@ namespace TrainingBuddy.FireBase
 			return true;
 		}
 
-		public async Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm, int dobDay, int dobMonth, int dobYear)
+		public async Task<bool> FirebaseRegister(string username, string sex, string email, string password, string passwordConfirm, int dobDay, int dobMonth, int dobYear, string referralCode = null)
 	    {
 		    if (string.IsNullOrEmpty(username))
 		    {
@@ -221,6 +225,17 @@ namespace TrainingBuddy.FireBase
 	        }
 
 	        var userId = _databaseManager.Auth.CurrentUser.UserId;
+
+	        // Refer-a-friend — see ReferAFriend_Scope.md. Reuses the existing FriendCode lookup;
+	        // an invalid/blank code just means no referral, not a registration failure.
+	        string referrerUid = null;
+	        if (!string.IsNullOrWhiteSpace(referralCode))
+	        {
+		        UserData? referrer = await _databaseManager.GetUserByFriendCodeAsync(referralCode.Trim().ToUpper());
+		        if (referrer?.UserID != null && referrer.Value.UserID != userId)
+			        referrerUid = referrer.Value.UserID;
+	        }
+
 	        var user = new UserData
 	        {
 		        UserName = username,
@@ -237,9 +252,18 @@ namespace TrainingBuddy.FireBase
 		        StepCountSnapshot = 0,
 		        StepCurrency = 0,
 		        UserLevel = 1,
+		        ReferredBy = referrerUid,
+		        ReferralRewardGranted = false,
 	        };
 
-	        if (!await _databaseManager.CreateUser(user))
+	        // New user's own side of the friend link, written atomically with account creation
+	        // (self-write, always allowed) — the referrer's own client adds the reverse entry
+	        // when it claims the reward (see DatabaseManager.ClaimReferralRewardsAsync).
+	        Dictionary<string, object> referralUpdates = referrerUid != null
+		        ? new Dictionary<string, object> { [$"friends/{userId}/{referrerUid}/addedAt"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }
+		        : null;
+
+	        if (!await _databaseManager.CreateUser(user, referralUpdates))
 	        {
 		        var currentUser = _databaseManager.Auth.CurrentUser;
 		        if (currentUser != null)

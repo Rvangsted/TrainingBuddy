@@ -65,7 +65,7 @@ Idea: let accumulated steps be spent like a currency in-app.
 
 ## 5. Refer-a-friend system
 
-- **Scoped** — see `ReferAFriend_Scope.md`. Reuses the existing `FriendCode` as the
+- **Implemented** — see `ReferAFriend_Scope.md`. Reuses the existing `FriendCode` as the
   referral code (no new code system needed); a new "referral code" field at signup
   sets `users/{uid}/ReferredBy` once. Both sides get rewarded in `StepCurrency`,
   gated on the new account's first real step sync (not instant at signup) to raise
@@ -76,8 +76,9 @@ Idea: let accumulated steps be spent like a currency in-app.
   by reusing the `friendRequests`-style pattern — a new `referralRewards/{referrerUid}/{newUid}`
   node the new user writes a pending claim into, which the referrer's own client reads
   and claims on its next sync.
-- Still open: reward amounts, and whether a valid referral should auto-add the friend
-  relationship as a bonus.
+- Reward amounts (referrer 1000 / new user 500 StepCurrency) and friend auto-add
+  are resolved and built — see `ReferAFriend_Scope.md` "Resolved". Not yet
+  playtested end-to-end on a real device.
 
 ## 6. Better error messaging
 

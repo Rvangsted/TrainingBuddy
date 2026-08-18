@@ -66,6 +66,7 @@ namespace TrainingBuddy.Managers
 		public Task CancelRaceAsync(string raceId);
 		public Task ClaimPendingRefundsAsync();
 		public Task ClaimPendingPlacementPointsAsync();
+		public Task ClaimReferralRewardsAsync();
 		public Task PatchUserFields(Dictionary<string, object> fields);
 		public Task<StepCounterAvailability> StartStepCounter();
 		public void StopStepCounter();
@@ -102,6 +103,8 @@ namespace TrainingBuddy.Managers
 		private string _cachedUserName;
 		private string _cachedSex;
 		private long _cachedPlacementPoints; // Mirrored into every leaderboard write so pre-existing entries (from before this field existed) satisfy the "leaderboard/$uid" validate rule
+		private string _cachedReferredBy;             // Loaded once per session — see ReferAFriend_Scope.md
+		private bool   _cachedReferralRewardGranted;
 
 		private const long DeviceSyncMaxBacklogMillis = 30L * 24 * 60 * 60 * 1000; // 30-day cap on a single sync's reach
 		private const long MaxPlausibleStepsPerSync   = 20000;                     // sanity clamp, per the migration doc
@@ -149,6 +152,11 @@ namespace TrainingBuddy.Managers
 			{ RaceEntryTier.Elite, (7000, 25) },
 		};
 
+		// Refer-a-friend — see ReferAFriend_Scope.md. Referrer gets enough for one free Basic-tier
+		// race; the new user's welcome bonus is kept lower to cap the payoff from disposable-email farming.
+		private const int ReferralReferrerReward = 1000;
+		private const int ReferralNewUserReward   = 500;
+
 		public event Action<long> StepCountChanged;
 
 		public bool StepCounterRunning { get; private set; }
@@ -165,7 +173,12 @@ namespace TrainingBuddy.Managers
 
 		#region User Data
 
-		public async Task<bool> CreateUser(UserData user)
+		/// <summary>
+		/// additionalUpdates merges into the same atomic write as account creation — e.g. the
+		/// referred user's own friends/{uid}/{referrerUid} link (see ReferAFriend_Scope.md), so a
+		/// valid referral code and the account it belongs to can never land inconsistently.
+		/// </summary>
+		public async Task<bool> CreateUser(UserData user, Dictionary<string, object> additionalUpdates = null)
 		{
 			string json = JsonConvert.SerializeObject(user, JsonSettings);
 			var userDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(json, JsonSettings);
@@ -184,6 +197,9 @@ namespace TrainingBuddy.Managers
 				[$"leaderboard/{user.UserID}/StepCount"] = 0,
 				[$"leaderboard/{user.UserID}/PlacementPoints"] = 0,
 			};
+
+			if (additionalUpdates != null)
+				foreach (var kvp in additionalUpdates) updates[kvp.Key] = kvp.Value;
 
 			Task task = DatabaseReference.UpdateChildrenAsync(updates);
 			await task;
@@ -259,6 +275,8 @@ namespace TrainingBuddy.Managers
 			       userData.LastSyncTimestamp ??= currentUserdata.LastSyncTimestamp;
 			       userData.UserLevel ??= currentUserdata.UserLevel;
 			       userData.PlacementPoints ??= currentUserdata.PlacementPoints;
+			       userData.ReferredBy ??= currentUserdata.ReferredBy;
+			       userData.ReferralRewardGranted ??= currentUserdata.ReferralRewardGranted;
 
 			       string json = JsonConvert.SerializeObject(userData, JsonSettings);
 
@@ -1669,6 +1687,8 @@ namespace TrainingBuddy.Managers
 			_cachedUserName = data?.Child("UserName").Value?.ToString() ?? "";
 			_cachedSex      = data?.Child("Sex").Value?.ToString() ?? "";
 			_cachedPlacementPoints = ReadLong(data?.Child("PlacementPoints").Value);
+			_cachedReferredBy = data?.Child("ReferredBy").Value?.ToString();
+			_cachedReferralRewardGranted = data?.Child("ReferralRewardGranted").Value is true;
 
 			long firebaseSteps = ReadLong(data?.Child("StepCount").Value);
 			long localSteps    = PlayerPrefs.GetInt(StepCountKey, 0);
@@ -1916,6 +1936,15 @@ namespace TrainingBuddy.Managers
 				_currentCurrency = newCurrency;
 				PlayerPrefs.SetInt(StepCurrencyKey, (int)_currentCurrency);
 				PlayerPrefs.Save();
+
+				// Refer-a-friend milestone — see ReferAFriend_Scope.md. Fires on this account's
+				// first successful non-zero step sync, not at signup.
+				if (!string.IsNullOrEmpty(_cachedReferredBy) && !_cachedReferralRewardGranted)
+				{
+					if (await GrantReferralMilestoneRewardAsync(uid, _cachedReferredBy))
+						_cachedReferralRewardGranted = true;
+				}
+
 				return true;
 			}
 			catch (Exception ex)
@@ -1948,6 +1977,104 @@ namespace TrainingBuddy.Managers
 			{
 				$"WriteWalletEarnTransactionAsync failed: {ex}".Log();
 			}
+		}
+
+		/// <summary>
+		/// Fires once, on the referred account's first successful non-zero step sync (see
+		/// ReferAFriend_Scope.md "Milestone gate, not instant reward") — credits this new user's
+		/// own StepCurrency, records an "earn" wallet transaction, sets ReferralRewardGranted so
+		/// it can never fire again, and leaves a referralRewards/{referrerUid}/{uid} pending claim
+		/// for the referrer's own client to redeem (see ClaimReferralRewardsAsync — Firebase rules
+		/// only let a user write their own users/{uid}, so this account can't credit the referrer
+		/// directly; same pending-claim boundary this codebase already uses for refunds and
+		/// PlacementPoints). Returns whether the write succeeded, so the caller only marks the
+		/// reward granted in memory once it's actually landed on the server.
+		/// </summary>
+		private async Task<bool> GrantReferralMilestoneRewardAsync(string uid, string referrerUid)
+		{
+			try
+			{
+				long newCurrency = _currentCurrency + ReferralNewUserReward;
+				string txId = DatabaseReference.Child("walletTransactions").Child(uid).Push().Key;
+				long timestamp = GetUnixTimestampMilliseconds();
+
+				var updates = new Dictionary<string, object>
+				{
+					[$"users/{uid}/StepCurrency"] = (int)newCurrency,
+					[$"users/{uid}/ReferralRewardGranted"] = true,
+					[$"walletTransactions/{uid}/{txId}/type"] = "earn",
+					[$"walletTransactions/{uid}/{txId}/amount"] = ReferralNewUserReward,
+					[$"walletTransactions/{uid}/{txId}/status"] = "settled",
+					[$"walletTransactions/{uid}/{txId}/createdAt"] = timestamp,
+					[$"referralRewards/{referrerUid}/{uid}/amount"] = ReferralReferrerReward,
+					[$"referralRewards/{referrerUid}/{uid}/createdAt"] = timestamp,
+					[$"referralRewards/{referrerUid}/{uid}/status"] = "pending",
+				};
+
+				await DatabaseReference.UpdateChildrenAsync(updates);
+
+				_currentCurrency = newCurrency;
+				PlayerPrefs.SetInt(StepCurrencyKey, (int)_currentCurrency);
+				PlayerPrefs.Save();
+				return true;
+			}
+			catch (Exception ex)
+			{
+				$"GrantReferralMilestoneRewardAsync failed: {ex}".Log();
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Self-authored: claims any referral rewards owed to the current user as a referrer. For
+		/// each pending referralRewards/{myUid}/{newUid} entry (see GrantReferralMilestoneRewardAsync
+		/// above), credits StepCurrency, records an "earn" wallet transaction, adds the referred
+		/// user directly to this account's own friends list — the new user already wrote their
+		/// side of the link at signup (see FirebaseController.FirebaseRegister); only this
+		/// account's own client can write this account's own friends/{uid} node — and flips the
+		/// claim's status to "claimed" so it can't be claimed twice. A no-op if nothing is
+		/// pending. Call at app start/login alongside ClaimPendingRefundsAsync/
+		/// ClaimPendingPlacementPointsAsync.
+		/// </summary>
+		public async Task ClaimReferralRewardsAsync()
+		{
+			if (Auth?.CurrentUser == null) return;
+			string uid = Auth.CurrentUser.UserId;
+
+			DataSnapshot pendingSnapshot = await DatabaseReference.Child("referralRewards").Child(uid).GetValueAsync();
+			if (pendingSnapshot is not { Exists: true }) return;
+
+			// Reads the authoritative balance fresh rather than the in-memory _currentCurrency —
+			// this can run concurrently with StartStepCounter (see GameManager.OnApplicationPause,
+			// which fires both without awaiting), so the local cache isn't guaranteed loaded yet.
+			// Same convention ClaimPendingRefundsAsync already uses.
+			DataSnapshot userSnapshot = await FetchUserDataById(uid);
+			long balance = ReadLong(userSnapshot?.Child("StepCurrency").Value);
+			long timestamp = GetUnixTimestampMilliseconds();
+			var updates = new Dictionary<string, object>();
+
+			foreach (DataSnapshot pending in pendingSnapshot.Children)
+			{
+				if (pending.Child("status").Value?.ToString() != "pending") continue;
+
+				string newUserId = pending.Key;
+				int amount = ConvertToNullableInt(pending.Child("amount").Value) ?? 0;
+				if (amount <= 0) continue;
+
+				balance += amount;
+				string txId = DatabaseReference.Child("walletTransactions").Child(uid).Push().Key;
+				updates[$"walletTransactions/{uid}/{txId}/type"] = "earn";
+				updates[$"walletTransactions/{uid}/{txId}/amount"] = amount;
+				updates[$"walletTransactions/{uid}/{txId}/status"] = "settled";
+				updates[$"walletTransactions/{uid}/{txId}/createdAt"] = timestamp;
+				updates[$"referralRewards/{uid}/{newUserId}/status"] = "claimed";
+				updates[$"friends/{uid}/{newUserId}/addedAt"] = timestamp;
+			}
+
+			if (updates.Count == 0) return;
+			updates[$"users/{uid}/StepCurrency"] = (int)balance;
+
+			await DatabaseReference.UpdateChildrenAsync(updates);
 		}
 
 		private Task SyncStepsToFirebase(long deviceValue)
@@ -2464,6 +2591,7 @@ namespace TrainingBuddy.Managers
 			updates[$"walletTransactions/{uid}"] = null;
 			updates[$"pendingRefunds/{uid}"] = null;
 			updates[$"pendingPlacementPoints/{uid}"] = null;
+			updates[$"referralRewards/{uid}"] = null;
 			if (!string.IsNullOrEmpty(friendCode)) updates[$"friendCodes/{friendCode}"] = null;
 			if (!string.IsNullOrEmpty(userName))   updates[$"usernames/{userName}"] = null;
 			updates[$"users/{uid}"] = null; // includes nested dailySteps

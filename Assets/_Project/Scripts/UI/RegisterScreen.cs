@@ -13,6 +13,7 @@ namespace TrainingBuddy.UI
 		private LocalizedTextInput _registerEmailField;
 		private LocalizedTextInput _registerPasswordField;
 		private LocalizedTextInput _registerPasswordConfirmField;
+		private TextField _registerReferralCodeField;
 
 		private IntegerField _registerDobDayField;
 		private IntegerField _registerDobMonthField;
@@ -37,6 +38,7 @@ namespace TrainingBuddy.UI
 			_registerEmailField = Layout.Q<LocalizedTextInput>("Email");
 			_registerPasswordField = Layout.Q<LocalizedTextInput>("Password");
 			_registerPasswordConfirmField = Layout.Q<LocalizedTextInput>("PasswordConfirm");
+			_registerReferralCodeField = Layout.Q<TextField>("ReferralCode");
 
 			_registerDobDayField = Layout.Q<IntegerField>("DobDay");
 			_registerDobMonthField = Layout.Q<IntegerField>("DobMonth");
@@ -93,7 +95,8 @@ namespace TrainingBuddy.UI
 				_registerPasswordConfirmField.value,
 				dobDay,
 				dobMonth,
-				dobYear))
+				dobYear,
+				_registerReferralCodeField.value))
 			{
 				_uiManager.ChangePage(_layoutData.ProfileScreen);
 			}
