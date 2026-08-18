@@ -140,11 +140,27 @@ not implemented yet.
 - `DeleteAccountAsync`'s three English catches now route through
   `UserMessages` (Danish) instead of inline English strings.
 
+## UI (Resolved)
+
+Found while punch-listing remaining roadmap UI work. `UniversalOverlay`
+currently has no color/style "variant" concept at all — every overlay uses
+identical white-card styling regardless of content, and `PopupImage` only
+has two large-illustration options (`Friends`/`Worry`), neither an
+icon-sized error mark. `Worry` is defined and styled but no call site uses
+it today.
+
+- **Error overlays get a style variant, not a new component.** Unlike the
+  referral/reward case (`NotificationToast_Scope.md`), errors need an
+  explicit acknowledgment — they stay blocking modals. Add a small color/
+  accent variant to the existing `UniversalOverlay` (e.g. a colored left
+  border or accent behind the title) applied whenever `ShowError` is the
+  caller, distinguishing it from success/info overlays without building new
+  infrastructure.
+- Exact color/icon/typography not decided here — needs a real design pass,
+  same as the placement-points and paid-tier-badge visuals.
+
 ## Still open
 
-- Whether error popups should look visually distinct from success/info
-  ones (icon, color) — a `UniversalOverlay` styling question, not required
-  for the coverage fix itself.
 - Whether/when to do the deferred full sweep of passive background-fetch
   feedback.
 - A full `UniversalOverlay` queueing mechanism (only the two-line

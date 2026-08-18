@@ -46,7 +46,11 @@ Idea: let accumulated steps be spent like a currency in-app.
   a paid participant being kicked/leaving pre-start, or a race never reaching minimum
   participants (the last one needs new auto-expiry logic — doesn't exist today).
 - Still open: concrete tier costs/bonus sizes (needs balancing against
-  `RaceSimulator`'s stat normalization and playtesting) and tier-selection UI.
+  `RaceSimulator`'s stat normalization and playtesting).
+- **Tier-selection UI now scoped** — see `PaidRunsUI_Scope.md`. Turned out
+  to be the biggest gap of anything on the roadmap: zero UI anywhere lets a
+  player actually reach a paid tier today (every real race is created/joined
+  with `tier: None`, hardcoded). Not implemented yet.
 
 ## 4. Placement points (new leaderboard currency)
 
@@ -97,3 +101,33 @@ Idea: let accumulated steps be spent like a currency in-app.
   exception messages were English, not Danish as assumed — all translated and
   centralized in `UserMessages.cs`. See `ErrorMessaging_Scope.md` "Resolved".
   Not yet playtested end-to-end on a real device.
+
+## 7. Design/UI follow-ups on #3–#6
+
+Found by auditing what's actually reachable in the app vs. what only exists
+in the backend, after #2–#6 above landed. Scoped, not implemented, in
+priority order:
+
+1. **Paid-runs tier UI** (`PaidRunsUI_Scope.md`) — **implemented**: new
+   Create Race screen (tier picker + race-name input) and a join-confirm
+   modal on `FindLobbyScreen`. One manual Unity Editor step still needed
+   (wiring the new screen's `VisualTreeAsset` in `LayoutData`'s Inspector —
+   see the doc). Not yet compiled/playtested. The pre-existing, separate
+   join-request/host-approval flow gap (`SubmitJoinRequestAsync` etc. have
+   no UI at all) remains explicitly deferred, not bundled in.
+2. **Paid-participant badge** in lobby/host cards — not yet built; bundled
+   into the same doc, small and directly related.
+3. **Notification toast component** (`NotificationToast_Scope.md`) — new
+   shared, non-blocking infra; no toast/snackbar exists anywhere today.
+   Needed so refer-a-friend's reward moments (currently silent) can
+   actually tell the player something happened.
+4. **Refer-a-friend UI** (`ReferAFriend_Scope.md` "UI" section) — invite-
+   promotion section on `ProfileScreen`, `RegisterScreen` field polish to
+   match the existing section/label pattern, reward-confirmation hookup
+   into the toast above.
+5. **Placement-points visual polish** (`PlacementPoints_Scope.md` "UI"
+   section) — distinct styling for the post-race "+N placeringspoint" line
+   and the `ProfileScreen` label, currently both visually generic.
+6. **Error popup styling** (`ErrorMessaging_Scope.md` "UI" section) — a
+   color/accent variant on `UniversalOverlay` for errors vs. success/info;
+   lowest priority, purely cosmetic since the functional fix already shipped.

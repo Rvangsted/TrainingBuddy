@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/Race/FindLobbyScreen.uss?fileID=7433441132597879392&amp;guid=15ef845a30654130babdf8e88b07b129&amp;type=3#FindLobbyScreen"/>
+    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/UniversalOverlay.uss" />
     <ui:VisualElement name="FindLobbyScreen" class="find-lobby-screen" style="flex-grow: 1;">
         <ui:VisualElement name="Container" class="container" style="flex-grow: 1;">
             <ui:VisualElement name="SearchRow" class="search-row">
@@ -7,6 +8,20 @@
                 <ui:Button text="" name="FilterButton" class="filter-button"/>
             </ui:VisualElement>
             <ui:ScrollView name="LobbyList" mode="Vertical" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="find-lobby-scroll" />
+        </ui:VisualElement>
+        <ui:VisualElement name="JoinConfirmModal" class="overlay-root" style="display: none;">
+            <ui:VisualElement class="overlay-background" />
+            <ui:VisualElement class="overlay-safe-content">
+                <ui:VisualElement class="overlay-content">
+                    <ui:Label text="Vælg niveau" class="overlay-title font-title" />
+                    <ui:RadioButtonGroup name="JoinTierGroup" class="tier-group" />
+                    <ui:VisualElement class="overlay-two-button-row">
+                        <ui:Button name="JoinCancelButton" text="Annuller" class="overlay-button secondary" />
+                        <ui:VisualElement class="button-space" />
+                        <ui:Button name="JoinConfirmButton" text="Deltag" class="overlay-button primary" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

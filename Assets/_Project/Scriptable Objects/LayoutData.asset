@@ -12,8 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 720932b009e149759d4185868efaf4b6, type: 3}
   m_Name: LayoutData
   m_EditorClassIdentifier: 
-  <SplashScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: b0c9d92bfe3784140b313f58da7dddbc,
-    type: 3}
   <WelcomeScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 73806bb16db3f1c4aa9be804d6ed9436,
     type: 3}
   <LoginScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: dfe909e47b3fa464380c1eee7c2cc92b,
@@ -37,4 +35,6 @@ MonoBehaviour:
   <HostScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 283fdbdbfaca05a43b32bbad725485e9,
     type: 3}
   <FindLobbyScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 5710735217e9a2e41a7c7323372a96f5,
+    type: 3}
+  <CreateRaceScreenVisualTree>k__BackingField: {fileID: 9197481963319205126, guid: 45ca7571fc090724499fcefebd3a3361,
     type: 3}

@@ -152,6 +152,30 @@ namespace TrainingBuddy.Managers
 			{ RaceEntryTier.Elite, (7000, 25) },
 		};
 
+		// Fixed display order for the tier picker UI — deliberately explicit rather than
+		// enumerating RaceEntryTiers, since the picker's selected radio INDEX is cast straight
+		// back to (RaceEntryTier)index (see PaidRunsUI_Scope.md); relying on Dictionary
+		// enumeration order to match the enum's numeric values would be fragile.
+		private static readonly RaceEntryTier[] TierPickerOrder =
+			{ RaceEntryTier.None, RaceEntryTier.Basic, RaceEntryTier.Plus, RaceEntryTier.Elite };
+
+		/// <summary>
+		/// One label per RaceEntryTier value, in enum order — index i always corresponds to
+		/// (RaceEntryTier)i, so callers can assign this straight to a RadioButtonGroup's
+		/// `choices` and cast `.value` back to a RaceEntryTier. See PaidRunsUI_Scope.md.
+		/// </summary>
+		public static List<string> GetRaceEntryTierChoiceLabels()
+		{
+			var labels = new List<string>(TierPickerOrder.Length);
+			foreach (RaceEntryTier tier in TierPickerOrder)
+			{
+				labels.Add(tier == RaceEntryTier.None
+					? "Gratis"
+					: $"{tier} — {RaceEntryTiers[tier].Cost} mønter (+{RaceEntryTiers[tier].StatBonus})");
+			}
+			return labels;
+		}
+
 		// Refer-a-friend — see ReferAFriend_Scope.md. Referrer gets enough for one free Basic-tier
 		// race; the new user's welcome bonus is kept lower to cap the payoff from disposable-email farming.
 		private const int ReferralReferrerReward = 1000;
@@ -311,9 +335,9 @@ namespace TrainingBuddy.Managers
 
 		#region Race Management
 
-		public async Task CreateLobby(RaceData race)
+		public async Task CreateLobby(RaceData race, RaceEntryTier tier = RaceEntryTier.None)
 		{
-			await HostRaceAsync(race, 5);
+			await HostRaceAsync(race, 5, tier: tier);
 		}
 
 		/// <summary>

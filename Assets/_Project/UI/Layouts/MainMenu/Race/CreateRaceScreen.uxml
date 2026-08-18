@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Project/UI/Styles/Stylesheets/Race/CreateRaceScreen.uss" />
+    <ui:ScrollView name="CreateRaceScreen" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="create-race-screen" style="flex-grow: 1;">
+        <ui:VisualElement name="Container" class="container">
+            <ui:Label text="Opret løb" class="font-title create-race-title" />
+            <ui:TextField name="RaceNameField" class="field-race-name" placeholder-text="Navngiv dit løb (valgfrit)" />
+            <ui:VisualElement name="TierSection" class="section-container">
+                <ui:Label text="Vælg niveau" class="font-title section-label" />
+                <ui:RadioButtonGroup name="TierGroup" class="tier-group" />
+            </ui:VisualElement>
+            <ui:Button name="CreateRaceButton" text="Opret løb" class="button-large create-race-button" />
+        </ui:VisualElement>
+    </ui:ScrollView>
+</ui:UXML>

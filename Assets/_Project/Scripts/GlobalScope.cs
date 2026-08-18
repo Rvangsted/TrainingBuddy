@@ -61,6 +61,7 @@ namespace TrainingBuddy
 			builder.Register<LobbyScreen>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 			builder.Register<FindLobbyScreen>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 			builder.Register<HostScreen>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
+			builder.Register<CreateRaceScreen>(Lifetime.Singleton).AsImplementedInterfaces().AsSelf();
 		}
 	}
 } 

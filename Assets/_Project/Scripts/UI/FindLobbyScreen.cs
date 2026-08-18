@@ -17,6 +17,10 @@ namespace TrainingBuddy.UI
 		private string _searchText = string.Empty;
 		private bool _eventsWired;
 
+		private VisualElement _joinConfirmModal;
+		private RadioButtonGroup _joinTierGroup;
+		private string _pendingJoinRaceId;
+
 		protected FindLobbyScreen(LayoutData layoutData, UIManager uiManager, DatabaseManager databaseManager) : base(layoutData, uiManager, databaseManager)
 		{
 			ConfigureLayoutAsset(_layoutData.FindLobbyScreenVisualTree, "find-lobby-wrapper");
@@ -73,6 +77,16 @@ namespace TrainingBuddy.UI
 					ApplyFilter();
 				};
 			}
+
+			// Join-confirm modal (see PaidRunsUI_Scope.md) — a small purpose-built modal embedded
+			// directly in this screen's own UXML, deliberately kept separate from UniversalOverlay
+			// itself since it needs a tier picker, not just text/buttons.
+			_joinConfirmModal = Layout.Q<VisualElement>("JoinConfirmModal");
+			_joinTierGroup = Layout.Q<RadioButtonGroup>("JoinTierGroup");
+			_joinTierGroup.choices = DatabaseManager.GetRaceEntryTierChoiceLabels();
+
+			Layout.Q<Button>("JoinCancelButton").RegisterCallback<ClickEvent>(_ => HideJoinConfirmModal());
+			Layout.Q<Button>("JoinConfirmButton").RegisterCallback<ClickEvent>(OnConfirmJoin);
 		}
 
 		private void UpdateFilterButtonLabel(Button filterButton)
@@ -195,11 +209,30 @@ namespace TrainingBuddy.UI
 			return row;
 		}
 
-		private async void JoinLobby(string raceId)
+		private void JoinLobby(string raceId)
 		{
+			_pendingJoinRaceId = raceId;
+			_joinTierGroup.value = 0;
+			_joinConfirmModal.style.display = DisplayStyle.Flex;
+		}
+
+		private void HideJoinConfirmModal()
+		{
+			_joinConfirmModal.style.display = DisplayStyle.None;
+			_pendingJoinRaceId = null;
+		}
+
+		private async void OnConfirmJoin(ClickEvent evt)
+		{
+			string raceId = _pendingJoinRaceId;
+			if (raceId == null) return;
+
+			var tier = (RaceEntryTier)_joinTierGroup.value;
+			HideJoinConfirmModal();
+
 			try
 			{
-				await _databaseManager.JoinRaceDirectlyAsync(raceId);
+				await _databaseManager.JoinRaceDirectlyAsync(raceId, tier);
 				$"Joined race: {raceId}".Log();
 				_uiManager.ChangePage(_layoutData.LobbyScreen);
 			}

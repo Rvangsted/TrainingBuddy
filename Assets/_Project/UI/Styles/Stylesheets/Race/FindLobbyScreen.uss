@@ -124,3 +124,28 @@
     border-width: 1px;
     border-color: rgba(225, 225, 225, 1);
 }
+
+/* Join-confirm modal (see PaidRunsUI_Scope.md) — reuses UniversalOverlay.uss's card/backdrop
+   classes for a consistent modal look, styled here since it isn't UniversalOverlay itself. */
+.tier-group .unity-radio-button-group__container {
+    flex-direction: column;
+    width: 100%;
+}
+
+.tier-group .unity-base-field__input {
+    border-width: 0;
+}
+
+.tier-group .unity-radio-button {
+    border-width: 1px;
+    border-color: rgba(227, 227, 227, 1);
+    border-radius: 15px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+}
+
+.tier-group .unity-radio-button__text {
+    font-size: var(--font-size-m);
+    color: var(--color-font);
+    white-space: normal;
+}

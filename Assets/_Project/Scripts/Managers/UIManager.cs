@@ -207,6 +207,7 @@ namespace TrainingBuddy.UI
 				ResetPasswordScreen => () => ChangePage(_layoutData.WelcomeScreen),
 				ProfileScreen => () => ChangePage(_layoutData.MainMenu),
 				FindLobbyScreen => () => ChangePage(_layoutData.MainMenu),
+				CreateRaceScreen => () => ChangePage(_layoutData.MainMenu),
 				HighScoreScreen => () => ChangePage(_layoutData.MainMenu),
 				LobbyScreen => () => ChangePage(_layoutData.MainMenu),
 				HostScreen => () => ChangePage(_layoutData.MainMenu),

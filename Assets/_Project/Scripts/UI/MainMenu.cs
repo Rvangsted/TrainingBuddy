@@ -1,5 +1,4 @@
 using System;
-using TrainingBuddy.FireBase;
 using TrainingBuddy.Managers;
 using TrainingBuddy.UI.Controls;
 using UnityEngine;
@@ -82,18 +81,9 @@ namespace TrainingBuddy.UI
 			}
 		}
 		
-		private async void OnCreateLobby(ClickEvent evt)
+		private void OnCreateLobby(ClickEvent evt)
 		{
-			await _databaseManager.CreateLobby(new RaceData
-			{
-				RaceName = $"{_databaseManager.Auth.CurrentUser.DisplayName}'s Race",
-				HostName = _databaseManager.Auth.CurrentUser.DisplayName,
-				Longitude = 0,
-				Latitude = 0,
-				Status = 0,
-			});
-			
-			_uiManager.ChangePage(_layoutData.HostScreen);
+			_uiManager.ChangePage(_layoutData.CreateRaceScreen);
 		}
 		
 		private void OnFindLobby(ClickEvent evt)

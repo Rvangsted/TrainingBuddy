@@ -110,6 +110,29 @@ boundary the friend-request system already respects.
   `RegisterScreen` gained a plain (non-localized) optional "referral code"
   field, matching the existing DOB fields' convention of skipping the
   Localization system for secondary/optional inputs.
+## UI (Resolved)
+
+Found while punch-listing remaining roadmap UI work: the backend above is
+fully wired, but nothing communicates any of it to a player.
+
+- **Invite-promotion section on `ProfileScreen`.** No natural slot exists
+  today (screen runs Info → Stats → Activity graph → Friends → Menu buttons
+  → profile picture — mapped in full while researching this). Add a new
+  block near the existing `FriendCode` display framing it as an invite:
+  the code plus a short line explaining both sides' rewards. Exact copy/
+  layout not decided here.
+- **`RegisterScreen`'s referral field needs to match the established section
+  pattern.** Every other field (`GenderSection`, `DobSection`) is wrapped in
+  `<ui:VisualElement class="section-container">` with a
+  `LocalizedLabel class="font-title section-label"` — the current
+  `ReferralCode` field (`RegisterScreen.uxml`) is a bare, unlabeled
+  `TextField` outside that pattern. Wrap it the same way (plain, non-
+  localized label per the earlier decision to skip Unity's Localization
+  tables for this field).
+- **Reward confirmation** — see `NotificationToast_Scope.md`. Both the new
+  user's welcome bonus and the referrer's payout currently land completely
+  silently; they'll hook into the new toast component there instead.
+
 - **Farming is reduced, not eliminated** — someone determined can still run
   multiple disposable-email accounts through the milestone gate manually.
   Same "accepted risk, revisit only if actually observed" framing already

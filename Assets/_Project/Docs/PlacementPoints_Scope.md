@@ -150,3 +150,22 @@ not how many steps you've banked.
   in one shared class is enough; no need for a ScriptableObject or remote
   config unless balancing turns out to need runtime tuning without a
   rebuild.
+
+## UI (Resolved)
+
+Found while punch-listing remaining roadmap UI work: both hookups above are
+functionally wired but visually indistinct from their surroundings.
+
+- **Post-race popup**: the "+N placeringspoint" line
+  (`RaceScreen.AnnounceWinner`) currently sits as plain second-line text in
+  the existing win/lose overlay. Give it its own visual weight (larger/bold/
+  accent-colored) so it reads as a distinct award, not an afterthought —
+  stays inline in the same popup rather than moving to a toast
+  (`NotificationToast_Scope.md`): this is the direct outcome of the race the
+  player is already looking at, not an unrelated background event.
+- **`ProfileScreen` label**: the `PlacementPoints` label
+  (`LevelingBottomRightElementLabel`) currently reuses the `StepCurrency`
+  label's exact style. Give it its own small icon/accent so it reads as a
+  distinct stat, not a mønter lookalike.
+- Exact color/icon/typography for both — no mockup done here, needs a real
+  design pass.
