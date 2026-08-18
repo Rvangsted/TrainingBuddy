@@ -158,15 +158,22 @@ has two large-illustration options (`Friends`/`Worry`), neither an
 icon-sized error mark. `Worry` is defined and styled but no call site uses
 it today.
 
-- **Error overlays get a style variant, not a new component.** Unlike the
-  referral/reward case (`NotificationToast_Scope.md`), errors need an
-  explicit acknowledgment — they stay blocking modals. Add a small color/
-  accent variant to the existing `UniversalOverlay` (e.g. a colored left
-  border or accent behind the title) applied whenever `ShowError` is the
-  caller, distinguishing it from success/info overlays without building new
-  infrastructure.
-- Exact color/icon/typography not decided here — needs a real design pass,
-  same as the placement-points and paid-tier-badge visuals.
+- **Implemented — error overlays get a style variant, not a new
+  component.** Unlike the referral/reward case (`NotificationToast_Scope.md`),
+  errors need an explicit acknowledgment — they stay blocking modals.
+  `UniversalOverlay.Show`/`UIManager.ShowOverlay`/`DatabaseManager.ShowMessage`
+  all gained a trailing `isError` bool (default `false`, so every existing
+  call site is unaffected); `DatabaseManager.ShowError` is the only caller
+  that passes `true`. When set, `UniversalOverlay` toggles a
+  `overlay-card--error` class on the card, styled with a 6px left border and
+  matching title color in `--color-red` (an existing, already-defined token,
+  not a new one) — distinguishing error popups from success/info ones
+  without building new infrastructure. Deliberately scoped to `ShowError`
+  only, not every `ShowMessage` call site (several of which — register
+  validation, login failures — are also conceptually errors but predate this
+  variant and weren't retrofitted here).
+- Exact color/border-width was picked directly (reusing `--color-red`), not
+  a mockup-reviewed design — easy to retune since it's plain USS.
 
 ## Still open
 

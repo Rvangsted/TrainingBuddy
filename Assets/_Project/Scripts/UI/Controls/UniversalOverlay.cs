@@ -103,7 +103,7 @@ namespace TrainingBuddy.UI.Controls
             }
         }
 
-        public void Show(string title, string message, string primaryButtonText = null, Action primaryAction = null, string secondaryButtonText = null, Action secondaryAction = null, PopupImage image = PopupImage.None , bool allowBackgroundDismiss = true)
+        public void Show(string title, string message, string primaryButtonText = null, Action primaryAction = null, string secondaryButtonText = null, Action secondaryAction = null, PopupImage image = PopupImage.None , bool allowBackgroundDismiss = true, bool isError = false)
         {
             if (_overlayAsset == null)
             {
@@ -143,6 +143,13 @@ namespace TrainingBuddy.UI.Controls
             _overlayCard?.RemoveFromClassList("has-background-image");
             _overlayCard?.RemoveFromClassList("background-worry");
             _overlayCard?.RemoveFromClassList("background-friends");
+
+            // Error variant — see ErrorMessaging_Scope.md "UI". Only ShowError-originated
+            // overlays get this; plain ShowMessage calls (confirmations, etc.) stay neutral.
+            if (isError)
+                _overlayCard?.AddToClassList("overlay-card--error");
+            else
+                _overlayCard?.RemoveFromClassList("overlay-card--error");
 
             // OverlaySingleRow has no active button in the UXML — always use the two-button row.
             // The secondary button is hidden below when secondaryButtonText is null/empty.

@@ -134,9 +134,9 @@ namespace TrainingBuddy.UI
 				raceScreen.TickRace(Time.deltaTime);
 		}
 		
-		public void ShowOverlay(string title, string message, string primaryButtonText, System.Action primaryAction, UniversalOverlay.PopupImage image = UniversalOverlay.PopupImage.None, bool allowBackgroundDismiss = true)
+		public void ShowOverlay(string title, string message, string primaryButtonText, System.Action primaryAction, UniversalOverlay.PopupImage image = UniversalOverlay.PopupImage.None, bool allowBackgroundDismiss = true, bool isError = false)
 		{
-			_universalOverlay?.Show(title, message, primaryButtonText, primaryAction, null, null, image, allowBackgroundDismiss);
+			_universalOverlay?.Show(title, message, primaryButtonText, primaryAction, null, null, image, allowBackgroundDismiss, isError);
 		}
 
 		public void ShowOverlay(string title, string message, string primaryButtonText, System.Action primaryAction, string secondaryButtonText, System.Action secondaryAction, UniversalOverlay.PopupImage image = UniversalOverlay.PopupImage.None, bool allowBackgroundDismiss = true)

@@ -2531,9 +2531,9 @@ namespace TrainingBuddy.Managers
 		/// <summary>
 		/// Shows a simple one-button informational overlay, if the UI layer is available.
 		/// </summary>
-		public void ShowMessage(string title, string message, string buttonText = "OK")
+		public void ShowMessage(string title, string message, string buttonText = "OK", bool isError = false)
 		{
-			UIManager?.ShowOverlay(title, message, buttonText, () => { });
+			UIManager?.ShowOverlay(title, message, buttonText, () => { }, isError: isError);
 		}
 
 		/// <summary>
@@ -2548,7 +2548,7 @@ namespace TrainingBuddy.Managers
 		public void ShowError(string title, Exception ex)
 		{
 			string message = ex is InvalidOperationException ? ex.Message : UserMessages.GenericFallback;
-			ShowMessage(title, message);
+			ShowMessage(title, message, isError: true);
 		}
 
 		#endregion

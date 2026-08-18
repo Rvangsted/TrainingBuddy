@@ -52,6 +52,18 @@
     justify-content: flex-start;
 }
 
+/* Error variant — see ErrorMessaging_Scope.md "UI". Only applied to ShowError-originated
+   overlays (a colored left accent + a matching title color), distinguishing them from
+   success/info overlays without a separate component. */
+.overlay-card--error .overlay-content {
+    border-left-width: 6px;
+    border-left-color: var(--color-red);
+}
+
+.overlay-card--error .overlay-title {
+    color: var(--color-red);
+}
+
 .overlay-title {
     font-size: var(--font-size-xl);
     color: var(--color-dark);

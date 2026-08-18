@@ -134,6 +134,10 @@ priority order:
    its own icon/caption. Turned out the `ProfileScreen` label wasn't visible
    at all — its container was `display: none` (pre-existing, unrelated to
    placement points). Not yet compiled/playtested.
-6. **Error popup styling** (`ErrorMessaging_Scope.md` "UI" section) — a
-   color/accent variant on `UniversalOverlay` for errors vs. success/info;
-   lowest priority, purely cosmetic since the functional fix already shipped.
+6. **Error popup styling** (`ErrorMessaging_Scope.md` "UI" section) —
+   **implemented**: a new `isError` flag (default `false`, so no existing
+   call site is affected) threaded through `UniversalOverlay.Show` →
+   `UIManager.ShowOverlay` → `DatabaseManager.ShowMessage`; only
+   `ShowError` passes `true`. Adds a `--color-red` left-border accent + title
+   color, distinguishing error popups from success/info ones. Not yet
+   compiled/playtested. This was the last item on the punch list.
