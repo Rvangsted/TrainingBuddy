@@ -63,7 +63,7 @@ namespace TrainingBuddy.UI
 			catch (System.Exception ex)
 			{
 				$"Failed to start race: {ex.Message}".LogError();
-				_uiManager.ShowOverlay("Kan ikke starte", ex.Message, "OK", () => { });
+				_databaseManager.ShowError("Kan ikke starte", ex);
 			}
 		}
 
@@ -161,6 +161,8 @@ namespace TrainingBuddy.UI
 					catch (System.Exception ex)
 					{
 						$"Failed to kick participant: {ex.Message}".LogError();
+						_uiManager.HideOverlay();
+						_databaseManager.ShowError("Kan ikke fjerne deltager", ex);
 					}
 				},
 				UniversalOverlay.PopupImage.None,
@@ -186,6 +188,8 @@ namespace TrainingBuddy.UI
 					catch (System.Exception ex)
 					{
 						$"Failed to cancel race: {ex.Message}".LogError();
+						_uiManager.HideOverlay();
+						_databaseManager.ShowError("Kan ikke aflyse løbet", ex);
 					}
 				},
 				UniversalOverlay.PopupImage.None,

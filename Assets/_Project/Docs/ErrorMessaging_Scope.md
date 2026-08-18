@@ -106,12 +106,46 @@ not implemented yet.
   other). Not strictly required for v1, but flagged because this change is
   what makes the bug more likely to surface in practice.
 
+## Resolved
+
+- **Bigger than first scoped**: nearly every deliberately-thrown
+  `InvalidOperationException` in `DatabaseManager.cs` (~40 of them — race
+  join/leave/kick/cancel/start guards, friend-request guards) was written in
+  **English**, not Danish, contradicting the "show business-rule exceptions
+  as-is" design's assumption that they were already safe. All of them are
+  now translated to Danish and centralized in a new
+  `Assets/_Project/Scripts/Firebase/UserMessages.cs` — one dedicated file,
+  separate from business logic, so copy can be reviewed/tweaked without
+  hunting through `DatabaseManager`/`FirebaseController`. Near-duplicate
+  guards (every "not authenticated"/"account deactivated"/"race not
+  found"/"race full" message) were consolidated to one shared constant each
+  rather than kept as ~10 near-identical translations.
+- **`DatabaseManager.ShowError(title, ex)`** is the new shared helper (next
+  to the existing `ShowMessage`): shows `ex.Message` as-is only for
+  `InvalidOperationException` (now guaranteed Danish/safe via
+  `UserMessages`), otherwise shows `UserMessages.GenericFallback`. Does not
+  log — call sites keep their own existing `LogError` calls.
+- **Retrofit list ended up bigger than the doc's original bullets**: also
+  fixed `HostScreen`'s kick and cancel flows (silent, not just
+  join/leave/start as originally named) and `ProfileScreen`'s friend
+  request send/accept/deny (had no error handling at all — an unhandled
+  exception in an `async void` handler). `FirebaseController.FirebaseLogin`
+  now actually shows its already-computed message instead of just logging
+  it, and gained a null-guard on the `FirebaseException` cast (was an
+  unguarded `as` cast that would NPE on a non-Firebase exception).
+- **Overlay-stacking**: retrofitted catch blocks that fire while a confirm
+  overlay is still open (`LobbyScreen` leave, `HostScreen` kick/cancel) call
+  `HideOverlay()` before `ShowError` — a cheap fix for the exact stacking
+  case the doc flagged, short of building real queueing.
+- `DeleteAccountAsync`'s three English catches now route through
+  `UserMessages` (Danish) instead of inline English strings.
+
 ## Still open
 
-- Exact copy for each retrofitted message (needs the same Danish, plain,
-  non-technical tone as the existing good examples — not written here).
 - Whether error popups should look visually distinct from success/info
   ones (icon, color) — a `UniversalOverlay` styling question, not required
   for the coverage fix itself.
 - Whether/when to do the deferred full sweep of passive background-fetch
   feedback.
+- A full `UniversalOverlay` queueing mechanism (only the two-line
+  `HideOverlay()`-before-`ShowError` fix above was applied, not a real queue).

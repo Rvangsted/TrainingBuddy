@@ -82,7 +82,7 @@ Idea: let accumulated steps be spent like a currency in-app.
 
 ## 6. Better error messaging
 
-- **Scoped** — see `ErrorMessaging_Scope.md`. Fixing gaps in an existing mechanism,
+- **Implemented** — see `ErrorMessaging_Scope.md`. Fixing gaps in an existing mechanism,
   not building a new one: `UniversalOverlay`/`ShowMessage` already exists but is
   reused ad hoc, several user-initiated actions (join/leave race, login) currently
   fail completely silently, some places show raw `ex.Message` verbatim (works today
@@ -91,5 +91,9 @@ Idea: let accumulated steps be spent like a currency in-app.
 - Scope: user-initiated actions first (join/leave race, register, login, cancel,
   kick, delete account) — passive background fetches (leaderboard, friends list)
   stay logging-only for now, deferred as a separate lower-priority pass.
-- Design: one shared helper that only ever shows a pre-written user-safe message or
-  one shared generic fallback — never raw/technical/English exception text again.
+- Design: one shared helper (`DatabaseManager.ShowError`) that only ever shows a
+  pre-written user-safe message or one shared generic fallback — never
+  raw/technical/English exception text again. Turned out ~40 of the app's own
+  exception messages were English, not Danish as assumed — all translated and
+  centralized in `UserMessages.cs`. See `ErrorMessaging_Scope.md` "Resolved".
+  Not yet playtested end-to-end on a real device.

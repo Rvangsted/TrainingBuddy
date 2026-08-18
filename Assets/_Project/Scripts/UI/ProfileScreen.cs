@@ -143,16 +143,32 @@ namespace TrainingBuddy.UI
 					string capturedUid = fromUserId;
 					acceptButton.RegisterCallback<ClickEvent>(async _ =>
 					{
-						await _databaseManager.HandleFriendRequestAsync(capturedUid, true);
-						DrawFriendsSection();
+						try
+						{
+							await _databaseManager.HandleFriendRequestAsync(capturedUid, true);
+							DrawFriendsSection();
+						}
+						catch (Exception ex)
+						{
+							$"Failed to accept friend request: {ex.Message}".LogError();
+							_databaseManager.ShowError("Kan ikke acceptere anmodning", ex);
+						}
 					});
 
 					var denyButton = new Button { text = "Afvis" };
 					denyButton.AddToClassList("friend-deny-button");
 					denyButton.RegisterCallback<ClickEvent>(async _ =>
 					{
-						await _databaseManager.HandleFriendRequestAsync(capturedUid, false);
-						DrawFriendsSection();
+						try
+						{
+							await _databaseManager.HandleFriendRequestAsync(capturedUid, false);
+							DrawFriendsSection();
+						}
+						catch (Exception ex)
+						{
+							$"Failed to deny friend request: {ex.Message}".LogError();
+							_databaseManager.ShowError("Kan ikke afvise anmodning", ex);
+						}
 					});
 
 					requestCard.Add(nameLabel);
@@ -292,7 +308,18 @@ namespace TrainingBuddy.UI
 				"Send venneanmodning",
 				$"Vil du sende en venneanmodning til {targetName}?",
 				"Ja",
-				async () => await _databaseManager.SendFriendRequestAsync(targetUserId),
+				async () =>
+				{
+					try
+					{
+						await _databaseManager.SendFriendRequestAsync(targetUserId);
+					}
+					catch (Exception ex)
+					{
+						$"Failed to send friend request: {ex.Message}".LogError();
+						_databaseManager.ShowError("Kan ikke sende anmodning", ex);
+					}
+				},
 				"Nej",
 				null,
 				UniversalOverlay.PopupImage.Friends

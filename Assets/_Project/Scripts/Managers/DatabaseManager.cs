@@ -340,7 +340,7 @@ namespace TrainingBuddy.Managers
 			long balance = ReadLong(userSnapshot?.Child("StepCurrency").Value);
 			if (balance < cost)
 			{
-				throw new InvalidOperationException($"Du har ikke nok mønter til dette niveau. Det koster {cost}, og du har {balance}.");
+				throw new InvalidOperationException(UserMessages.InsufficientStepCurrency(cost, balance));
 			}
 
 			string txId = DatabaseReference.Child("walletTransactions").Child(uid).Push().Key;
@@ -468,7 +468,7 @@ namespace TrainingBuddy.Managers
         {
             if (Auth?.CurrentUser == null)
             {
-                throw new InvalidOperationException("Cannot host a race without an authenticated user.");
+                throw new InvalidOperationException(UserMessages.NotAuthenticated);
             }
 
             if (capacity <= 0)
@@ -480,7 +480,7 @@ namespace TrainingBuddy.Managers
 
             if (IsDeactivatedLevel(currentUserLevel))
             {
-                throw new InvalidOperationException("Deactivated users cannot host races.");
+                throw new InvalidOperationException(UserMessages.AccountDeactivated);
             }
 
             await EnsureUserCanHostRace(Auth.CurrentUser.UserId);
@@ -524,27 +524,27 @@ namespace TrainingBuddy.Managers
         {
             if (Auth?.CurrentUser == null)
             {
-                throw new InvalidOperationException("Cannot join a race without an authenticated user.");
+                throw new InvalidOperationException(UserMessages.NotAuthenticated);
             }
 
             int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
 
             if (IsDeactivatedLevel(currentUserLevel))
             {
-                throw new InvalidOperationException("Deactivated users cannot join races.");
+                throw new InvalidOperationException(UserMessages.AccountDeactivated);
             }
 
             DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
 
             if (raceSnapshot is not { Exists: true })
             {
-                throw new InvalidOperationException("Race not found.");
+                throw new InvalidOperationException(UserMessages.RaceNotFound);
             }
 
             string status = raceSnapshot.Child("status").Value?.ToString();
             if (!string.IsNullOrEmpty(status) && status != "open")
             {
-                throw new InvalidOperationException("Race is not open for joining.");
+                throw new InvalidOperationException(UserMessages.RaceNotOpen);
             }
 
             int capacity = ConvertToNullableInt(raceSnapshot.Child("capacity").Value) ?? 0;
@@ -552,7 +552,7 @@ namespace TrainingBuddy.Managers
 
             if (capacity > 0 && participantsCount >= capacity)
             {
-                throw new InvalidOperationException("Race is already at capacity.");
+                throw new InvalidOperationException(UserMessages.RaceFull);
             }
 
             await EnsureUserCanJoinRace(Auth.CurrentUser.UserId, raceId);
@@ -588,27 +588,27 @@ namespace TrainingBuddy.Managers
         {
             if (Auth?.CurrentUser == null)
             {
-                throw new InvalidOperationException("Cannot join a race without an authenticated user.");
+                throw new InvalidOperationException(UserMessages.NotAuthenticated);
             }
 
             int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
 
             if (IsDeactivatedLevel(currentUserLevel))
             {
-                throw new InvalidOperationException("Deactivated users cannot submit join requests.");
+                throw new InvalidOperationException(UserMessages.AccountDeactivated);
             }
 
             DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
 
             if (raceSnapshot is not { Exists: true })
             {
-                throw new InvalidOperationException("Race not found.");
+                throw new InvalidOperationException(UserMessages.RaceNotFound);
             }
 
             string status = raceSnapshot.Child("status").Value?.ToString();
             if (!string.IsNullOrEmpty(status) && status != "open")
             {
-                throw new InvalidOperationException("Race is not open for join requests.");
+                throw new InvalidOperationException(UserMessages.RaceNotOpen);
             }
 
             int capacity = ConvertToNullableInt(raceSnapshot.Child("capacity").Value) ?? 0;
@@ -616,7 +616,7 @@ namespace TrainingBuddy.Managers
 
             if (capacity > 0 && participantsCount >= capacity)
             {
-                throw new InvalidOperationException("Race is already at capacity.");
+                throw new InvalidOperationException(UserMessages.RaceFull);
             }
 
             long timestamp = GetUnixTimestampMilliseconds();
@@ -638,14 +638,14 @@ namespace TrainingBuddy.Managers
         {
             if (Auth?.CurrentUser == null)
             {
-                throw new InvalidOperationException("Cannot retract a request without an authenticated user.");
+                throw new InvalidOperationException(UserMessages.NotAuthenticated);
             }
 
             int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
 
             if (IsDeactivatedLevel(currentUserLevel))
             {
-                throw new InvalidOperationException("Deactivated users cannot retract join requests.");
+                throw new InvalidOperationException(UserMessages.AccountDeactivated);
             }
 
             await DatabaseReference.Child("joinRequests").Child(raceId).Child(Auth.CurrentUser.UserId).RemoveValueAsync();
@@ -655,14 +655,14 @@ namespace TrainingBuddy.Managers
         {
             if (Auth?.CurrentUser == null)
             {
-                throw new InvalidOperationException("Cannot handle requests without an authenticated user.");
+                throw new InvalidOperationException(UserMessages.NotAuthenticated);
             }
 
             int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
 
             if (IsDeactivatedLevel(currentUserLevel))
             {
-                throw new InvalidOperationException("Deactivated users cannot manage races.");
+                throw new InvalidOperationException(UserMessages.AccountDeactivated);
             }
 
             DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
@@ -676,7 +676,7 @@ namespace TrainingBuddy.Managers
 
             if (!IsAdminLevel(currentUserLevel) && hostId != Auth.CurrentUser.UserId)
             {
-                throw new InvalidOperationException("Only the host or an admin can handle join requests.");
+                throw new InvalidOperationException(UserMessages.OnlyHostCanManageRequests);
             }
 
             DataSnapshot requestSnapshot = await DatabaseReference.Child("joinRequests").Child(raceId).Child(requesterUserId).GetValueAsync();
@@ -735,7 +735,7 @@ namespace TrainingBuddy.Managers
         {
             if (Auth?.CurrentUser == null)
             {
-                throw new InvalidOperationException("Cannot join a race without an authenticated user.");
+                throw new InvalidOperationException(UserMessages.NotAuthenticated);
             }
 
             string userId = Auth.CurrentUser.UserId;
@@ -744,26 +744,26 @@ namespace TrainingBuddy.Managers
             if (requestSnapshot is not { Exists: true } ||
                 !string.Equals(requestSnapshot.Child("status").Value?.ToString(), "approved", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("Your join request has not been approved.");
+                throw new InvalidOperationException(UserMessages.JoinRequestNotApproved);
             }
 
             DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
             if (raceSnapshot is not { Exists: true })
             {
-                throw new InvalidOperationException("Race not found.");
+                throw new InvalidOperationException(UserMessages.RaceNotFound);
             }
 
             string status = raceSnapshot.Child("status").Value?.ToString();
             if (!string.IsNullOrEmpty(status) && status != "open")
             {
-                throw new InvalidOperationException("Race is no longer open for joining.");
+                throw new InvalidOperationException(UserMessages.RaceNotOpen);
             }
 
             int capacity = ConvertToNullableInt(raceSnapshot.Child("capacity").Value) ?? 0;
             long participantsCount = raceSnapshot.Child("participants").ChildrenCount;
             if (capacity > 0 && participantsCount >= capacity)
             {
-                throw new InvalidOperationException("Race is already at capacity.");
+                throw new InvalidOperationException(UserMessages.RaceFull);
             }
 
             RaceEntryTier tier = (RaceEntryTier)(ConvertToNullableInt(requestSnapshot.Child("tier").Value) ?? 0);
@@ -801,14 +801,14 @@ namespace TrainingBuddy.Managers
         {
             if (Auth?.CurrentUser == null)
             {
-                throw new InvalidOperationException("Cannot kick a participant without an authenticated user.");
+                throw new InvalidOperationException(UserMessages.NotAuthenticated);
             }
 
             DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
 
             if (raceSnapshot is not { Exists: true })
             {
-                throw new InvalidOperationException("Race not found.");
+                throw new InvalidOperationException(UserMessages.RaceNotFound);
             }
 
             string hostId = raceSnapshot.Child("hostId").Value?.ToString();
@@ -816,12 +816,12 @@ namespace TrainingBuddy.Managers
 
             if (!IsAdminLevel(currentUserLevel) && hostId != Auth.CurrentUser.UserId)
             {
-                throw new InvalidOperationException("Only the host or an admin can kick participants.");
+                throw new InvalidOperationException(UserMessages.OnlyHostCanKick);
             }
 
             if (participantUserId == hostId)
             {
-                throw new InvalidOperationException("The host cannot kick themselves.");
+                throw new InvalidOperationException(UserMessages.HostCannotKickSelf);
             }
 
             var updates = new Dictionary<string, object>
@@ -845,21 +845,21 @@ namespace TrainingBuddy.Managers
         {
             if (Auth?.CurrentUser == null)
             {
-                throw new InvalidOperationException("Cannot leave a race without an authenticated user.");
+                throw new InvalidOperationException(UserMessages.NotAuthenticated);
             }
 
             int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
 
             if (IsDeactivatedLevel(currentUserLevel))
             {
-                throw new InvalidOperationException("Deactivated users cannot leave races.");
+                throw new InvalidOperationException(UserMessages.AccountDeactivated);
             }
 
             DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
 
             if (raceSnapshot is not { Exists: true })
             {
-                throw new InvalidOperationException("Race not found.");
+                throw new InvalidOperationException(UserMessages.RaceNotFound);
             }
 
             string status = raceSnapshot.Child("status").Value?.ToString();
@@ -867,13 +867,13 @@ namespace TrainingBuddy.Managers
             if (string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(status, "in_progress", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("You cannot leave a race that is in progress or completed.");
+                throw new InvalidOperationException(UserMessages.CannotLeaveActiveRace);
             }
 
             string hostId = raceSnapshot.Child("hostId").Value?.ToString();
             if (hostId == Auth.CurrentUser.UserId)
             {
-                throw new InvalidOperationException("Hosts must cancel their race instead of leaving it.");
+                throw new InvalidOperationException(UserMessages.HostMustCancelNotLeave);
             }
 
             DataSnapshot leavingParticipantSnapshot = raceSnapshot.Child("participants").Child(Auth.CurrentUser.UserId);
@@ -901,22 +901,22 @@ namespace TrainingBuddy.Managers
         public async Task<RaceSimulation> StartRaceAsync(string raceId)
         {
             if (Auth?.CurrentUser == null)
-                throw new InvalidOperationException("Cannot start a race without an authenticated user.");
+                throw new InvalidOperationException(UserMessages.NotAuthenticated);
 
             DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
 
             if (raceSnapshot is not { Exists: true })
-                throw new InvalidOperationException("Race not found.");
+                throw new InvalidOperationException(UserMessages.RaceNotFound);
 
             string hostId = raceSnapshot.Child("hostId").Value?.ToString();
             int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
 
             if (!IsAdminLevel(currentUserLevel) && hostId != Auth.CurrentUser.UserId)
-                throw new InvalidOperationException("Only the host or an admin can start this race.");
+                throw new InvalidOperationException(UserMessages.OnlyHostCanStartRace);
 
             long realParticipantCount = raceSnapshot.Child("participants").ChildrenCount;
             if (realParticipantCount < MinRaceParticipants)
-                throw new InvalidOperationException($"Løbet kræver mindst {MinRaceParticipants} spillere for at starte.");
+                throw new InvalidOperationException(UserMessages.NotEnoughParticipants(MinRaceParticipants));
 
             // Fetch each participant's stats to drive the simulation
             var participantInputs = new List<(string userId, string displayName, string sex, int speedPoints, int accelPoints)>();
@@ -1239,35 +1239,35 @@ namespace TrainingBuddy.Managers
         {
             if (Auth?.CurrentUser == null)
             {
-                throw new InvalidOperationException("Cannot cancel a race without an authenticated user.");
+                throw new InvalidOperationException(UserMessages.NotAuthenticated);
             }
 
             int? currentUserLevel = await GetUserLevelAsync(Auth.CurrentUser.UserId);
 
             if (IsDeactivatedLevel(currentUserLevel))
             {
-                throw new InvalidOperationException("Deactivated users cannot cancel races.");
+                throw new InvalidOperationException(UserMessages.AccountDeactivated);
             }
 
             DataSnapshot raceSnapshot = await GetRaceSnapshotAsync(raceId);
 
             if (raceSnapshot is not { Exists: true })
             {
-                throw new InvalidOperationException("Race not found.");
+                throw new InvalidOperationException(UserMessages.RaceNotFound);
             }
 
             string hostId = raceSnapshot.Child("hostId").Value?.ToString();
 
             if (!IsAdminLevel(currentUserLevel) && hostId != Auth.CurrentUser.UserId)
             {
-                throw new InvalidOperationException("Only the host or an admin can cancel this race.");
+                throw new InvalidOperationException(UserMessages.OnlyHostCanCancelRace);
             }
 
             string status = raceSnapshot.Child("status").Value?.ToString();
 
             if (string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("Completed races cannot be cancelled.");
+                throw new InvalidOperationException(UserMessages.CannotCancelCompletedRace);
             }
 
             if (string.Equals(status, "cancelled", StringComparison.OrdinalIgnoreCase))
@@ -1504,12 +1504,12 @@ namespace TrainingBuddy.Managers
 
             if (isHostingActive)
             {
-                throw new InvalidOperationException("You are already hosting an active race.");
+                throw new InvalidOperationException(UserMessages.AlreadyHostingRace);
             }
 
             if (isParticipatingActive)
             {
-                throw new InvalidOperationException("You cannot host a race while participating in another active race.");
+                throw new InvalidOperationException(UserMessages.CannotHostWhileParticipating);
             }
         }
 
@@ -1519,12 +1519,12 @@ namespace TrainingBuddy.Managers
 
             if (isHostingActive)
             {
-                throw new InvalidOperationException("You cannot join another race while hosting an active race.");
+                throw new InvalidOperationException(UserMessages.CannotJoinWhileHosting);
             }
 
             if (isParticipatingActive)
             {
-                throw new InvalidOperationException("You are already participating in an active race.");
+                throw new InvalidOperationException(UserMessages.AlreadyInRace);
             }
         }
 
@@ -2166,11 +2166,11 @@ namespace TrainingBuddy.Managers
 		public async Task SendFriendRequestAsync(string targetUserId)
 		{
 			if (Auth?.CurrentUser == null)
-				throw new InvalidOperationException("Must be authenticated to send friend requests.");
+				throw new InvalidOperationException(UserMessages.NotAuthenticated);
 
 			string myUid = Auth.CurrentUser.UserId;
 			if (myUid == targetUserId)
-				throw new InvalidOperationException("Cannot send a friend request to yourself.");
+				throw new InvalidOperationException(UserMessages.CannotFriendSelf);
 
 			long timestamp = GetUnixTimestampMilliseconds();
 			var requestData = new Dictionary<string, object>
@@ -2185,7 +2185,7 @@ namespace TrainingBuddy.Managers
 		public async Task RevokeFriendRequestAsync(string targetUserId)
 		{
 			if (Auth?.CurrentUser == null)
-				throw new InvalidOperationException("Must be authenticated to revoke friend requests.");
+				throw new InvalidOperationException(UserMessages.NotAuthenticated);
 
 			await DatabaseReference.Child("friendRequests").Child(targetUserId).Child(Auth.CurrentUser.UserId).RemoveValueAsync();
 		}
@@ -2225,7 +2225,7 @@ namespace TrainingBuddy.Managers
 		public async Task HandleFriendRequestAsync(string requesterUserId, bool accept)
 		{
 			if (Auth?.CurrentUser == null)
-				throw new InvalidOperationException("Must be authenticated to handle friend requests.");
+				throw new InvalidOperationException(UserMessages.NotAuthenticated);
 
 			string myUid = Auth.CurrentUser.UserId;
 			long timestamp = GetUnixTimestampMilliseconds();
@@ -2276,7 +2276,7 @@ namespace TrainingBuddy.Managers
 		public async Task RemoveFriendAsync(string friendUserId)
 		{
 			if (Auth?.CurrentUser == null)
-				throw new InvalidOperationException("Must be authenticated to remove friends.");
+				throw new InvalidOperationException(UserMessages.NotAuthenticated);
 
 			string myUid = Auth.CurrentUser.UserId;
 			var updates = new Dictionary<string, object>
@@ -2502,6 +2502,21 @@ namespace TrainingBuddy.Managers
 			UIManager?.ShowOverlay(title, message, buttonText, () => { });
 		}
 
+		/// <summary>
+		/// The one place a caught exception is allowed to reach the UI — see
+		/// ErrorMessaging_Scope.md. Never shows raw/technical/English exception text: an
+		/// InvalidOperationException is one of this codebase's own deliberately-thrown,
+		/// pre-written business-rule exceptions (its message is always one of the
+		/// UserMessages constants), so it's shown as-is; anything else — network errors,
+		/// Firebase SDK exceptions, anything unexpected — shows the one shared generic
+		/// fallback instead. Does not log; call sites keep their own existing LogError calls.
+		/// </summary>
+		public void ShowError(string title, Exception ex)
+		{
+			string message = ex is InvalidOperationException ? ex.Message : UserMessages.GenericFallback;
+			ShowMessage(title, message);
+		}
+
 		#endregion
 
 		#region Account Deletion
@@ -2533,7 +2548,7 @@ namespace TrainingBuddy.Managers
 			catch (Exception ex)
 			{
 				$"DeleteAccountAsync: reauthentication failed: {ex}".LogError();
-				ShowMessage("Delete Account", "Incorrect password. Your account was not deleted.");
+				ShowMessage(UserMessages.DeleteAccountTitle, UserMessages.DeleteAccountWrongPassword);
 				return false;
 			}
 
@@ -2603,7 +2618,7 @@ namespace TrainingBuddy.Managers
 			catch (Exception ex)
 			{
 				$"DeleteAccountAsync: database cleanup failed: {ex}".LogError();
-				ShowMessage("Delete Account", "Something went wrong deleting your data. Please try again.");
+				ShowMessage(UserMessages.DeleteAccountTitle, UserMessages.DeleteAccountCleanupFailed);
 				return false;
 			}
 
@@ -2624,7 +2639,7 @@ namespace TrainingBuddy.Managers
 			catch (Exception ex)
 			{
 				$"DeleteAccountAsync: failed to delete auth user: {ex}".LogError();
-				ShowMessage("Delete Account", "Your data was removed, but the sign-in record could not be deleted. Please contact support.");
+				ShowMessage(UserMessages.DeleteAccountTitle, UserMessages.DeleteAccountAuthDeletionFailed);
 				return false;
 			}
 

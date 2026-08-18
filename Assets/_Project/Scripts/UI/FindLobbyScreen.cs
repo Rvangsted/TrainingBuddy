@@ -206,6 +206,7 @@ namespace TrainingBuddy.UI
 			catch (System.Exception ex)
 			{
 				$"Failed to join race {raceId}: {ex.Message}".LogError();
+				_databaseManager.ShowError("Kan ikke deltage", ex);
 			}
 		}
 	}

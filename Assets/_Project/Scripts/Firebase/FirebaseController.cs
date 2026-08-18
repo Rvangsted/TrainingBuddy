@@ -67,19 +67,21 @@ namespace TrainingBuddy.FireBase
 			{
 				//If there are errors handle them
 				var firebaseEx = LoginTask.Exception.GetBaseException() as FirebaseException;
-				var errorCode = (AuthError)firebaseEx.ErrorCode;
 
-				string message = errorCode switch
-				{
-					AuthError.MissingEmail => "Missing Email",
-					AuthError.MissingPassword => "Missing Password",
-					AuthError.WrongPassword => "Wrong Password",
-					AuthError.InvalidEmail => "Invalid Email",
-					AuthError.UserNotFound => "Account does not exist",
-					_ => "Login Failed!",
-				};
+				string message = firebaseEx == null
+					? UserMessages.GenericFallback
+					: (AuthError)firebaseEx.ErrorCode switch
+					{
+						AuthError.MissingEmail => UserMessages.LoginMissingEmail,
+						AuthError.MissingPassword => UserMessages.LoginMissingPassword,
+						AuthError.WrongPassword => UserMessages.LoginWrongPassword,
+						AuthError.InvalidEmail => UserMessages.LoginInvalidEmail,
+						AuthError.UserNotFound => UserMessages.LoginNoSuchAccount,
+						_ => UserMessages.LoginFailed,
+					};
 
-				$"Error message: {message}".LogError();
+				$"Login failed: {LoginTask.Exception}".LogError();
+				_databaseManager.ShowMessage("Login mislykkedes", message);
 				return false;
 			}
 

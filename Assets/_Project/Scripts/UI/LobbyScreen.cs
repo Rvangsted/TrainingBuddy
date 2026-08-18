@@ -158,6 +158,8 @@ namespace TrainingBuddy.UI
 					catch (System.Exception ex)
 					{
 						$"Failed to leave race: {ex.Message}".LogError();
+						_uiManager.HideOverlay();
+						_databaseManager.ShowError("Kan ikke forlade løbet", ex);
 					}
 				},
 				UniversalOverlay.PopupImage.None,
